@@ -2,31 +2,33 @@
 
 namespace App\Models;
 
+use App\Enums\UserStatus;
+use App\Enums\UserType;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
-     *
-     * @var list<string>
+     * Indexed: email and status
      */
     protected $fillable = [
         'name',
         'email',
         'password',
+        'user_type', // individual or company
+        'status', // active, inactive, suspended
     ];
 
     /**
      * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
      */
     protected $hidden = [
         'password',
@@ -35,14 +37,14 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
      */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'user_type' => UserType::class,
+            'status' => UserStatus::class,
         ];
     }
 
@@ -77,5 +79,27 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getRoleNames(): array
     {
         return $this->roles()->pluck('display_name')->toArray();
+    }
+
+    public function individuals()
+    {
+        return $this->hasMany(Individual::class);
+    }
+
+    public function companies()
+    {
+        return $this->hasMany(Company::class);
+    }
+
+    // Applications created by this user
+    public function applications()
+    {
+        return $this->hasMany(Application::class);
+    }
+
+    // Applications reviewed by this user
+    public function reviewedApplications()
+    {
+        return $this->hasMany(Application::class, 'reviewed_by');
     }
 }
