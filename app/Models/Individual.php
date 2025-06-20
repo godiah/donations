@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Notifications\Notifiable;
 
 class Individual extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, Notifiable;
 
     /**
      * Mass assignable fields
@@ -36,7 +37,6 @@ class Individual extends Model
 
     protected $casts = [
         'target_date' => 'date',
-        'additional_info' => 'array',
         'target_amount' => 'decimal:2',
         'amount_raised' => 'decimal:2',
         'fees_charged' => 'decimal:2',

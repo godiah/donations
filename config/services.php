@@ -35,4 +35,18 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Africa's Talking Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for Africa's Talking SMS API
+    |
+    */
+    'africastalking' => [
+        'username' => env('AFRICASTALKING_USERNAME', 'wigopaybulksms'),
+        'key' => env('AFRICASTALKING_API_KEY', 'atsk_c4e1dbab5d5de9e222992316bee7bc26ffb5d5b2cadcb9fc9fd0a843fce4ab30ba3b35d2'),
+        'sender_id' => env('AFRICASTALKING_SENDER_ID', 'wiGOPAY'),
+        'whatsapp_number' => env('AFRICASTALKING_WHATSAPP_NUMBER', '+254745548093'), // Add your WhatsApp-enabled number
+    ],
 ];
