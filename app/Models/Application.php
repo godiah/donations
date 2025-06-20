@@ -55,6 +55,11 @@ class Application extends Model
         return $this->belongsTo(User::class, 'reviewed_by');
     }
 
+    public function documents()
+    {
+        return $this->morphMany(SupportDocument::class, 'documentable');
+    }
+
     // Get all documents for this application through the applicant
     public function getDocuments()
     {

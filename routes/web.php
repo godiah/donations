@@ -55,11 +55,20 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     /**
-     * Administrator Routes     
+     * Administrator Routes  
+     * Admin middleware   
      */
-    Route::prefix('admin')->name('admin.')->group(function () {
+    Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::prefix('/applications')->name('applications.')->group(function () {
             Route::get('/', [AdminApplicationController::class, 'index'])->name('index');
+            Route::get('/{application}', [AdminApplicationController::class, 'show'])->name('show');
+            Route::get('/type/{type}', [AdminApplicationController::class, 'filterByType'])->name('filter.type');
+            Route::get('/status/{status}', [AdminApplicationController::class, 'filterByStatus'])->name('filter.status');
+            Route::get('/type/{type}/status/{status}', [AdminApplicationController::class, 'filterByTypeAndStatus'])->name('filter.type_status');
+            Route::post('/{application}/start-review', [AdminApplicationController::class, 'startReview'])->name('start-review');
+            Route::post('/documents/{document}/update-status', [AdminApplicationController::class, 'updateDocumentStatus'])->name('document.update-status');
+            Route::get('/documents/{document}/serve', [AdminApplicationController::class, 'serveDocument'])->name('document.serve');
+            Route::post('/{application}/approve', [AdminApplicationController::class, 'approve'])->name('approve');
         });
     });
 });
