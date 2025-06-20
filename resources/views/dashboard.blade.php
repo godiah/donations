@@ -42,6 +42,16 @@
                 </div>
             </div>
 
+            @if ($user->hasRole('admin'))
+                <!-- Admin Panel -->
+                <div class="py-4">
+                    <h1>Quick Actions</h1>
+                    <div>
+                        <a href="{{ route('admin.applications.index') }}">View Applications</a>
+                    </div>
+                </div>
+            @endif
+
             <!-- Applications Section -->
             @if (!$user->hasRole('admin'))
                 <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
@@ -103,11 +113,19 @@
                                             </div>
 
                                             <div class="flex flex-col ml-4 space-y-2">
-                                                <a href="{{ route('individual.applications.show', $application->application_number) }}"
-                                                    class="inline-flex items-center px-3 py-1.5 bg-indigo-600 border border-transparent rounded-md text-xs font-medium text-white hover:bg-indigo-700 transition-colors">
-                                                    View Details
-                                                </a>
+                                                @if ($application->applicant_type === \App\Models\Individual::class)
+                                                    <a href="{{ route('individual.applications.show', $application->application_number) }}"
+                                                        class="inline-flex items-center px-3 py-1.5 bg-indigo-600 border border-transparent rounded-md text-xs font-medium text-white hover:bg-indigo-700 transition-colors">
+                                                        View Details
+                                                    </a>
+                                                @else
+                                                    <a href="{{ route('company.applications.show', $application->application_number) }}"
+                                                        class="inline-flex items-center px-3 py-1.5 bg-indigo-600 border border-transparent rounded-md text-xs font-medium text-white hover:bg-indigo-700 transition-colors">
+                                                        View Details
+                                                    </a>
+                                                @endif
                                             </div>
+
                                         </div>
 
                                         @if ($application->applicant->contribution_description)

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Application;
+use App\Models\Bank;
 use App\Models\ContributionReason;
 use App\Models\IdType;
 use Illuminate\Http\Request;
@@ -38,6 +39,9 @@ class DashboardController extends Controller
     // View company donation application form
     public function showCompany()
     {
-        return view('applications.companies.index');
+        $contributionReasons = ContributionReason::where('is_active', true)->get();
+        $banks = Bank::all();
+
+        return view('applications.companies.index', compact('contributionReasons', 'banks'));
     }
 }
