@@ -115,7 +115,7 @@
                         <div class="space-y-3">
                             <div>
                                 <span class="font-medium text-gray-700">Full Name:</span>
-                                <div class="text-gray-900">{{ $application->applicant->full_name }}</div>
+                                <div class="text-gray-900">{{ $application->applicant->getFullNameAttribute() }}</div>
                             </div>
                             <div>
                                 <span class="font-medium text-gray-700">Email:</span>
@@ -142,26 +142,42 @@
                             </div>
                         </div>
                     </div>
-
-                    @if ($application->applicant->emergency_contact_name)
-                        <div class="pt-4 mt-6 border-t border-gray-200">
-                            <h4 class="mb-3 font-medium text-gray-700">Emergency Contact</h4>
-                            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                <div>
-                                    <span class="font-medium text-gray-700">Name:</span>
-                                    <div class="text-gray-900">{{ $application->applicant->emergency_contact_name }}
-                                    </div>
-                                </div>
-                                <div>
-                                    <span class="font-medium text-gray-700">Phone:</span>
-                                    <div class="text-gray-900">{{ $application->applicant->emergency_contact_phone }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
                 </div>
             </div>
+
+            <!-- Payout Mandate -->
+            @if ($application->payoutMandate)
+                <div class="mt-6 overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <h3 class="mb-4 text-lg font-semibold text-gray-800">Payout Mandate</h3>
+
+                        @if ($application->payoutMandate->isSingle())
+                            <p class="text-sm text-gray-700">
+                                This application uses a <strong class="text-green-700">Single Mandate</strong> setup.
+                            </p>
+                        @elseif ($application->payoutMandate->isDual())
+                            <p class="mb-4 text-sm text-gray-700">
+                                This application uses a <strong class="text-blue-700">Dual Mandate</strong> setup. Below
+                                are the checker details:
+                            </p>
+
+                            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                <div>
+                                    <span class="font-medium text-gray-700">Checker Name:</span>
+                                    <div class="text-gray-900">
+                                        {{ $application->payoutMandate->checker->name ?? 'N/A' }}</div>
+                                </div>
+                                <div>
+                                    <span class="font-medium text-gray-700">Checker Email:</span>
+                                    <div class="text-gray-900">
+                                        {{ $application->payoutMandate->checker->email ?? 'N/A' }}</div>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endif
+
 
             <!-- Support Documents -->
             @if ($supportDocuments->isNotEmpty())

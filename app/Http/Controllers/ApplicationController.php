@@ -6,13 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\Company;
 use App\Models\SupportDocument;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ApplicationController extends Controller
 {
+    use AuthorizesRequests;
+
     /**
-     * Display the specified application by application number
+     * Display the specified individual application by application number
      */
     public function showIndividual(string $application_number)
     {
@@ -23,15 +26,14 @@ class ApplicationController extends Controller
             'applicant.contributionReason',
             'applicant.idType',
             'applicant.supportDocuments.contributionReason',
-            'reviewer'
+            'reviewer',
+            'payoutMandate'
         ])
             ->where('application_number', $application_number)
             ->firstOrFail();
 
-        // Check if user owns this application or is admin
-        if (!$user->hasRole('admin') && $application->user_id !== $user->id) {
-            abort(403, 'Unauthorized to view this application.');
-        }
+        // Check if user owns this application or is admin or is a checker
+        $this->authorize('view', $application);
 
         // Get support documents through the applicant
         $supportDocuments = $application->applicant->supportDocuments()
@@ -41,6 +43,9 @@ class ApplicationController extends Controller
         return view('applications.individuals.show', compact('application', 'supportDocuments'));
     }
 
+    /**
+     * Display the specified company application by application number
+     */
     public function showCompany(string $application_number)
     {
         $user = Auth::user();
@@ -50,20 +55,18 @@ class ApplicationController extends Controller
             'applicant.contributionReason',
             'applicant.bank',
             'applicant.supportDocuments.contributionReason',
-            'reviewer'
+            'reviewer',
+            'payoutMandate'
         ])
             ->where('application_number', $application_number)
             ->firstOrFail();
 
-        // Ensure the application belongs to the authenticated user and is a company application
-        if (!$user->hasRole('admin') && $application->user_id !== $user->id) {
-            abort(403, 'Unauthorized to view this application.');
-        }
+        // Check if user owns this application or is admin or is a checker
+        $this->authorize('view', $application);
 
         $supportDocuments = $application->applicant->supportDocuments()
             ->with('contributionReason')
             ->get();
-
 
         return view('applications.companies.show', compact('application', 'supportDocuments'));
     }

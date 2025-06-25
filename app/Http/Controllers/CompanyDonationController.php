@@ -3,15 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ApplicationStatus;
+use App\Mail\CheckerInvitation;
 use App\Models\Application;
 use App\Models\Company;
 use App\Models\ContributionReason;
 use App\Models\DocumentType;
+use App\Models\Invitation;
+use App\Models\PayoutMandate;
 use App\Models\SupportDocument;
+use App\Notifications\CompanyApplicationSubmitted;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -43,6 +48,11 @@ class CompanyDonationController extends Controller
         $validator = $this->validateCompanyDonation($request);
 
         if ($validator->fails()) {
+            Log::error('Validation failed for individual donation.', [
+                'errors' => $validator->errors()->toArray(),
+                'input' => $request->all(),
+            ]);
+
             return response()->json([
                 'success' => false,
                 'errors' => $validator->errors()
@@ -60,18 +70,33 @@ class CompanyDonationController extends Controller
             // Create the company record
             $company = $this->createCompany($validated, $request);
 
-
             // Handle support documents
             $this->handleDocumentUploads($request, $company);
 
             // Create application record
             $application = $this->createApplication($company);
 
+            // Create payout mandate
+            $payoutMandate = $this->createPayoutMandate($request, $application);
+
+            // Handle dual mandate invitation if needed
+            if ($payoutMandate->isDual()) {
+                $this->createAndSendInvitation($request, $application, $payoutMandate);
+            }
+
+            // Assign roles
+            $this->assignUserRoles($request, $application, $payoutMandate);
+
+            // Send notification to company email
+            $company->notify(new CompanyApplicationSubmitted($company, $application->application_number));
+
+
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Company donation application submitted successfully!',
+                'message' => 'Company donation application submitted successfully!' .
+                    ($payoutMandate->isDual() ? ' An invitation has been sent to the checker.' : ''),
                 'application_number' => $application->application_number,
                 'redirect_url' => route('company.success', $application)
             ]);
@@ -118,6 +143,7 @@ class CompanyDonationController extends Controller
 
             // Step 2: Company Information
             'company_name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
             'registration_certificate' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB
             'pin_number' => 'required|string|max:50',
             'cr12' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
@@ -147,6 +173,9 @@ class CompanyDonationController extends Controller
             'additional_info.purpose' => 'nullable|string|max:1000',
             'additional_info.timeline' => 'nullable|string|max:500',
             'additional_info.expected_impact' => 'nullable|string|max:1000',
+
+            // Payout mandate validation
+            'mandate_type' => 'required|in:single,dual',
         ];
 
         // Add support document validation
@@ -154,6 +183,17 @@ class CompanyDonationController extends Controller
         if ($contributionReason && $contributionReason->requires_document) {
             $rules['support_documents'] = 'required|array|min:1';
             $rules['support_documents.*'] = 'required|file|mimes:pdf,jpg,jpeg,png|max:5120'; // 5MB
+        }
+
+        if ($request->input('mandate_type') === 'dual') {
+            $rules['checker_name'] = ['required', 'string', 'max:255'];
+            $rules['checker_email'] = ['required', 'email', 'max:255'];
+        } else {
+            // Clear values explicitly if single mandate (to avoid string "null" from HTML form)
+            $request->merge([
+                'checker_name' => null,
+                'checker_email' => null,
+            ]);
         }
 
         return Validator::make($request->all(), $rules);
@@ -170,6 +210,7 @@ class CompanyDonationController extends Controller
             'contribution_description' => $validated['contribution_description'],
             'contribution_reason_id' => $validated['contribution_reason_id'],
             'company_name' => $validated['company_name'],
+            'email' => $validated['email'],
             'registration_certificate' => $this->handleFileUpload($request, 'registration_certificate'),
             'pin_number' => $validated['pin_number'],
             'cr12' => $this->handleFileUpload($request, 'cr12'),
@@ -252,6 +293,75 @@ class CompanyDonationController extends Controller
             'status' => ApplicationStatus::Submitted,
             'submitted_at' => now(),
         ]);
+    }
+
+    /**
+     * Create payout mandate record
+     */
+    private function createPayoutMandate(Request $request, Application $application)
+    {
+        return PayoutMandate::create([
+            'application_id' => $application->id,
+            'type' => $request->mandate_type,
+            'maker_id' => Auth::id(),
+            'checker_id' => null, // Will be updated when checker registers
+            'checker_name' => $request->checker_name,
+            'checker_email' => $request->checker_email,
+            'is_active' => true,
+        ]);
+    }
+
+    /**
+     * Create and send invitation for dual mandate
+     */
+    private function createAndSendInvitation(Request $request, Application $application, PayoutMandate $payoutMandate)
+    {
+        $token = Str::random(64);
+        $expiresAt = now()->addHours(24);
+
+        $invitation = Invitation::create([
+            'application_id' => $application->id,
+            'payout_mandate_id' => $payoutMandate->id,
+            'email' => $request->checker_email,
+            'name' => $request->checker_name,
+            'token' => $token,
+            'expires_at' => $expiresAt,
+        ]);
+
+        // Send invitation email
+        try {
+            Mail::to($request->checker_email)->queue(new CheckerInvitation($invitation));
+        } catch (\Exception $e) {
+            Log::error('Failed to send checker invitation email: ' . $e->getMessage(), [
+                'invitation_id' => $invitation->id,
+                'email' => $request->checker_email,
+            ]);
+        }
+
+        return $invitation;
+    }
+
+    /**
+     * Assign roles to the user based on the payout mandate and application.
+     */
+    private function assignUserRoles(Request $request, Application $application, PayoutMandate $payoutMandate): bool
+    {
+        $user = Auth::user();
+
+        try {
+            if ($payoutMandate->isSingle()) {
+                // Single mandate - user is both maker and checker
+                $user->assignRole('single_mandate_user', $application->id);
+            } else {
+                // Dual mandate - user is maker
+                $user->assignRole('payout_maker', $application->id);
+                // Checker role will be assigned when they register
+            }
+            return true;
+        } catch (\Exception $e) {
+            Log::error("Failed to assign role: {$e->getMessage()}");
+            return false;
+        }
     }
 
     /**

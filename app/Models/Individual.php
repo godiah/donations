@@ -20,13 +20,16 @@ class Individual extends Model
         'contribution_name',
         'contribution_description',
         'contribution_reason_id',
-        'full_name',
+        'first_name',
+        'middle_name',
+        'last_name',
         'email',
         'phone',
-        'emergency_contact_name',
-        'emergency_contact_phone',
         'id_type_id',
         'id_number',
+        'kyc_verified',
+        'kyc_verified_at',
+        'kyc_response_data',
         'kra_pin',
         'target_amount',
         'target_date',
@@ -36,6 +39,9 @@ class Individual extends Model
     ];
 
     protected $casts = [
+        'kyc_verified' => 'boolean',
+        'kyc_verified_at' => 'datetime',
+        'kyc_response_data' => 'array',
         'target_date' => 'date',
         'target_amount' => 'decimal:2',
         'amount_raised' => 'decimal:2',
@@ -67,6 +73,20 @@ class Individual extends Model
     public function supportDocuments()
     {
         return $this->morphMany(SupportDocument::class, 'documentable');
+    }
+
+    /**
+     * Get the full name attribute by combining name fields
+     */
+    public function getFullNameAttribute(): string
+    {
+        $names = array_filter([
+            $this->first_name,
+            $this->middle_name,
+            $this->last_name
+        ]);
+
+        return implode(' ', $names);
     }
 
     // Helper: Get required document types for this individual's contribution reason

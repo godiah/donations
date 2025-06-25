@@ -6,12 +6,12 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
             <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
                     <!-- Progress Indicator -->
                     <div class="mb-8">
-                        <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center mx-auto mb-4 justify-evenly">
                             <div class="flex items-center">
                                 <div class="step-indicator active" data-step="1">
                                     <span class="step-number">1</span>
@@ -129,17 +129,55 @@
 
                         <!-- Step 2: Personal Information -->
                         <div class="form-step" id="step-2">
-                            <h3 class="mb-6 text-lg font-semibold text-gray-900">Personal Information</h3>
+                            <h3 class="mb-0.5 text-lg font-semibold text-gray-900">Personal Information</h3>
+                            <p class="mb-6 text-sm text-gray-600">The provided email and phone number will be used for
+                                communication purposes.</p>
 
                             <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                <div>
-                                    <label for="full_name" class="block mb-2 text-sm font-medium text-gray-700">
-                                        Full Name <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="text" id="full_name" name="full_name"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                        placeholder="Enter full name of beneficiary">
-                                    <div class="hidden mt-1 text-sm text-red-500 error-message"></div>
+                                <!-- Name Fields -->
+                                <div class="md:col-span-2">
+                                    <div class="p-4 mb-4 border border-blue-200 rounded-md bg-blue-50">
+                                        <p class="text-sm text-blue-800">
+                                            <strong>Important:</strong> Please provide your names exactly as they appear
+                                            on your National ID, Passport, or Alien Registration Card. This information
+                                            will be verified against official records.
+                                        </p>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                        <div>
+                                            <label for="first_name"
+                                                class="block mb-2 text-sm font-medium text-gray-700">
+                                                First Name <span class="text-red-500">*</span>
+                                            </label>
+                                            <input type="text" id="first_name" name="first_name"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                placeholder="Enter first name">
+                                            <div class="hidden mt-1 text-sm text-red-500 error-message"></div>
+                                        </div>
+
+                                        <div>
+                                            <label for="middle_name"
+                                                class="block mb-2 text-sm font-medium text-gray-700">
+                                                Middle Name
+                                            </label>
+                                            <input type="text" id="middle_name" name="middle_name"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                placeholder="Enter middle name (optional)">
+                                            <div class="hidden mt-1 text-sm text-red-500 error-message"></div>
+                                        </div>
+
+                                        <div>
+                                            <label for="last_name"
+                                                class="block mb-2 text-sm font-medium text-gray-700">
+                                                Last Name <span class="text-red-500">*</span>
+                                            </label>
+                                            <input type="text" id="last_name" name="last_name"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                placeholder="Enter last name">
+                                            <div class="hidden mt-1 text-sm text-red-500 error-message"></div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div>
@@ -157,28 +195,6 @@
                                         Phone Number <span class="text-red-500">*</span>
                                     </label>
                                     <input type="tel" id="phone" name="phone"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                        placeholder="+254 700 000 000">
-                                    <div class="hidden mt-1 text-sm text-red-500 error-message"></div>
-                                </div>
-
-                                <div>
-                                    <label for="emergency_contact_name"
-                                        class="block mb-2 text-sm font-medium text-gray-700">
-                                        Emergency Contact Name <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="text" id="emergency_contact_name" name="emergency_contact_name"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                        placeholder="Emergency contact full name">
-                                    <div class="hidden mt-1 text-sm text-red-500 error-message"></div>
-                                </div>
-
-                                <div class="md:col-span-2">
-                                    <label for="emergency_contact_phone"
-                                        class="block mb-2 text-sm font-medium text-gray-700">
-                                        Emergency Contact Phone <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="tel" id="emergency_contact_phone" name="emergency_contact_phone"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                         placeholder="+254 700 000 000">
                                     <div class="hidden mt-1 text-sm text-red-500 error-message"></div>
@@ -211,19 +227,81 @@
                                         class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                         <option value="">Select ID type</option>
                                         @foreach ($idTypes as $idType)
-                                            <option value="{{ $idType->id }}">{{ $idType->display_name }}</option>
+                                            <option value="{{ $idType->id }}" data-type="{{ $idType->type }}">
+                                                {{ $idType->display_name }}</option>
                                         @endforeach
                                     </select>
                                     <div class="hidden mt-1 text-sm text-red-500 error-message"></div>
                                 </div>
 
-                                <div>
+                                <div class="relative">
                                     <label for="id_number" class="block mb-2 text-sm font-medium text-gray-700">
                                         ID Number <span class="text-red-500">*</span>
                                     </label>
-                                    <input type="text" id="id_number" name="id_number"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                        placeholder="Enter ID number">
+                                    <div class="relative">
+                                        <input type="text" id="id_number" name="id_number"
+                                            class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            placeholder="Enter ID number">
+
+                                        <!-- KYC Verification Status Indicator -->
+                                        {{-- <div id="kyc-status" class="absolute inset-y-0 right-0 flex items-center pr-3"
+                                            style="display: none;">
+                                            <!-- Loading Spinner -->
+                                            <div id="kyc-loading" class="hidden">
+                                                <svg class="w-4 h-4 text-blue-500 animate-spin" fill="none"
+                                                    viewBox="0 0 24 24">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10"
+                                                        stroke="currentColor" stroke-width="4"></circle>
+                                                    <path class="opacity-75" fill="currentColor"
+                                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                                    </path>
+                                                </svg>
+                                            </div>
+
+                                            <!-- Success Icon -->
+                                            <div id="kyc-success" class="hidden">
+                                                <svg class="w-4 h-4 text-green-500" fill="none"
+                                                    stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                </svg>
+                                            </div>
+
+                                            <!-- Error Icon -->
+                                            <div id="kyc-error" class="hidden">
+                                                <svg class="w-4 h-4 text-red-500" fill="none"
+                                                    stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                </svg>
+                                            </div>
+                                        </div> --}}
+                                    </div>
+
+                                    <!-- KYC Status Messages -->
+                                    {{-- <div id="kyc-message" class="mt-1 text-sm" style="display: none;">
+                                        <div id="kyc-success-message" class="hidden text-green-600">
+                                            <svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                            Identity verified successfully
+                                        </div>
+                                        <div id="kyc-error-message" class="hidden text-red-600">
+                                            <svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            <span id="kyc-error-text">Identity verification failed. Please check your
+                                                details.</span>
+                                        </div>
+                                        <div id="kyc-loading-message" class="hidden text-blue-600">
+                                            Verifying identity... Please wait.
+                                        </div>
+                                    </div> --}}
+
                                     <div class="hidden mt-1 text-sm text-red-500 error-message"></div>
                                 </div>
 
@@ -259,6 +337,99 @@
                                 </div>
 
                                 <div class="md:col-span-2">
+                                    <h4 class="pb-2 mb-4 font-semibold text-gray-900 border-b text-md">Payout Mandate
+                                    </h4>
+
+                                    <div class="space-y-4">
+                                        <!-- Mandate Type Selection -->
+                                        <div>
+                                            <label class="block mb-2 text-sm font-medium text-gray-700">
+                                                Payout Authorization Type <span class="text-red-500">*</span>
+                                            </label>
+                                            <div class="space-y-3">
+                                                <div class="flex items-start">
+                                                    <input type="radio" id="mandate_single" name="mandate_type"
+                                                        value="single"
+                                                        class="w-4 h-4 mt-1 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2">
+                                                    <div class="ml-3">
+                                                        <label for="mandate_single"
+                                                            class="text-sm font-medium text-gray-700 cursor-pointer">
+                                                            Single Mandate
+                                                        </label>
+                                                        <p class="mt-1 text-xs text-gray-500">You will be both the
+                                                            maker and approver of payouts</p>
+                                                    </div>
+                                                </div>
+
+                                                <div class="flex items-start">
+                                                    <input type="radio" id="mandate_dual" name="mandate_type"
+                                                        value="dual"
+                                                        class="w-4 h-4 mt-1 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2">
+                                                    <div class="ml-3">
+                                                        <label for="mandate_dual"
+                                                            class="text-sm font-medium text-gray-700 cursor-pointer">
+                                                            Dual Mandate
+                                                        </label>
+                                                        <p class="mt-1 text-xs text-gray-500">You create payout
+                                                            requests, another person approves them</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="hidden mt-1 text-sm text-red-500 error-message"
+                                                id="mandate_type_error"></div>
+                                        </div>
+
+                                        <!-- Checker Details (shown only for dual mandate) -->
+                                        <div id="checker_details"
+                                            class="p-4 space-y-4 border border-blue-200 rounded-lg bg-blue-50"
+                                            style="display: none;">
+                                            <div class="mb-3">
+                                                <div class="flex items-center mb-2 space-x-2">
+                                                    <svg class="w-5 h-5 text-blue-600" fill="none"
+                                                        stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                                                        </path>
+                                                    </svg>
+                                                    <p class="text-sm font-medium text-blue-800">Checker Authorization
+                                                    </p>
+                                                </div>
+                                                <p class="text-xs text-blue-700">The checker will be authorized to
+                                                    approve payouts for this application. They will receive an
+                                                    invitation to complete their account setup.</p>
+                                            </div>
+
+                                            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                                <div>
+                                                    <label for="checker_name"
+                                                        class="block mb-2 text-sm font-medium text-gray-700">
+                                                        Checker Full Name <span class="text-red-500">*</span>
+                                                    </label>
+                                                    <input type="text" id="checker_name" name="checker_name"
+                                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                        placeholder="Enter checker's full name">
+                                                    <div class="hidden mt-1 text-sm text-red-500 error-message"
+                                                        id="checker_name_error"></div>
+                                                </div>
+
+                                                <div>
+                                                    <label for="checker_email"
+                                                        class="block mb-2 text-sm font-medium text-gray-700">
+                                                        Checker Email Address <span class="text-red-500">*</span>
+                                                    </label>
+                                                    <input type="email" id="checker_email" name="checker_email"
+                                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                        placeholder="checker@example.com">
+                                                    <div class="hidden mt-1 text-sm text-red-500 error-message"
+                                                        id="checker_email_error"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="md:col-span-2">
                                     <label for="additional_info" class="block mb-2 text-sm font-medium text-gray-700">
                                         Additional Information
                                     </label>
@@ -283,7 +454,14 @@
 
                         <!-- Step 4: Review & Submit -->
                         <div class="form-step" id="step-4">
-                            <h3 class="mb-6 text-lg font-semibold text-gray-900">Review Your Application</h3>
+                            <div class="review-header">
+                                <h3>Review Your Application</h3>
+                                <p>Please review all information before submitting your application</p>
+                            </div>
+
+                            <div class="review-summary">
+                                <p class="review-summary-text">✓ All sections completed - Ready for submission</p>
+                            </div>
 
                             <div id="application-review" class="space-y-6">
                                 <!-- Review content will be populated by JavaScript -->
@@ -461,6 +639,8 @@
             const documentTypesInfo = document.getElementById('document-types-info');
             const supportDocumentsInput = document.getElementById('support_documents');
             const uploadedFilesContainer = document.getElementById('uploaded-files');
+            const mandateRadios = document.querySelectorAll('input[name="mandate_type"]');
+            const checkerDetails = document.getElementById('checker_details');
             const submitButton = document.getElementById('submit-application');
 
             let currentStep = 1;
@@ -597,6 +777,31 @@
                 return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
             }
 
+            // Mandate
+            mandateRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.value === 'dual') {
+                        checkerDetails.style.display = 'block';
+                        // Add required attribute to checker fields
+                        document.getElementById('checker_name').setAttribute('required',
+                            'required');
+                        document.getElementById('checker_email').setAttribute('required',
+                            'required');
+                    } else {
+                        checkerDetails.style.display = 'none';
+                        // Remove required attribute from checker fields
+                        document.getElementById('checker_name').removeAttribute('required');
+                        document.getElementById('checker_email').removeAttribute('required');
+                        // Clear checker fields
+                        document.getElementById('checker_name').value = '';
+                        document.getElementById('checker_email').value = '';
+                        // Clear any error messages
+                        hideError('checker_name');
+                        hideError('checker_email');
+                    }
+                });
+            });
+
             // Validation functions
             function validateCurrentStep() {
                 clearErrors();
@@ -649,9 +854,15 @@
             function validateStep2() {
                 let isValid = true;
 
-                // Full name
-                if (!document.getElementById('full_name').value.trim()) {
-                    showError('full_name', 'Full name is required');
+                // First name
+                if (!document.getElementById('first_name').value.trim()) {
+                    showError('first_name', 'First name is required');
+                    isValid = false;
+                }
+
+                // Last name
+                if (!document.getElementById('last_name').value.trim()) {
+                    showError('last_name', 'Last name is required');
                     isValid = false;
                 }
 
@@ -668,18 +879,6 @@
                 // Phone
                 if (!document.getElementById('phone').value.trim()) {
                     showError('phone', 'Phone number is required');
-                    isValid = false;
-                }
-
-                // Emergency contact name
-                if (!document.getElementById('emergency_contact_name').value.trim()) {
-                    showError('emergency_contact_name', 'Emergency contact name is required');
-                    isValid = false;
-                }
-
-                // Emergency contact phone
-                if (!document.getElementById('emergency_contact_phone').value.trim()) {
-                    showError('emergency_contact_phone', 'Emergency contact phone is required');
                     isValid = false;
                 }
 
@@ -724,6 +923,38 @@
                     }
                 }
 
+                // Payout mandate validation
+                const selectedMandateType = document.querySelector('input[name="mandate_type"]:checked');
+                if (!selectedMandateType) {
+                    showError('mandate_type', 'Please select a payout authorization type');
+                    isValid = false;
+                } else {
+                    hideError('mandate_type');
+
+                    // If dual mandate is selected, validate checker details
+                    if (selectedMandateType.value === 'dual') {
+                        const checkerName = document.getElementById('checker_name').value.trim();
+                        const checkerEmail = document.getElementById('checker_email').value.trim();
+
+                        if (!checkerName) {
+                            showError('checker_name', 'Checker name is required for dual mandate');
+                            isValid = false;
+                        } else {
+                            hideError('checker_name');
+                        }
+
+                        if (!checkerEmail) {
+                            showError('checker_email', 'Checker email is required for dual mandate');
+                            isValid = false;
+                        } else if (!isValidEmail(checkerEmail)) {
+                            showError('checker_email', 'Please enter a valid email address');
+                            isValid = false;
+                        } else {
+                            hideError('checker_email');
+                        }
+                    }
+                }
+
                 return isValid;
             }
 
@@ -735,10 +966,18 @@
 
             function showError(fieldId, message) {
                 const field = document.getElementById(fieldId);
-                const errorDiv = field.parentNode.querySelector('.error-message');
-                errorDiv.textContent = message;
-                errorDiv.classList.remove('hidden');
-                field.classList.add('border-red-500');
+                const errorElement = document.getElementById(fieldId + '_error') ||
+                    field.parentNode.querySelector('.error-message');
+
+                if (field) {
+                    field.classList.add('border-red-500');
+                    field.classList.remove('border-gray-300');
+                }
+
+                if (errorElement) {
+                    errorElement.textContent = message;
+                    errorElement.classList.remove('hidden');
+                }
             }
 
             function clearErrors() {
@@ -750,6 +989,22 @@
                 });
             }
 
+            function hideError(fieldId) {
+                const field = document.getElementById(fieldId);
+                const errorElement = document.getElementById(fieldId + '_error') ||
+                    field.parentNode.querySelector('.error-message');
+
+                if (field) {
+                    field.classList.remove('border-red-500');
+                    field.classList.add('border-gray-300');
+                }
+
+                if (errorElement) {
+                    errorElement.classList.add('hidden');
+                    errorElement.textContent = '';
+                }
+            }
+
             // Populate review section
             function populateReviewSection() {
                 const reviewContainer = document.getElementById('application-review');
@@ -758,86 +1013,100 @@
                 const formData = new FormData(form);
                 const contributionReasonText = contributionReasonSelect.options[contributionReasonSelect
                     .selectedIndex]?.text || '';
-                const idTypeText = document.getElementById('id_type_id').options[document.getElementById(
-                    'id_type_id').selectedIndex]?.text || '';
+                const idTypeText = document.getElementById('id_type_id')?.options[document.getElementById(
+                    'id_type_id')?.selectedIndex]?.text || '';
 
                 const html = `
-                    <div class="review-section">
-                        <h4>Contribution Details</h4>
-                        <div class="review-item">
-                            <span class="review-label">Contribution Name:</span>
-                            <span class="review-value">${formData.get('contribution_name') || 'N/A'}</span>
-                        </div>
-                        <div class="review-item">
-                            <span class="review-label">Description:</span>
-                            <span class="review-value">${formData.get('contribution_description') || 'N/A'}</span>
-                        </div>
-                        <div class="review-item">
-                            <span class="review-label">Reason:</span>
-                            <span class="review-value">${contributionReasonText}</span>
-                        </div>
-                        <div class="review-item">
-                            <span class="review-label">Support Documents:</span>
-                            <span class="review-value">${uploadedFiles.length} file(s) uploaded</span>
-                        </div>
+                <div class="review-section">
+                    <h4>
+                        <svg class="inline-block section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Contribution Details
+                    </h4>
+                    <div class="review-item">
+                        <span class="review-label">Contribution Name:</span>
+                        <span class="review-value">${formData.get('contribution_name') || 'N/A'}</span>
                     </div>
+                    <div class="review-item">
+                        <span class="review-label">Description:</span>
+                        <span class="review-value">${formData.get('contribution_description') || 'N/A'}</span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">Reason:</span>
+                        <span class="review-value">${contributionReasonText}</span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">Support Documents:</span>
+                        <span class="review-value">${uploadedFiles.length} file(s) uploaded</span>
+                    </div>
+                </div>
 
-                    <div class="review-section">
-                        <h4>Personal Information</h4>
-                        <div class="review-item">
-                            <span class="review-label">Full Name:</span>
-                            <span class="review-value">${formData.get('full_name') || 'N/A'}</span>
-                        </div>
-                        <div class="review-item">
-                            <span class="review-label">Email:</span>
-                            <span class="review-value">${formData.get('email') || 'N/A'}</span>
-                        </div>
-                        <div class="review-item">
-                            <span class="review-label">Phone:</span>
-                            <span class="review-value">${formData.get('phone') || 'N/A'}</span>
-                        </div>
-                        <div class="review-item">
-                            <span class="review-label">Emergency Contact:</span>
-                            <span class="review-value">${formData.get('emergency_contact_name') || 'N/A'}</span>
-                        </div>
-                        <div class="review-item">
-                            <span class="review-label">Emergency Phone:</span>
-                            <span class="review-value">${formData.get('emergency_contact_phone') || 'N/A'}</span>
-                        </div>
+                <div class="review-section">
+                    <h4>
+                        <svg class="inline-block section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                        Personal Information
+                    </h4>
+                    <div class="review-item">
+                        <span class="review-label">Full Name:</span>
+                        <span class="review-value">${formData.get('full_name') || 'N/A'}</span>
                     </div>
+                    <div class="review-item">
+                        <span class="review-label">Email:</span>
+                        <span class="review-value">${formData.get('email') || 'N/A'}</span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">Phone:</span>
+                        <span class="review-value">${formData.get('phone') || 'N/A'}</span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">Emergency Contact:</span>
+                        <span class="review-value">${formData.get('emergency_contact_name') || 'N/A'}</span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">Emergency Phone:</span>
+                        <span class="review-value">${formData.get('emergency_contact_phone') || 'N/A'}</span>
+                    </div>
+                </div>
 
-                    <div class="review-section">
-                        <h4>Identification & Financial</h4>
-                        <div class="review-item">
-                            <span class="review-label">ID Type:</span>
-                            <span class="review-value">${idTypeText}</span>
-                        </div>
-                        <div class="review-item">
-                            <span class="review-label">ID Number:</span>
-                            <span class="review-value">${formData.get('id_number') || 'N/A'}</span>
-                        </div>
-                        <div class="review-item">
-                            <span class="review-label">KRA PIN:</span>
-                            <span class="review-value">${formData.get('kra_pin') || 'Not provided'}</span>
-                        </div>
-                        <div class="review-item">
-                            <span class="review-label">Target Amount:</span>
-                            <span class="review-value">KES ${parseFloat(formData.get('target_amount') || 0).toLocaleString()}</span>
-                        </div>
-                        <div class="review-item">
-                            <span class="review-label">Target Date:</span>
-                            <span class="review-value">${formData.get('target_date') || 'N/A'}</span>
-                        </div>
-                        <div class="review-item">
-                            <span class="review-label">Additional Info:</span>
-                            <span class="review-value">${formData.get('additional_info') || 'None provided'}</span>
-                        </div>
+                <div class="review-section">
+                    <h4>
+                        <svg class="inline-block section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                        Identification & Financial
+                    </h4>
+                    <div class="review-item">
+                        <span class="review-label">ID Type:</span>
+                        <span class="review-value">${idTypeText}</span>
                     </div>
-                `;
+                    <div class="review-item">
+                        <span class="review-label">ID Number:</span>
+                        <span class="review-value">${formData.get('id_number') || 'N/A'}</span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">KRA PIN:</span>
+                        <span class="review-value">${formData.get('kra_pin') || 'Not provided'}</span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">Target Amount:</span>
+                        <span class="review-value">KES ${parseFloat(formData.get('target_amount') || 0).toLocaleString()}</span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">Target Date:</span>
+                        <span class="review-value">${formData.get('target_date') || 'N/A'}</span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">Additional Info:</span>
+                        <span class="review-value">${formData.get('additional_info') || 'None provided'}</span>
+                    </div>
+                </div>
+            `;
 
                 reviewContainer.innerHTML = html;
             }
-
             // Form submission
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();

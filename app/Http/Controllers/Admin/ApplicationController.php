@@ -37,7 +37,7 @@ class ApplicationController extends Controller
      */
     public function show(Application $application)
     {
-        $application->load(['user', 'applicant', 'reviewer']);
+        $application->load(['users', 'applicant', 'reviewer']);
 
         // Get support documents through the applicant
         $documents = $application->applicant->supportDocuments()->get();
@@ -88,7 +88,7 @@ class ApplicationController extends Controller
      */
     private function getFilteredApplications(string $type, string $status)
     {
-        $query = Application::with(['user', 'applicant', 'reviewer'])
+        $query = Application::with(['users', 'applicant', 'reviewer'])
             ->orderBy('created_at', 'desc');
 
         // Filter by applicant type
@@ -197,6 +197,39 @@ class ApplicationController extends Controller
         return response($file, 200)
             ->header('Content-Type', $mimeType)
             ->header('Content-Disposition', 'inline; filename="' . $document->original_filename . '"');
+    }
+
+    /**
+     * Serve company documents from private disk
+     */
+    public function serveCompanyDocument(Company $company, $field)
+    {
+        // Validate the field to ensure it's one of the allowed document fields
+        $allowedFields = ['registration_certificate', 'cr12', 'bank_account_proof'];
+
+        if (!in_array($field, $allowedFields)) {
+            abort(404, 'Invalid document field');
+        }
+
+        // Get the file path from the company model
+        $filePath = $company->{$field};
+
+        if (!$filePath || !Storage::disk('private')->exists($filePath)) {
+            abort(404, 'File not found');
+        }
+
+        // Optional: Add authorization check
+        // $this->authorize('view', $company);
+
+        $file = Storage::disk('private')->get($filePath);
+        $mimeType = Storage::disk('private')->mimeType($filePath);
+
+        // Extract original filename from path or create a friendly name
+        $originalFilename = basename($filePath);
+
+        return response($file, 200)
+            ->header('Content-Type', $mimeType)
+            ->header('Content-Disposition', 'inline; filename="' . $originalFilename . '"');
     }
 
     /**

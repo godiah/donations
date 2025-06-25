@@ -5,6 +5,7 @@ use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\CompanyDonationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IndividualDonationController;
+use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -12,9 +13,16 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
+// Invitation routes
+Route::get('/invitation/{token}/register', [InvitationController::class, 'showRegistrationForm'])
+    ->name('invitation.register');
+
+Route::post('/invitation/{token}/register', [InvitationController::class, 'register'])
+    ->name('invitation.register.submit');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('verified')->name('dashboard');
+
     Route::prefix('individual/application')->name('individual.')->group(function () {
         Route::get('/', [DashboardController::class, 'showIndividual'])->name('application');
         Route::post('/store', [IndividualDonationController::class, 'store'])->name('store');
@@ -68,9 +76,20 @@ Route::middleware('auth')->group(function () {
             Route::post('/{application}/start-review', [AdminApplicationController::class, 'startReview'])->name('start-review');
             Route::post('/documents/{document}/update-status', [AdminApplicationController::class, 'updateDocumentStatus'])->name('document.update-status');
             Route::get('/documents/{document}/serve', [AdminApplicationController::class, 'serveDocument'])->name('document.serve');
+            Route::get('/companies/{company}/documents/{field}/serve', [AdminApplicationController::class, 'serveCompanyDocument'])->name('company.document-serve');
             Route::post('/{application}/approve', [AdminApplicationController::class, 'approve'])->name('approve');
         });
+
+        Route::post('/payout-mandates/{payoutMandate}/invitations', [InvitationController::class, 'createAndSendInvitation'])->name('invitations.create');
     });
 });
+
+// KYC Verification Routes
+Route::middleware(['auth'])->group(function () {
+    Route::post('/api/verify-kyc', [IndividualDonationController::class, 'verifyKyc'])->name('api.verify-kyc');
+});
+
+// Webhook route (no auth required for external callbacks)
+Route::post('/kyc/callback', [IndividualDonationController::class, 'handleKycCallback'])->name('api.kyc.callback');
 
 require __DIR__ . '/auth.php';

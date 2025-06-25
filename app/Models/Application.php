@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\ApplicationStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Application extends Model
@@ -34,11 +35,14 @@ class Application extends Model
     ];
 
     /**
-     * User who created the application
+     * Users associated with this application and their roles.
      */
-    public function user()
+    public function users(): BelongsToMany
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsToMany(User::class, 'application_user')
+            ->withPivot('role_id')
+            ->withTimestamps()
+            ->using(ApplicationUser::class);
     }
 
     /**
@@ -48,6 +52,13 @@ class Application extends Model
     {
         return $this->morphTo();
     }
+
+    public function creator()
+    {
+        $payoutMakerRoleId = Role::where('name', 'payout_maker')->value('id');
+        return $this->users()->wherePivot('role_id', $payoutMakerRoleId)->first();
+    }
+
 
     // User who reviewed the application
     public function reviewer()
@@ -64,5 +75,30 @@ class Application extends Model
     public function getDocuments()
     {
         return $this->applicant->supportDocuments();
+    }
+
+    public function payoutMandate()
+    {
+        return $this->hasOne(PayoutMandate::class);
+    }
+
+    public function invitations()
+    {
+        return $this->hasMany(Invitation::class);
+    }
+
+    public function hasDualMandate()
+    {
+        return $this->payoutMandate && $this->payoutMandate->isDual();
+    }
+
+    public function getMaker()
+    {
+        return $this->payoutMandate ? $this->payoutMandate->maker : $this->user;
+    }
+
+    public function getChecker()
+    {
+        return $this->payoutMandate ? $this->payoutMandate->checker : null;
     }
 }

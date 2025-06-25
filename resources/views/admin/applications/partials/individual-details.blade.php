@@ -1,7 +1,7 @@
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
     <div>
         <dt class="text-sm font-medium text-gray-500">Full Name</dt>
-        <dd class="mt-1 text-sm text-gray-900">{{ $individual->full_name }}</dd>
+        <dd class="mt-1 text-sm text-gray-900">{{ $individual->getFullNameAttribute() }}</dd>
     </div>
     <div>
         <dt class="text-sm font-medium text-gray-500">Email</dt>
@@ -24,15 +24,6 @@
         <dd class="mt-1 text-sm text-gray-900">{{ $individual->kra_pin ?? 'Not provided' }}</dd>
     </div>
     <div>
-        <dt class="text-sm font-medium text-gray-500">Emergency Contact</dt>
-        <dd class="mt-1 text-sm text-gray-900">
-            {{ $individual->emergency_contact_name }}
-            @if ($individual->emergency_contact_phone)
-                <div class="text-xs text-gray-500">{{ $individual->emergency_contact_phone }}</div>
-            @endif
-        </dd>
-    </div>
-    <div>
         <dt class="text-sm font-medium text-gray-500">Amount Raised</dt>
         <dd class="mt-1 text-sm text-gray-900">
             KES {{ number_format($individual->amount_raised ?? 0, 2) }}
@@ -46,7 +37,7 @@
 @if ($individual->additional_info)
     <div class="mt-6">
         <dt class="text-sm font-medium text-gray-500">Additional Information</dt>
-        <dd class="mt-1 text-sm text-gray-900 bg-gray-50 p-3 rounded">
+        <dd class="p-3 mt-1 text-sm text-gray-900 rounded bg-gray-50">
             @if (is_array($individual->additional_info))
                 @foreach ($individual->additional_info as $key => $value)
                     <div class="mb-2">

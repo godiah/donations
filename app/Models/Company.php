@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Notifications\Notifiable;
 
 class Company extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, Notifiable, SoftDeletes;
 
     /**
      * Mass assignable fields
@@ -20,6 +21,7 @@ class Company extends Model
         'contribution_description',
         'contribution_reason_id',
         'company_name',
+        'email',
         'registration_certificate',
         'pin_number',
         'cr12',
@@ -93,5 +95,13 @@ class Company extends Model
             ->toArray();
 
         return empty(array_diff($requiredTypes, $uploadedTypes));
+    }
+
+    /**
+     * Route notifications for the mail channel.
+     */
+    public function routeNotificationForMail($notification)
+    {
+        return $this->email;
     }
 }

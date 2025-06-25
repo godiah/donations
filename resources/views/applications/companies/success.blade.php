@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
             <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div class="p-8 bg-white">
                     <!-- Success Icon -->
@@ -93,7 +93,7 @@
                                 <div class="ml-3">
                                     <p class="text-blue-800">
                                         <strong>Email Updates:</strong> You'll receive email notifications at
-                                        <strong>{{ $application->applicant->contact_persons[0]['email'] ?? 'N/A' }}</strong>
+                                        <strong>{{ $application->applicant->email ?? 'N/A' }}</strong>
                                         regarding your application status.
                                     </p>
                                 </div>

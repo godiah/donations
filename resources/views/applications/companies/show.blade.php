@@ -30,7 +30,7 @@
                     <!-- Contribution Details -->
                     <div class="mb-8">
                         <h4 class="mb-4 text-lg font-semibold text-gray-900">Contribution Details</h4>
-                        <div class="p-6 bg-gray-50 rounded-lg">
+                        <div class="p-6 rounded-lg bg-gray-50">
                             <div class="grid grid-cols-1 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-500">Contribution Name</label>
@@ -54,7 +54,7 @@
                     <!-- Company Information -->
                     <div class="mb-8">
                         <h4 class="mb-4 text-lg font-semibold text-gray-900">Company Information</h4>
-                        <div class="p-6 bg-gray-50 rounded-lg">
+                        <div class="p-6 rounded-lg bg-gray-50">
                             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-500">Company Name</label>
@@ -97,7 +97,7 @@
                     <!-- Address Information -->
                     <div class="mb-8">
                         <h4 class="mb-4 text-lg font-semibold text-gray-900">Address Information</h4>
-                        <div class="p-6 bg-gray-50 rounded-lg">
+                        <div class="p-6 rounded-lg bg-gray-50">
                             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 <div class="md:col-span-2">
                                     <label class="block text-sm font-medium text-gray-500">Address</label>
@@ -127,7 +127,7 @@
                     <!-- Banking Information -->
                     <div class="mb-8">
                         <h4 class="mb-4 text-lg font-semibold text-gray-900">Banking Information</h4>
-                        <div class="p-6 bg-gray-50 rounded-lg">
+                        <div class="p-6 rounded-lg bg-gray-50">
                             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-500">Bank</label>
@@ -161,7 +161,7 @@
                     <!-- Contact Persons -->
                     <div class="mb-8">
                         <h4 class="mb-4 text-lg font-semibold text-gray-900">Contact Persons</h4>
-                        <div class="p-6 bg-gray-50 rounded-lg">
+                        <div class="p-6 rounded-lg bg-gray-50">
                             @forelse ($application->applicant->contact_persons as $index => $person)
                                 <div
                                     class="mb-4 {{ $index < count($application->applicant->contact_persons) - 1 ? 'border-b pb-4' : '' }}">
@@ -193,7 +193,7 @@
                     <!-- Financial Information -->
                     <div class="mb-8">
                         <h4 class="mb-4 text-lg font-semibold text-gray-900">Financial Information</h4>
-                        <div class="p-6 bg-gray-50 rounded-lg">
+                        <div class="p-6 rounded-lg bg-gray-50">
                             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-500">Target Amount</label>
@@ -210,10 +210,45 @@
                         </div>
                     </div>
 
+                    <!-- Payout Mandate -->
+                    @if ($application->payoutMandate)
+                        <div class="mt-6 overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                            <div class="p-6">
+                                <h3 class="mb-4 text-lg font-semibold text-gray-800">Payout Mandate</h3>
+
+                                @if ($application->payoutMandate->isSingle())
+                                    <p class="text-sm text-gray-700">
+                                        This application uses a <strong class="text-green-700">Single Mandate</strong>
+                                        setup.
+                                    </p>
+                                @elseif ($application->payoutMandate->isDual())
+                                    <p class="mb-4 text-sm text-gray-700">
+                                        This application uses a <strong class="text-blue-700">Dual Mandate</strong>
+                                        setup. Below
+                                        are the checker details:
+                                    </p>
+
+                                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                        <div>
+                                            <span class="font-medium text-gray-700">Checker Name:</span>
+                                            <div class="text-gray-900">
+                                                {{ $application->payoutMandate->checker->name ?? 'N/A' }}</div>
+                                        </div>
+                                        <div>
+                                            <span class="font-medium text-gray-700">Checker Email:</span>
+                                            <div class="text-gray-900">
+                                                {{ $application->payoutMandate->checker->email ?? 'N/A' }}</div>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+
                     <!-- Additional Information -->
                     <div class="mb-8">
                         <h4 class="mb-4 text-lg font-semibold text-gray-900">Additional Information</h4>
-                        <div class="p-6 bg-gray-50 rounded-lg">
+                        <div class="p-6 rounded-lg bg-gray-50">
                             <div class="grid grid-cols-1 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-500">Purpose & Use of
@@ -238,9 +273,9 @@
                     <!-- Support Documents -->
                     <div class="mb-8">
                         <h4 class="mb-4 text-lg font-semibold text-gray-900">Support Documents</h4>
-                        <div class="p-6 bg-gray-50 rounded-lg">
+                        <div class="p-6 rounded-lg bg-gray-50">
                             @forelse ($supportDocuments as $document)
-                                <div class="flex items-center justify-between mb-4 pb-4 border-b">
+                                <div class="flex items-center justify-between pb-4 mb-4 border-b">
                                     <div>
                                         <p class="text-gray-900">{{ $document->original_filename }}</p>
                                         {{-- <p class="text-sm text-gray-500">

@@ -24,25 +24,19 @@ class ContributionReasonSeeder extends Seeder
                 'name' => 'Funeral',
                 'description' => 'Funeral and memorial services',
                 'requires_document' => true,
-                'required_document_types' => ['death_certificate', 'identity_document'],
+                'required_document_types' => ['burial_permit', 'identity_document'],
             ],
             [
                 'name' => 'Medical',
                 'description' => 'Medical treatment and healthcare',
                 'requires_document' => true,
-                'required_document_types' => ['medical_report', 'hospital_bill'],
+                'required_document_types' => ['medical_report', 'hospital_bill', 'identity_document'],
             ],
             [
                 'name' => 'Education',
                 'description' => 'Educational funding and scholarships',
                 'requires_document' => true,
                 'required_document_types' => ['admission_letter', 'fee_structure'],
-            ],
-            [
-                'name' => 'Business',
-                'description' => 'Business startup and expansion',
-                'requires_document' => true,
-                'required_document_types' => ['business_plan', 'registration_certificate'],
             ],
             [
                 'name' => 'Other',

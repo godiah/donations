@@ -3,37 +3,38 @@
         <table class="min-w-full divide-y divide-gray-300">
             <thead class="bg-gray-50">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                         Application #</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Applicant
+                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Type</th>
+                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Applicant
                     </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                         Contribution</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status
+                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Status
                     </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted
+                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Submitted
                     </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions
+                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Actions
                     </th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 @foreach ($applications as $application)
                     <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
                             {{ $application->application_number }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                             {{ $application->applicant_type === 'App\\Models\\Individual' ? 'Individual' : 'Company' }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
                             @if ($application->applicant_type === 'App\\Models\\Individual')
-                                {{ $application->applicant->full_name }}
+                                {{ $application->applicant->getFullNameAttribute() }}
                                 <div class="text-xs text-gray-500">{{ $application->applicant->email }}</div>
                             @else
                                 {{ $application->applicant->company_name }}
-                                <div class="text-xs text-gray-500">{{ $application->user->email }}</div>
+                                <div class="text-xs text-gray-500">
+                                    {{ $application->applicant->email ?? 'No email available' }}</div>
                             @endif
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-900">
@@ -64,7 +65,7 @@
                                 {{ $statusText }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                             @if ($application->submitted_at)
                                 {{ $application->submitted_at->format('M d, Y') }}
                                 <div class="text-xs">{{ $application->submitted_at->format('H:i') }}</div>
@@ -72,7 +73,7 @@
                                 <span class="text-gray-400">Not submitted</span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                             <a href="{{ route('admin.applications.show', $application) }}"
                                 class="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                 View Details
@@ -91,8 +92,8 @@
         </div>
     @endif
 @else
-    <div class="text-center py-12">
-        <div class="text-gray-500 text-lg">No applications found</div>
-        <div class="text-gray-400 text-sm mt-2">Applications matching your criteria will appear here</div>
+    <div class="py-12 text-center">
+        <div class="text-lg text-gray-500">No applications found</div>
+        <div class="mt-2 text-sm text-gray-400">Applications matching your criteria will appear here</div>
     </div>
 @endif

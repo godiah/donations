@@ -28,9 +28,9 @@ class DocumentTypeSeeder extends Seeder
 
             // Funeral documents
             [
-                'type_key' => 'death_certificate',
-                'display_name' => 'Death Certificate',
-                'description' => 'Official death certificate issued by authorized authority',
+                'type_key' => 'burial_permit',
+                'display_name' => 'Burial Permit',
+                'description' => 'Burial Permit issued by authorized authority',
             ],
 
             // Medical documents
@@ -43,6 +43,11 @@ class DocumentTypeSeeder extends Seeder
                 'type_key' => 'hospital_bill',
                 'display_name' => 'Hospital Bill',
                 'description' => 'Hospital bill or medical expense documentation',
+            ],
+            [
+                'type_key' => 'identity_document',
+                'display_name' => 'Identity Document',
+                'description' => 'National ID, Passport, or other government-issued identification',
             ],
 
             // Education documents
@@ -58,16 +63,7 @@ class DocumentTypeSeeder extends Seeder
             ],
 
             // Business documents
-            [
-                'type_key' => 'business_plan',
-                'display_name' => 'Business Plan',
-                'description' => 'Detailed business plan document',
-            ],
-            [
-                'type_key' => 'registration_certificate',
-                'display_name' => 'Registration Certificate',
-                'description' => 'Business registration certificate or incorporation documents',
-            ],
+
 
             // General documents
             [

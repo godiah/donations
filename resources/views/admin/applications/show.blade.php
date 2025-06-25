@@ -1,26 +1,26 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex justify-between items-center">
+        <div class="flex items-center justify-between">
             <h2 class="text-xl font-semibold leading-tight text-gray-800">
                 Application Details - {{ $application->application_number }}
             </h2>
             <a href="{{ route('admin.applications.index') }}"
-                class="inline-flex items-center px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded hover:bg-gray-700">
+                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded hover:bg-gray-700">
                 ← Back to Applications
             </a>
         </div>
     </x-slot>
 
     <div class="py-6">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
 
             <!-- Application Status Card -->
-            <div class="bg-white overflow-hidden shadow rounded-lg mb-6">
+            <div class="mb-6 overflow-hidden bg-white rounded-lg shadow">
                 <div class="px-6 py-4 border-b border-gray-200">
                     <h3 class="text-lg font-medium text-gray-900">Application Status</h3>
                 </div>
                 <div class="px-6 py-4">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Status</dt>
                             @php
@@ -45,14 +45,14 @@
                                 </span>
                                 @if ($application->status->value === 'submitted')
                                     <button id="review-button"
-                                        class="ml-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-xs"
+                                        class="px-2 py-1 ml-2 text-xs font-bold text-white bg-blue-500 rounded hover:bg-blue-700"
                                         data-application-id="{{ $application->id }}">
                                         Start Review
                                     </button>
                                 @endif
                                 @if ($application->status->value !== 'approved' && $allDocumentsVerified)
                                     <button id="approve-button"
-                                        class="ml-2 bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded text-xs"
+                                        class="px-2 py-1 ml-2 text-xs font-bold text-white bg-green-500 rounded hover:bg-green-700"
                                         data-application-id="{{ $application->id }}">
                                         Approve
                                     </button>
@@ -82,7 +82,7 @@
                     @if ($application->admin_comments)
                         <div class="mt-4">
                             <dt class="text-sm font-medium text-gray-500">Admin Comments</dt>
-                            <dd class="mt-1 text-sm text-gray-900 bg-gray-50 p-3 rounded">
+                            <dd class="p-3 mt-1 text-sm text-gray-900 rounded bg-gray-50">
                                 {{ $application->admin_comments }}
                             </dd>
                         </div>
@@ -91,7 +91,7 @@
             </div>
 
             <!-- Applicant Information -->
-            <div class="bg-white overflow-hidden shadow rounded-lg mb-6">
+            <div class="mb-6 overflow-hidden bg-white rounded-lg shadow">
                 <div class="px-6 py-4 border-b border-gray-200">
                     <h3 class="text-lg font-medium text-gray-900">
                         {{ $application->applicant_type === 'App\\Models\\Individual' ? 'Individual' : 'Company' }}
@@ -112,12 +112,12 @@
             </div>
 
             <!-- Contribution Details -->
-            <div class="bg-white overflow-hidden shadow rounded-lg mb-6">
+            <div class="mb-6 overflow-hidden bg-white rounded-lg shadow">
                 <div class="px-6 py-4 border-b border-gray-200">
                     <h3 class="text-lg font-medium text-gray-900">Contribution Details</h3>
                 </div>
                 <div class="px-6 py-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Contribution Name</dt>
                             <dd class="mt-1 text-sm text-gray-900">{{ $application->applicant->contribution_name }}
@@ -144,7 +144,7 @@
                     @if ($application->applicant->contribution_description)
                         <div class="mt-6">
                             <dt class="text-sm font-medium text-gray-500">Description</dt>
-                            <dd class="mt-1 text-sm text-gray-900 bg-gray-50 p-3 rounded">
+                            <dd class="p-3 mt-1 text-sm text-gray-900 rounded bg-gray-50">
                                 {{ $application->applicant->contribution_description }}
                             </dd>
                         </div>
@@ -152,9 +152,76 @@
                 </div>
             </div>
 
+            <!-- Payout Mandate -->
+            <div class="mb-6 overflow-hidden bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Payout Mandate Details</h3>
+                </div>
+                <div class="px-6 py-4">
+                    @if ($application->payoutMandate)
+                        <div>
+                            @if ($application->payoutMandate->isSingle())
+                                <p class="text-sm text-gray-700">
+                                    This application uses a <strong class="text-green-700">Single Mandate</strong>
+                                    setup.
+                                </p>
+                            @elseif ($application->payoutMandate->isDual())
+                                <p class="mb-4 text-sm text-gray-700">
+                                    This application uses a <strong class="text-blue-700">Dual Mandate</strong> setup.
+                                    Below are the checker details:
+                                </p>
+
+                                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                    @if ($application->payoutMandate->checker && $application->payoutMandate->checker)
+                                        <div>
+                                            <span class="block text-sm font-medium text-gray-700">Checker Name:</span>
+                                            <div class="mt-1 text-gray-900">
+                                                {{ $application->payoutMandate->checker->name ?? 'N/A' }}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span class="block text-sm font-medium text-gray-700">Checker Email:</span>
+                                            <div class="mt-1 text-gray-900">
+                                                {{ $application->payoutMandate->checker->email ?? 'N/A' }}
+                                            </div>
+                                        </div>
+                                    @else
+                                        @php
+                                            $invitation = $application->payoutMandate->invitations()->latest()->first();
+                                        @endphp
+                                        <div class="text-gray-900">
+                                            @if ($invitation && !$invitation->isExpired())
+                                                Checker is yet to complete account creation and sign up
+                                            @elseif ($invitation && $invitation->isExpired())
+                                                Invitation link expired
+                                            @else
+                                                No checker assigned
+                                            @endif
+                                        </div>
+                                    @endif
+
+                                </div>
+
+                                @if (!$application->payoutMandate->checker && (($invitation && $invitation->isExpired()) || !$invitation))
+                                    <form action="{{ route('admin.invitations.create', $application->payoutMandate) }}"
+                                        method="POST" class="mt-4">
+                                        @csrf
+                                        <button type="submit"
+                                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
+                                            {{ $invitation && $invitation->isExpired() ? 'Resend Invitation Link' : 'Create Invitation Link' }}
+                                        </button>
+                                    </form>
+                                @endif
+                            @endif
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+
             <!-- Support Documents -->
             @if ($documents->count() > 0)
-                <div class="bg-white overflow-hidden shadow rounded-lg mb-6">
+                <div class="mb-6 overflow-hidden bg-white rounded-lg shadow">
                     <div class="px-6 py-4 border-b border-gray-200">
                         <h3 class="text-lg font-medium text-gray-900">Support Documents</h3>
                     </div>
@@ -164,16 +231,16 @@
                                 <thead class="bg-gray-50">
                                     <tr>
                                         <th
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                                             Document</th>
                                         <th
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                                             Status</th>
                                         <th
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                                             Uploaded</th>
                                         <th
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                                             Verified At</th>
                                     </tr>
                                 </thead>
@@ -189,7 +256,7 @@
                                                     {{ $document->original_filename }}
                                                 </button>
                                                 @if ($document->verification_notes)
-                                                    <div class="text-xs text-gray-500 mt-1">
+                                                    <div class="mt-1 text-xs text-gray-500">
                                                         {{ $document->verification_notes }}</div>
                                                 @endif
                                             </td>
@@ -207,10 +274,10 @@
                                                     {{ ucfirst($document->status) }}
                                                 </span>
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                                                 {{ $document->created_at->format('M d, Y H:i') }}
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                                                 @if ($document->verified_at)
                                                     {{ $document->verified_at->format('M d, Y H:i') }}
                                                 @endif
@@ -225,20 +292,20 @@
 
                 <!-- Modal for Viewing Document and Updating Status -->
                 <div id="document-modal"
-                    class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-                    <div class="relative top-20 mx-auto p-5 border w-3/4 max-w-4xl shadow-lg rounded-md bg-white">
-                        <div class="flex justify-between items-center mb-4">
+                    class="fixed inset-0 z-50 hidden w-full h-full overflow-y-auto bg-gray-600 bg-opacity-50">
+                    <div class="relative w-3/4 max-w-4xl p-5 mx-auto bg-white border rounded-md shadow-lg top-20">
+                        <div class="flex items-center justify-between mb-4">
                             <h3 id="modal-title" class="text-lg font-medium text-gray-900"></h3>
                             <button id="close-modal" class="text-gray-400 hover:text-gray-600">&times;</button>
                         </div>
-                        <div id="document-preview" class="mb-4 max-h-96 overflow-auto">
+                        <div id="document-preview" class="mb-4 overflow-auto max-h-96">
                             <!-- Document preview will be loaded here -->
                         </div>
                         <form id="document-status-form" class="space-y-4">
                             <div>
                                 <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
                                 <select id="status" name="status"
-                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                    class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                                     <option value="verified">Verified</option>
                                     <option value="rejected">Rejected</option>
                                 </select>
@@ -247,13 +314,13 @@
                                 <label for="verification_notes"
                                     class="block text-sm font-medium text-gray-700">Verification Notes</label>
                                 <textarea id="verification_notes" name="verification_notes" rows="4"
-                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+                                    class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
                             </div>
                             <div class="flex justify-end space-x-2">
                                 <button type="button" id="cancel-button"
-                                    class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Cancel</button>
+                                    class="px-4 py-2 text-gray-800 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
                                 <button type="submit" id="submit-button"
-                                    class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700">Update
+                                    class="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-700">Update
                                     Status</button>
                             </div>
                         </form>
@@ -288,7 +355,7 @@
                                         `<embed src="${fileUrl}" type="application/pdf" width="100%" height="400px" />`;
                                 } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileType)) {
                                     documentPreview.innerHTML =
-                                        `<img src="${fileUrl}" class="max-w-full h-auto" />`;
+                                        `<img src="${fileUrl}" class="h-auto max-w-full" />`;
                                 } else {
                                     documentPreview.innerHTML =
                                         `<p class="text-red-500">Unsupported file type</p>`;

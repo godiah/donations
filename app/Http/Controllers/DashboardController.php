@@ -19,8 +19,13 @@ class DashboardController extends Controller
 
         // Get user's applications with related data
         $applications = Application::with(['applicant', 'reviewer'])
-            ->where('user_id', $user->id)
-            ->whereNotNull('submitted_at') // Only show submitted applications
+            ->whereNotNull('submitted_at')
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id) // User created it
+                    ->orWhereHas('payoutMandate', function ($subQuery) use ($user) {
+                        $subQuery->where('checker_id', $user->id); // User is checker
+                    });
+            })
             ->orderBy('submitted_at', 'desc')
             ->get();
 

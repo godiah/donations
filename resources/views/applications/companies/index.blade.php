@@ -6,12 +6,12 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
             <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
                     <!-- Progress Indicator -->
                     <div class="mb-8">
-                        <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center mx-auto mb-4 justify-evenly">
                             <div class="flex items-center">
                                 <div class="step-indicator active" data-step="1">
                                     <span class="step-number">1</span>
@@ -143,6 +143,17 @@
                                     </label>
                                     <input type="text" id="company_name" name="company_name"
                                         value="{{ old('company_name') }}"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <div class="hidden mt-1 text-sm text-red-500 error-message"></div>
+                                </div>
+
+                                <div class="md:col-span-2">
+                                    <label for="email" class="block mb-0.5 text-sm font-medium text-gray-700">
+                                        Email <span class="text-red-500">*</span>
+                                    </label>
+                                    <p class="mb-2 text-sm text-gray-600">This email will be used for communication
+                                        purposes.</p>
+                                    <input type="email" id="email" name="email" value="{{ old('email') }}"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                     <div class="hidden mt-1 text-sm text-red-500 error-message"></div>
                                 </div>
@@ -336,9 +347,9 @@
                             <div class="mb-8">
                                 <h4 class="mb-4 text-sm font-semibold text-gray-700">Contact Persons</h4>
                                 <div id="contact-persons-container">
-                                    <div class="contact-person-item mb-6 p-4 border border-gray-200 rounded-lg">
+                                    <div class="p-4 mb-6 border border-gray-200 rounded-lg contact-person-item">
                                         <button type="button"
-                                            class="remove-contact-btn absolute top-2 right-2 text-red-600 hover:text-red-800 hidden">
+                                            class="absolute hidden text-red-600 remove-contact-btn top-2 right-2 hover:text-red-800">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor"
                                                 viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -393,13 +404,13 @@
                                     </div>
                                 </div>
                                 <button type="button" id="add-contact-person"
-                                    class="mt-2 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    class="inline-flex items-center px-3 py-2 mt-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
                                     + Add Another Contact Person
                                 </button>
                             </div>
 
                             <!-- Financial Information -->
-                            <div class="grid grid-cols-1 gap-6 md:grid-cols-2 mb-8">
+                            <div class="grid grid-cols-1 gap-6 mb-8 md:grid-cols-2">
                                 <div>
                                     <label for="target_amount" class="block mb-2 text-sm font-medium text-gray-700">
                                         Target Amount (KES) <span class="text-red-500">*</span>
@@ -419,6 +430,100 @@
                                         min="{{ date('Y-m-d', strtotime('+1 day')) }}"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                     <div class="hidden mt-1 text-sm text-red-500 error-message"></div>
+                                </div>
+                            </div>
+
+                            <!-- Payout Mandate -->
+                            <div class="md:col-span-2">
+                                <h4 class="pb-2 mb-4 font-semibold text-gray-900 border-b text-md">Payout Mandate
+                                </h4>
+
+                                <div class="space-y-4">
+                                    <!-- Mandate Type Selection -->
+                                    <div>
+                                        <label class="block mb-2 text-sm font-medium text-gray-700">
+                                            Payout Authorization Type <span class="text-red-500">*</span>
+                                        </label>
+                                        <div class="space-y-3">
+                                            <div class="flex items-start">
+                                                <input type="radio" id="mandate_single" name="mandate_type"
+                                                    value="single"
+                                                    class="w-4 h-4 mt-1 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2">
+                                                <div class="ml-3">
+                                                    <label for="mandate_single"
+                                                        class="text-sm font-medium text-gray-700 cursor-pointer">
+                                                        Single Mandate
+                                                    </label>
+                                                    <p class="mt-1 text-xs text-gray-500">You will be both the
+                                                        maker and approver of payouts</p>
+                                                </div>
+                                            </div>
+
+                                            <div class="flex items-start">
+                                                <input type="radio" id="mandate_dual" name="mandate_type"
+                                                    value="dual"
+                                                    class="w-4 h-4 mt-1 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2">
+                                                <div class="ml-3">
+                                                    <label for="mandate_dual"
+                                                        class="text-sm font-medium text-gray-700 cursor-pointer">
+                                                        Dual Mandate
+                                                    </label>
+                                                    <p class="mt-1 text-xs text-gray-500">You create payout
+                                                        requests, another person approves them</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="hidden mt-1 text-sm text-red-500 error-message"
+                                            id="mandate_type_error"></div>
+                                    </div>
+
+                                    <!-- Checker Details (shown only for dual mandate) -->
+                                    <div id="checker_details"
+                                        class="p-4 space-y-4 border border-blue-200 rounded-lg bg-blue-50"
+                                        style="display: none;">
+                                        <div class="mb-3">
+                                            <div class="flex items-center mb-2 space-x-2">
+                                                <svg class="w-5 h-5 text-blue-600" fill="none"
+                                                    stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                                                    </path>
+                                                </svg>
+                                                <p class="text-sm font-medium text-blue-800">Checker Authorization
+                                                </p>
+                                            </div>
+                                            <p class="text-xs text-blue-700">The checker will be authorized to
+                                                approve payouts for this application. They will receive an
+                                                invitation to complete their account setup.</p>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                            <div>
+                                                <label for="checker_name"
+                                                    class="block mb-2 text-sm font-medium text-gray-700">
+                                                    Checker Full Name <span class="text-red-500">*</span>
+                                                </label>
+                                                <input type="text" id="checker_name" name="checker_name"
+                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                    placeholder="Enter checker's full name">
+                                                <div class="hidden mt-1 text-sm text-red-500 error-message"
+                                                    id="checker_name_error"></div>
+                                            </div>
+
+                                            <div>
+                                                <label for="checker_email"
+                                                    class="block mb-2 text-sm font-medium text-gray-700">
+                                                    Checker Email Address <span class="text-red-500">*</span>
+                                                </label>
+                                                <input type="email" id="checker_email" name="checker_email"
+                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                    placeholder="checker@example.com">
+                                                <div class="hidden mt-1 text-sm text-red-500 error-message"
+                                                    id="checker_email_error"></div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -475,7 +580,14 @@
 
                         <!-- Step 5: Review & Submit -->
                         <div class="form-step" id="step-5">
-                            <h3 class="mb-6 text-lg font-semibold text-gray-900">Review Your Application</h3>
+                            <div class="review-header">
+                                <h3>Review Your Application</h3>
+                                <p>Please review all information before submitting your application</p>
+                            </div>
+
+                            <div class="review-summary">
+                                <p class="review-summary-text">✓ All sections completed - Ready for submission</p>
+                            </div>
 
                             <div id="application-review" class="space-y-6"></div>
 
@@ -664,6 +776,8 @@
             const submitButton = document.getElementById('submit-application');
             const addContactPersonBtn = document.getElementById('add-contact-person');
             const contactPersonsContainer = document.getElementById('contact-persons-container');
+            const mandateRadios = document.querySelectorAll('input[name="mandate_type"]');
+            const checkerDetails = document.getElementById('checker_details');
 
             let currentStep = 1;
             let uploadedFiles = [];
@@ -799,12 +913,37 @@
                 return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
             }
 
+            // Mandate
+            mandateRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.value === 'dual') {
+                        checkerDetails.style.display = 'block';
+                        // Add required attribute to checker fields
+                        document.getElementById('checker_name').setAttribute('required',
+                            'required');
+                        document.getElementById('checker_email').setAttribute('required',
+                            'required');
+                    } else {
+                        checkerDetails.style.display = 'none';
+                        // Remove required attribute from checker fields
+                        document.getElementById('checker_name').removeAttribute('required');
+                        document.getElementById('checker_email').removeAttribute('required');
+                        // Clear checker fields
+                        document.getElementById('checker_name').value = '';
+                        document.getElementById('checker_email').value = '';
+                        // Clear any error messages
+                        hideError('checker_name');
+                        hideError('checker_email');
+                    }
+                });
+            });
+
             // Add contact person
             addContactPersonBtn.addEventListener('click', function() {
                 const contactDiv = document.createElement('div');
                 contactDiv.className = 'contact-person-item mb-6 p-4 border border-gray-200 rounded-lg';
                 contactDiv.innerHTML = `
-                    <button type="button" class="remove-contact-btn absolute top-2 right-2 text-red-600 hover:text-red-800">
+                    <button type="button" class="absolute text-red-600 remove-contact-btn top-2 right-2 hover:text-red-800">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
@@ -905,6 +1044,18 @@
                 if (!document.getElementById('company_name').value.trim()) {
                     showError('company_name', 'Company name is required');
                     isValid = false;
+                }
+
+                if (!document.getElementById('email').value.trim()) {
+                    showError('email', 'Email is required');
+                    isValid = false;
+                } else {
+                    // Basic email validation
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(document.getElementById('email').value.trim())) {
+                        showError('email', 'Please enter a valid email address');
+                        isValid = false;
+                    }
                 }
 
                 if (!document.getElementById('registration_certificate').value) {
@@ -1008,6 +1159,38 @@
                     }
                 }
 
+                // Payout mandate validation
+                const selectedMandateType = document.querySelector('input[name="mandate_type"]:checked');
+                if (!selectedMandateType) {
+                    showError('mandate_type', 'Please select a payout authorization type');
+                    isValid = false;
+                } else {
+                    hideError('mandate_type');
+
+                    // If dual mandate is selected, validate checker details
+                    if (selectedMandateType.value === 'dual') {
+                        const checkerName = document.getElementById('checker_name').value.trim();
+                        const checkerEmail = document.getElementById('checker_email').value.trim();
+
+                        if (!checkerName) {
+                            showError('checker_name', 'Checker name is required for dual mandate');
+                            isValid = false;
+                        } else {
+                            hideError('checker_name');
+                        }
+
+                        if (!checkerEmail) {
+                            showError('checker_email', 'Checker email is required for dual mandate');
+                            isValid = false;
+                        } else if (!isValidEmail(checkerEmail)) {
+                            showError('checker_email', 'Please enter a valid email address');
+                            isValid = false;
+                        } else {
+                            hideError('checker_email');
+                        }
+                    }
+                }
+
                 return isValid;
             }
 
@@ -1017,11 +1200,19 @@
             }
 
             function showError(fieldId, message) {
-                const field = document.querySelector(`[name="${fieldId}"]`) || document.getElementById(fieldId);
-                const errorDiv = field.parentNode.querySelector('.error-message');
-                errorDiv.textContent = message;
-                errorDiv.classList.remove('hidden');
-                field.classList.add('border-red-500');
+                const field = document.getElementById(fieldId);
+                const errorElement = document.getElementById(fieldId + '_error') ||
+                    field.parentNode.querySelector('.error-message');
+
+                if (field) {
+                    field.classList.add('border-red-500');
+                    field.classList.remove('border-gray-300');
+                }
+
+                if (errorElement) {
+                    errorElement.textContent = message;
+                    errorElement.classList.remove('hidden');
+                }
             }
 
             function clearErrors() {
@@ -1031,6 +1222,22 @@
                 document.querySelectorAll('input, select, textarea').forEach(field => {
                     field.classList.remove('border-red-500');
                 });
+            }
+
+            function hideError(fieldId) {
+                const field = document.getElementById(fieldId);
+                const errorElement = document.getElementById(fieldId + '_error') ||
+                    field.parentNode.querySelector('.error-message');
+
+                if (field) {
+                    field.classList.remove('border-red-500');
+                    field.classList.add('border-gray-300');
+                }
+
+                if (errorElement) {
+                    errorElement.classList.add('hidden');
+                    errorElement.textContent = '';
+                }
             }
 
             // Populate review section
@@ -1095,6 +1302,10 @@
                         <div class="review-item">
                             <span class="review-label">Company Name:</span>
                             <span class="review-value">${formData.get('company_name') || 'N/A'}</span>
+                        </div>
+                        <div class="review-item">
+                            <span class="review-label">Email:</span>
+                            <span class="review-value">${formData.get('email') || 'N/A'}</span>
                         </div>
                         <div class="review-item">
                             <span class="review-label">Registration Certificate:</span>
