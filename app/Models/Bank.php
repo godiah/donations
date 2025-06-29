@@ -18,4 +18,9 @@ class Bank extends Model
     {
         return $this->hasMany(Company::class);
     }
+
+    public function payoutMethods()
+    {
+        return $this->hasMany(PayoutMethod::class);
+    }
 }

@@ -180,4 +180,19 @@ class User extends Authenticatable
     {
         return $this->hasMany(Application::class, 'reviewed_by');
     }
+
+    public function individual()
+    {
+        return $this->hasOne(Individual::class);
+    }
+
+    public function company()
+    {
+        return $this->hasOne(Company::class);
+    }
+
+    public function getApplicantAttribute()
+    {
+        return $this->individual ?? $this->company;
+    }
 }

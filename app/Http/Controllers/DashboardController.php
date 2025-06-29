@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ApplicationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\Bank;
@@ -17,19 +18,32 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        // Get user's applications with related data
-        $applications = Application::with(['applicant', 'reviewer'])
+        // Get user's latest 4 applications that are submitted or under review
+        $recentApplications = Application::with(['applicant', 'reviewer'])
             ->whereNotNull('submitted_at')
+            ->whereIn('status', [ApplicationStatus::Submitted, ApplicationStatus::UnderReview])
             ->where(function ($query) use ($user) {
-                $query->where('user_id', $user->id) // User created it
+                $query->where('user_id', $user->id) // maker
                     ->orWhereHas('payoutMandate', function ($subQuery) use ($user) {
-                        $subQuery->where('checker_id', $user->id); // User is checker
+                        $subQuery->where('checker_id', $user->id); // checker 
                     });
             })
             ->orderBy('submitted_at', 'desc')
+            ->limit(4)
             ->get();
 
-        return view('dashboard', compact('user', 'applications'));
+        // Count total applications for the "View All" button context
+        $totalActiveApplications = Application::whereNotNull('submitted_at')
+            ->whereIn('status', [ApplicationStatus::Submitted, ApplicationStatus::UnderReview])
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->orWhereHas('payoutMandate', function ($subQuery) use ($user) {
+                        $subQuery->where('checker_id', $user->id);
+                    });
+            })
+            ->count();
+
+        return view('dashboard', compact('user', 'recentApplications', 'totalActiveApplications'));
     }
 
     // View individual donation application form

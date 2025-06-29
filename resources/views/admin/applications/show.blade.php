@@ -24,20 +24,44 @@
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Status</dt>
                             @php
-                                $statusClass = match ($application->status->value) {
-                                    'submitted' => 'bg-blue-100 text-blue-800',
-                                    'under_review' => 'bg-yellow-100 text-yellow-800',
-                                    'additional_info_required' => 'bg-orange-100 text-orange-800',
-                                    'approved' => 'bg-green-100 text-green-800',
-                                    'rejected' => 'bg-red-100 text-red-800',
-                                    default => 'bg-gray-100 text-gray-800',
-                                };
-                                // Count total and verified documents
-                                $supportDocuments = $application->applicant->supportDocuments;
-                                $totalDocuments = $supportDocuments->count();
-                                $verifiedDocuments = $supportDocuments->where('status', 'verified')->count();
-                                $allDocumentsVerified = $totalDocuments > 0 && $totalDocuments === $verifiedDocuments;
-                            @endphp
+    $statusClass = match ($application->status->value) {
+        'submitted' => 'bg-blue-100 text-blue-800',
+        'under_review' => 'bg-yellow-100 text-yellow-800',
+        'additional_info_required' => 'bg-orange-100 text-orange-800',
+        'approved' => 'bg-green-100 text-green-800',
+        'rejected' => 'bg-red-100 text-red-800',
+        default => 'bg-gray-100 text-gray-800',
+    };
+
+    // Count total and verified support documents
+    $supportDocuments = $application->applicant->supportDocuments;
+    $totalDocuments = $supportDocuments->count();
+    $verifiedDocuments = $supportDocuments->where('status', 'verified')->count();
+    $allDocumentsVerified = $totalDocuments > 0 && $totalDocuments === $verifiedDocuments;
+
+    // Check KYC verification for individual applications
+    $kycVerified = true; // Default for companies
+    if ($application->applicant_type === 'App\\Models\\Individual') {
+        $latestKyc = $application->applicant->kycVerifications()
+            ->where('application_id', $application->id)
+            ->latest()
+            ->first();
+        $kycVerified = $latestKyc && $latestKyc->status === 'verified';
+    }
+
+    // Determine if application can be approved
+    $canApprove = $allDocumentsVerified && $kycVerified;
+    
+    // Create verification status message
+    $verificationStatus = [];
+    if (!$allDocumentsVerified) {
+        $verificationStatus[] = "Support Documents: {$verifiedDocuments}/{$totalDocuments} verified";
+    }
+    if ($application->applicant_type === 'App\\Models\\Individual' && !$kycVerified) {
+        $verificationStatus[] = "National ID: Not verified";
+    }
+@endphp
+
                             <dd class="mt-1">
                                 <span id="status-badge"
                                     class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $statusClass }}">
@@ -50,13 +74,13 @@
                                         Start Review
                                     </button>
                                 @endif
-                                @if ($application->status->value !== 'approved' && $allDocumentsVerified)
-                                    <button id="approve-button"
-                                        class="px-2 py-1 ml-2 text-xs font-bold text-white bg-green-500 rounded hover:bg-green-700"
-                                        data-application-id="{{ $application->id }}">
-                                        Approve
-                                    </button>
-                                @endif
+                                @if ($application->status->value !== 'approved' && $canApprove)
+    <button id="approve-button"
+        class="px-2 py-1 ml-2 text-xs font-bold text-white bg-green-500 rounded hover:bg-green-700"
+        data-application-id="{{ $application->id }}">
+        Approve Application
+    </button>
+@endif
                             </dd>
                         </div>
                         <div>
@@ -89,6 +113,32 @@
                     @endif
                 </div>
             </div>
+
+                                            {{-- Display verification status if not all requirements are met --}}
+@if (!$canApprove && $application->status->value !== 'approved')
+<div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+    <div class="flex">
+        <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+        </div>
+        <div class="ml-3">
+            <h3 class="text-sm font-medium text-yellow-800">
+                Verification Required
+            </h3>
+            <div class="mt-2 text-sm text-yellow-700">
+                <p>The following requirements must be met before approval:</p>
+                <ul class="list-disc list-inside mt-1">
+                    @foreach ($verificationStatus as $status)
+                        <li>{{ $status }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
             <!-- Applicant Information -->
             <div class="mb-6 overflow-hidden bg-white rounded-lg shadow">
@@ -426,7 +476,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Existing Start Review button handler
+            // Start Review button handler
             const reviewButton = document.getElementById('review-button');
             if (reviewButton) {
                 reviewButton.addEventListener('click', function() {
@@ -471,7 +521,23 @@
             const approveButton = document.getElementById('approve-button');
             if (approveButton) {
                 approveButton.addEventListener('click', function() {
-                    const applicationId = this.getAttribute('data-application-id');
+            const applicationId = this.getAttribute('data-application-id');
+
+            // Show confirmation dialog
+            Swal.fire({
+                title: 'Approve Application?',
+                text: 'This will approve the application and send confirmation notifications to the applicant.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, Approve',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Disable button to prevent double-clicks
+                    approveButton.disabled = true;
+                    approveButton.textContent = 'Processing...';
 
                     fetch('/admin/applications/' + applicationId + '/approve', {
                             method: 'POST',
@@ -484,29 +550,61 @@
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
+                                // Update status badge
                                 const statusBadge = document.getElementById('status-badge');
-                                statusBadge.textContent = 'Approved';
-                                statusBadge.className =
-                                    'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800';
+                                if (statusBadge) {
+                                    statusBadge.textContent = 'Approved';
+                                    statusBadge.className =
+                                        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800';
+                                }
+                                
+                                // Remove approve button
                                 approveButton.remove();
+                                
+                                // Remove verification status warning if present
+                                const warningDiv = document.querySelector('.bg-yellow-50');
+                                if (warningDiv) {
+                                    warningDiv.remove();
+                                }
+
+                                // Show success message
                                 Swal.fire({
                                     icon: 'success',
-                                    title: 'Application approved',
+                                    title: 'Application Approved!',
                                     text: data.message,
-                                    timer: 2000
+                                    timer: 3000,
+                                    showConfirmButton: false
+                                });
+                            } else {
+                                // Re-enable button on error
+                                approveButton.disabled = false;
+                                approveButton.textContent = 'Approve Application';
+                                
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Approval Failed',
+                                    text: data.message || 'Unable to approve application'
                                 });
                             }
                         })
                         .catch(error => {
                             console.error('Error:', error);
+                            
+                            // Re-enable button on error
+                            approveButton.disabled = false;
+                            approveButton.textContent = 'Approve Application';
+                            
                             Swal.fire({
                                 icon: 'error',
-                                title: 'Error',
-                                text: 'Failed to approve application'
+                                title: 'Network Error',
+                                text: 'Failed to approve application. Please check your connection and try again.'
                             });
                         });
+                }
+            });
                 });
             }
+
         });
     </script>
 </x-app-layout>

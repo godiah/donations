@@ -7,10 +7,15 @@ use App\Models\Application;
 use App\Models\Individual;
 use App\Models\Company;
 use App\Enums\ApplicationStatus;
+use App\Models\DonationLink;
 use App\Models\SupportDocument;
+use App\Notifications\CompanyApplicationApproved;
+use App\Notifications\IndividualApplicationApproved;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class ApplicationController extends Controller
@@ -268,35 +273,170 @@ class ApplicationController extends Controller
     }
 
     /**
-     * Mark as approved
+     * Mark application as approved
      */
     public function approve(Request $request, $application)
     {
-        $application = Application::findOrFail($application);
+        $application = Application::with(['applicant', 'applicant.supportDocuments', 'applicant.kycVerifications'])->findOrFail($application);
 
         // Optional: Add authorization check
         // $this->authorize('update', $application);
 
-        // Verify all documents are verified
-        $totalDocuments = $application->applicant->supportDocuments->count();
-        $verifiedDocuments = $application->applicant->supportDocuments->where('status', 'verified')->count();
+        try {
+            DB::beginTransaction();
 
-        if ($totalDocuments === 0 || $totalDocuments !== $verifiedDocuments) {
+            // Verify document requirements based on application type
+            $validationResult = $this->validateDocumentsForApproval($application);
+
+            if (!$validationResult['valid']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validationResult['message']
+                ], 422);
+            }
+
+            // Update application status
+            $application->update([
+                'status' => ApplicationStatus::Approved,
+                'reviewer_id' => Auth::id(),
+                'reviewed_at' => now(),
+            ]);
+
+            // Generate donation link
+            $donationLink = $this->generateDonationLink($application);
+
+            // Send appropriate notification based on applicant type
+            $this->sendApprovalNotification($application, $donationLink);
+
+            DB::commit();
+
+            Log::info('Application approved successfully', [
+                'application_id' => $application->id,
+                'application_number' => $application->application_number,
+                'applicant_type' => $application->applicant_type,
+                'reviewer_id' => Auth::id(),
+                'donation_link_code' => $donationLink->code
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Application approved successfully. Confirmation notifications have been sent.'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Failed to approve application', [
+                'application_id' => $application->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Cannot approve: Not all documents are verified'
-            ], 422);
+                'message' => 'Failed to approve application. Please try again.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Validate documents for approval based on application type
+     */
+    private function validateDocumentsForApproval($application)
+    {
+        $applicant = $application->applicant;
+        $supportDocuments = $applicant->supportDocuments;
+
+        // Check support documents
+        $totalDocuments = $supportDocuments->count();
+        $verifiedDocuments = $supportDocuments->where('status', 'verified')->count();
+
+        if ($totalDocuments === 0) {
+            return [
+                'valid' => false,
+                'message' => 'Cannot approve: No documents have been uploaded'
+            ];
         }
 
-        $application->update([
-            'status' => ApplicationStatus::Approved,
-            'reviewer_id' => Auth::id(),
-            'reviewed_at' => now(),
+        if ($totalDocuments !== $verifiedDocuments) {
+            return [
+                'valid' => false,
+                'message' => 'Cannot approve: Not all support documents are verified'
+            ];
+        }
+
+        // Additional validation for individual applications (KYC/National ID)
+        if ($application->applicant_type === 'App\\Models\\Individual') {
+            $kycVerifications = $applicant->kycVerifications()
+                ->where('application_id', $application->id)
+                ->latest()
+                ->first();
+
+            if (!$kycVerifications || $kycVerifications->status !== 'verified') {
+                return [
+                    'valid' => false,
+                    'message' => 'Cannot approve: National ID verification is required for individual applications'
+                ];
+            }
+        }
+
+        return [
+            'valid' => true,
+            'message' => 'All requirements met'
+        ];
+    }
+
+    /**
+     * Generate donation link for approved application
+     */
+    private function generateDonationLink($application)
+    {
+        // Set expiration to 1 year from now (configurable)
+        $expirationDate = now()->addYear();
+
+        $donationLink = DonationLink::create([
+            'application_id' => $application->id,
+            'expires_at' => $expirationDate,
+            'created_by' => Auth::id(),
         ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Application approved successfully'
+        Log::info('Donation link generated', [
+            'application_id' => $application->id,
+            'donation_link_id' => $donationLink->id,
+            'code' => $donationLink->code,
+            'expires_at' => $expirationDate
         ]);
+
+        return $donationLink;
+    }
+
+    /**
+     * Send approval notification based on applicant type
+     */
+    private function sendApprovalNotification($application, $donationLink)
+    {
+        $applicant = $application->applicant;
+        $user = $applicant->user;
+
+        if ($application->applicant_type === 'App\\Models\\Individual') {
+            // Send individual approval notification (email + SMS)
+            $user->notify(new IndividualApplicationApproved($application, $applicant, $donationLink));
+
+            Log::info('Individual approval notification sent', [
+                'application_id' => $application->id,
+                'individual_id' => $applicant->id,
+                'user_id' => $user->id,
+                'donation_link_code' => $donationLink->code
+            ]);
+        } elseif ($application->applicant_type === 'App\\Models\\Company') {
+            // Send company approval notification (email only)
+            $user->notify(new CompanyApplicationApproved($application, $applicant, $donationLink));
+
+            Log::info('Company approval notification sent', [
+                'application_id' => $application->id,
+                'company_id' => $applicant->id,
+                'user_id' => $user->id,
+                'donation_link_code' => $donationLink->code
+            ]);
+        }
     }
 }

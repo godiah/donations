@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ApplicationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\Company;
@@ -13,6 +14,93 @@ use Illuminate\Support\Facades\Auth;
 class ApplicationController extends Controller
 {
     use AuthorizesRequests;
+
+    /**
+     * Display all active applications (submitted/under review)
+     */
+    public function active(Request $request)
+    {
+        $user = Auth::user();
+        $perPage = $request->get('per_page', 10);
+        $status = $request->get('status');
+
+        $query = Application::with(['applicant', 'reviewer'])
+            ->whereNotNull('submitted_at')
+            ->whereIn('status', [ApplicationStatus::Submitted, ApplicationStatus::UnderReview])
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->orWhereHas('payoutMandate', function ($subQuery) use ($user) {
+                        $subQuery->where('checker_id', $user->id);
+                    });
+            });
+
+        // Filter by specific status if provided
+        if ($status && in_array($status, ['submitted', 'under_review'])) {
+            $query->where('status', ApplicationStatus::from($status));
+        }
+
+        $applications = $query->orderBy('submitted_at', 'desc')
+            ->paginate($perPage);
+
+        return view('applications.active', compact('applications', 'status'));
+    }
+
+    /**
+     * Display approved applications (My Donations)
+     */
+    public function donations(Request $request)
+    {
+        $user = Auth::user();
+        $perPage = $request->get('per_page', 10);
+
+        $donations = Application::with(['applicant', 'reviewer', 'payoutMandate'])
+            ->whereNotNull('submitted_at')
+            ->where('status', ApplicationStatus::Approved)
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->orWhereHas('payoutMandate', function ($subQuery) use ($user) {
+                        $subQuery->where('checker_id', $user->id);
+                    });
+            })
+            ->orderBy('reviewed_at', 'desc')
+            ->paginate($perPage);
+
+        return view('donations.index', compact('donations'));
+    }
+
+    /**
+     * Display applications requiring attention (rejected, cancelled, additional info)
+     */
+    public function pending(Request $request)
+    {
+        $user = Auth::user();
+        $perPage = $request->get('per_page', 10);
+        $status = $request->get('status');
+
+        $query = Application::with(['applicant', 'reviewer'])
+            ->whereNotNull('submitted_at')
+            ->whereIn('status', [
+                ApplicationStatus::Rejected,
+                ApplicationStatus::Cancelled,
+                ApplicationStatus::AdditionalInfoRequired
+            ])
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->orWhereHas('payoutMandate', function ($subQuery) use ($user) {
+                        $subQuery->where('checker_id', $user->id);
+                    });
+            });
+
+        // Filter by specific status if provided
+        if ($status && in_array($status, ['rejected', 'cancelled', 'additional_info_required'])) {
+            $query->where('status', ApplicationStatus::from($status));
+        }
+
+        $pendingApplications = $query->orderBy('reviewed_at', 'desc')
+            ->paginate($perPage);
+
+        return view('applications.pending', compact('pendingApplications', 'status'));
+    }
 
     /**
      * Display the specified individual application by application number

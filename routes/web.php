@@ -5,8 +5,10 @@ use App\Http\Controllers\Admin\KycController;
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\CompanyDonationController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DonationController;
 use App\Http\Controllers\IndividualDonationController;
 use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\PayoutMethodController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -15,15 +17,19 @@ Route::get('/', function () {
 });
 
 // Invitation routes
-Route::get('/invitation/{token}/register', [InvitationController::class, 'showRegistrationForm'])
-    ->name('invitation.register');
+Route::get('/invitation/{token}/register', [InvitationController::class, 'showRegistrationForm'])->name('invitation.register');
+Route::post('/invitation/{token}/register', [InvitationController::class, 'register'])->name('invitation.register.submit');
 
-Route::post('/invitation/{token}/register', [InvitationController::class, 'register'])
-    ->name('invitation.register.submit');
+// Donation routes
+Route::prefix('donate')->group(function () {
+    Route::get('/{code}', [DonationController::class, 'show'])->name('donation.show');
+    Route::post('/{code}', [DonationController::class, 'process'])->name('donation.process');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('verified')->name('dashboard');
 
+    // Individual applications
     Route::prefix('individual/application')->name('individual.')->group(function () {
         Route::get('/', [DashboardController::class, 'showIndividual'])->name('application');
         Route::post('/store', [IndividualDonationController::class, 'store'])->name('store');
@@ -37,7 +43,7 @@ Route::middleware('auth')->group(function () {
             ->name('document-types');
     });
 
-
+    // Company applications
     Route::prefix('company/application')->name('company.')->group(function () {
         Route::get('/', [DashboardController::class, 'showCompany'])->name('application');
         Route::post('/store', [CompanyDonationController::class, 'store'])->name('store');
@@ -51,6 +57,22 @@ Route::middleware('auth')->group(function () {
         Route::get('document-types/{contributionReason}', [CompanyDonationController::class, 'getDocumentTypes'])
             ->name('document-types');
     });
+
+    // All active applications (submitted/under review)
+    Route::get('/active', [ApplicationController::class, 'active'])->name('active');
+
+    // Pending/problem applications (rejected, cancelled, additional info)
+    Route::get('/pending', [ApplicationController::class, 'pending'])->name('pending');
+
+    // My donations (approved applications)
+    Route::get('/donations', [ApplicationController::class, 'donations'])->name('donations');
+    Route::get('/donations/{applicationNumber}', [DonationController::class, 'showDonation'])->name('donations.show');
+    // Payout methods
+    Route::get('/payout-methods', [PayoutMethodController::class, 'index'])->name('payout-methods.index');
+    Route::get('/payout-methods/create', [PayoutMethodController::class, 'create'])->name('payout-methods.create');
+    Route::post('/payout-methods', [PayoutMethodController::class, 'store'])->name('payout-methods.store');
+    Route::patch('/payout-methods/{id}/set-primary', [PayoutMethodController::class, 'setPrimary'])->name('payout-methods.set-primary');
+    Route::delete('/payout-methods/{id}', [PayoutMethodController::class, 'destroy'])->name('payout-methods.destroy');
 
     // pending downloads
     Route::get('/company/applications/{application}/download/{file}', [CompanyDonationController::class, 'download'])
@@ -87,6 +109,10 @@ Route::middleware('auth')->group(function () {
             Route::get('{application}/kyc/status', [KycController::class, 'getVerificationStatus'])->name('kyc.status');
             Route::get('kyc/verification/{verification}', [KycController::class, 'showVerification'])->name('kyc.verification.show');
         });
+
+        Route::get('/donation-links', [DonationController::class, 'index'])->name('donation-links.index');
+        Route::get('/donation-links/{donationLink}', [DonationController::class, 'showLink'])->name('donation-links.show');
+        Route::patch('/donation-links/{donationLink}/toggle-status', [DonationController::class, 'toggleStatus'])->name('donation-links.toggle-status');
 
         Route::post('/payout-mandates/{payoutMandate}/invitations', [InvitationController::class, 'createAndSendInvitation'])->name('invitations.create');
     });

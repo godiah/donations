@@ -21,6 +21,14 @@
                             {{ __('Applications') }}
                         </x-nav-link>
                     @endif
+
+                    <x-nav-link :href="route('active')" :active="request()->routeIs('active')">
+                        {{ __('My Applications') }}
+                    </x-nav-link>
+
+                    <x-nav-link :href="route('donations')" :active="request()->routeIs('donations')">
+                        {{ __('My Donations') }}
+                    </x-nav-link>
                 </div>
             </div>
 

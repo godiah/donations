@@ -59,7 +59,6 @@ class Application extends Model
         return $this->users()->wherePivot('role_id', $payoutMakerRoleId)->first();
     }
 
-
     // User who reviewed the application
     public function reviewer()
     {
@@ -85,6 +84,40 @@ class Application extends Model
     public function invitations()
     {
         return $this->hasMany(Invitation::class);
+    }
+
+    /**
+     * Get donation links for this application
+     */
+    public function donationLinks()
+    {
+        return $this->hasMany(DonationLink::class);
+    }
+
+    /**
+     * Get active donation links
+     */
+    public function activeDonationLinks()
+    {
+        return $this->hasMany(DonationLink::class)
+            ->where('status', 'active')
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            });
+    }
+
+    /**
+     * Get fee structure display
+     */
+    public function getFeeStructureAttribute()
+    {
+        // You can customize this based on your fee structure logic
+        return [
+            'type' => 'percentage', // or 'fixed' or 'range'
+            'value' => '5%', // or specific amount/range
+            'description' => '5% of total contribution'
+        ];
     }
 
     public function hasDualMandate()

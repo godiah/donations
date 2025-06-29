@@ -48,6 +48,7 @@
                     <h1>Quick Actions</h1>
                     <div>
                         <a href="{{ route('admin.applications.index') }}">View Applications</a>
+                        <a href="{{ route('admin.donation-links.index') }}">View Donations</a>
                     </div>
                 </div>
             @endif
@@ -57,20 +58,29 @@
                 <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold text-gray-800">My Applications</h3>
-                            <span class="text-sm text-gray-600">{{ $applications->count() }} application(s)</span>
+                            <h3 class="text-lg font-semibold text-gray-800">Recent Applications</h3>
+                            <div class="flex items-center space-x-3">
+                                <span class="text-sm text-gray-600">{{ $recentApplications->count() }} of
+                                    {{ $totalActiveApplications }} active</span>
+                                @if ($totalActiveApplications > 4)
+                                    <a href="{{ route('active') }}"
+                                        class="inline-flex items-center px-3 py-1.5 bg-indigo-600 border border-transparent rounded-md text-xs font-medium text-white hover:bg-indigo-700 transition-colors">
+                                        View All Applications
+                                    </a>
+                                @endif
+                            </div>
                         </div>
 
-                        @if ($applications->isEmpty())
+                        @if ($recentApplications->isEmpty())
                             <div class="py-8 text-center">
                                 <div class="mb-2 text-lg text-gray-400">📋</div>
-                                <p class="text-gray-600">No applications submitted yet.</p>
+                                <p class="text-gray-600">No active applications found.</p>
                                 <p class="mt-1 text-sm text-gray-500">Click "Set Up Donation" above to create your first
                                     application.</p>
                             </div>
                         @else
                             <div class="space-y-4">
-                                @foreach ($applications as $application)
+                                @foreach ($recentApplications as $application)
                                     <div
                                         class="p-4 transition-shadow border border-gray-200 rounded-lg hover:shadow-md">
                                         <div class="flex items-start justify-between">
@@ -80,15 +90,8 @@
                                                         #{{ $application->application_number }}
                                                     </span>
                                                     <span
-                                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                                            {{ $application->status->value === 'draft' ? 'bg-gray-100 text-gray-800' : '' }}
-                                                            {{ $application->status->value === 'submitted' ? 'bg-yellow-100 text-yellow-800' : '' }}
-                                                            {{ $application->status->value === 'under_review' ? 'bg-blue-100 text-blue-800' : '' }}
-                                                            {{ $application->status->value === 'additional_info_required' ? 'bg-orange-100 text-orange-800' : '' }}
-                                                            {{ $application->status->value === 'approved' ? 'bg-green-100 text-green-800' : '' }}
-                                                            {{ $application->status->value === 'rejected' ? 'bg-red-100 text-red-800' : '' }}
-                                                            {{ $application->status->value === 'cancelled' ? 'bg-purple-100 text-purple-800' : '' }}">
-                                                        {{ ucfirst(str_replace('_', ' ', $application->status->value)) }}
+                                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $application->status->getColorClass() }}">
+                                                        {{ $application->status->getDisplayName() }}
                                                     </span>
                                                 </div>
 
@@ -125,7 +128,6 @@
                                                     </a>
                                                 @endif
                                             </div>
-
                                         </div>
 
                                         @if ($application->applicant->contribution_description)
@@ -137,6 +139,62 @@
                                         @endif
                                     </div>
                                 @endforeach
+                            </div>
+
+                            <!-- Quick Navigation Cards -->
+                            <div class="grid grid-cols-1 gap-4 mt-6 md:grid-cols-3">
+                                <a href="{{ route('active') }}"
+                                    class="block p-4 transition-colors bg-blue-50 rounded-lg hover:bg-blue-100">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="p-2 bg-blue-200 rounded-full">
+                                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-blue-900">All Applications</p>
+                                            <p class="text-xs text-blue-600">View submitted & under review</p>
+                                        </div>
+                                    </div>
+                                </a>
+
+                                <a href="{{ route('donations') }}"
+                                    class="block p-4 transition-colors bg-green-50 rounded-lg hover:bg-green-100">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="p-2 bg-green-200 rounded-full">
+                                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-green-900">My Donations</p>
+                                            <p class="text-xs text-green-600">Approved applications</p>
+                                        </div>
+                                    </div>
+                                </a>
+
+                                <a href="{{ route('pending') }}"
+                                    class="block p-4 transition-colors bg-orange-50 rounded-lg hover:bg-orange-100">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="p-2 bg-orange-200 rounded-full">
+                                            <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.664-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-orange-900">Needs Attention</p>
+                                            <p class="text-xs text-orange-600">Rejected, cancelled, or pending info</p>
+                                        </div>
+                                    </div>
+                                </a>
                             </div>
                         @endif
                     </div>
