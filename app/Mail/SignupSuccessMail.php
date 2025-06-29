@@ -27,7 +27,7 @@ class SignupSuccessMail extends Mailable implements ShouldQueue
             ->view('emails.signup-success')
             ->with([
                 'name' => $this->user->name,
-                'userType' => ucfirst($this->user->user_type),
+                'userType' => ucfirst(is_string($this->user->user_type) ? $this->user->user_type : $this->user->user_type->value),
             ]);
     }
 }

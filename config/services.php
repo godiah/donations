@@ -49,20 +49,4 @@ return [
         'sender_id' => env('AFRICASTALKING_SENDER_ID', 'wiGOPAY'),
         'whatsapp_number' => env('AFRICASTALKING_WHATSAPP_NUMBER', '+254745548093'), // Add your WhatsApp-enabled number
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Smile Identity Configuration
-    |--------------------------------------------------------------------------
-    |
-    | Configuration for Smile Identity API
-    |
-    */
-    'smile_identity' => [
-        'base_url' => env('SMILE_IDENTITY_BASE_URL', 'https://testapi.smileidentity.com/v2/'),
-        'partner_id' => env('SMILE_IDENTITY_PARTNER_ID'),
-        'api_key' => env('SMILE_IDENTITY_API_KEY'),
-        'environment' => env('SMILE_IDENTITY_ENVIRONMENT', 'sandbox'), // 'sandbox' or 'production'
-        'callback_url' => env('NGROK_URL') . '/api/kyc/callback',
-    ],
 ];

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\ApplicationController as AdminApplicationController;
+use App\Http\Controllers\Admin\KycController;
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\CompanyDonationController;
 use App\Http\Controllers\DashboardController;
@@ -77,19 +78,21 @@ Route::middleware('auth')->group(function () {
             Route::post('/documents/{document}/update-status', [AdminApplicationController::class, 'updateDocumentStatus'])->name('document.update-status');
             Route::get('/documents/{document}/serve', [AdminApplicationController::class, 'serveDocument'])->name('document.serve');
             Route::get('/companies/{company}/documents/{field}/serve', [AdminApplicationController::class, 'serveCompanyDocument'])->name('company.document-serve');
+
+            // Approve donation application
             Route::post('/{application}/approve', [AdminApplicationController::class, 'approve'])->name('approve');
+
+            // KYC verification
+            Route::post('{application}/kyc/initiate', [KycController::class, 'initiateVerification'])->name('kyc.initiate');
+            Route::get('{application}/kyc/status', [KycController::class, 'getVerificationStatus'])->name('kyc.status');
+            Route::get('kyc/verification/{verification}', [KycController::class, 'showVerification'])->name('kyc.verification.show');
         });
 
         Route::post('/payout-mandates/{payoutMandate}/invitations', [InvitationController::class, 'createAndSendInvitation'])->name('invitations.create');
     });
 });
 
-// KYC Verification Routes
-Route::middleware(['auth'])->group(function () {
-    Route::post('/api/verify-kyc', [IndividualDonationController::class, 'verifyKyc'])->name('api.verify-kyc');
-});
-
-// Webhook route (no auth required for external callbacks)
-Route::post('/kyc/callback', [IndividualDonationController::class, 'handleKycCallback'])->name('api.kyc.callback');
+// Public webhook endpoint for Smile Identity callbacks
+Route::post('/api/kyc/callback', [KycController::class, 'handleCallback'])->name('kyc.callback');
 
 require __DIR__ . '/auth.php';

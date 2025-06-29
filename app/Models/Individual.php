@@ -75,6 +75,41 @@ class Individual extends Model
         return $this->morphMany(SupportDocument::class, 'documentable');
     }
 
+    // KYC verifications relationship
+    public function kycVerifications()
+    {
+        return $this->hasMany(KycVerification::class);
+    }
+
+    /**
+     * Get the latest KYC verification for a specific application
+     */
+    public function getLatestKycVerification(Application $application): ?KycVerification
+    {
+        return $this->kycVerifications()
+            ->where('application_id', $application->id)
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
+
+    /**
+     * Check if individual is KYC verified for a specific application
+     */
+    public function isKycVerified(Application $application): bool
+    {
+        $verification = $this->getLatestKycVerification($application);
+        return $verification && $verification->isVerified();
+    }
+
+    /**
+     * Get KYC verification status for a specific application
+     */
+    public function getKycStatus(Application $application): string
+    {
+        $verification = $this->getLatestKycVerification($application);
+        return $verification ? $verification->status : 'not_verified';
+    }
+
     /**
      * Get the full name attribute by combining name fields
      */

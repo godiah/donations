@@ -42,6 +42,14 @@ class ApplicationController extends Controller
         // Get support documents through the applicant
         $documents = $application->applicant->supportDocuments()->get();
 
+        // For individual applicants, load KYC verification data
+        if ($application->applicant_type === 'App\\Models\\Individual') {
+            $application->applicant->load(['kycVerifications' => function ($query) use ($application) {
+                $query->where('application_id', $application->id)
+                    ->orderBy('created_at', 'desc');
+            }]);
+        }
+
         return view('admin.applications.show', compact('application', 'documents'));
     }
 
