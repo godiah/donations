@@ -1,4 +1,4 @@
-<nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
+<nav x-data="{ open: false }" class="bg-white border-b border-gray-100 w-full fixed top-0 z-50">
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
@@ -20,15 +20,21 @@
                         <x-nav-link :href="route('admin.applications.index')" :active="request()->routeIs('admin.applications.index')">
                             {{ __('Applications') }}
                         </x-nav-link>
+
+                        <x-nav-link :href="route('admin.donation-links.index')" :active="request()->routeIs('admin.donation-links.index')">
+                            {{ __('Donations') }}
+                        </x-nav-link>
                     @endif
 
-                    <x-nav-link :href="route('active')" :active="request()->routeIs('active')">
-                        {{ __('My Applications') }}
-                    </x-nav-link>
+                    @if (!Auth::user()->hasRole('admin'))
+                        <x-nav-link :href="route('active')" :active="request()->routeIs('active')">
+                            {{ __('My Applications') }}
+                        </x-nav-link>
 
-                    <x-nav-link :href="route('donations')" :active="request()->routeIs('donations')">
-                        {{ __('My Donations') }}
-                    </x-nav-link>
+                        <x-nav-link :href="route('donations')" :active="request()->routeIs('donations')">
+                            {{ __('My Donations') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 

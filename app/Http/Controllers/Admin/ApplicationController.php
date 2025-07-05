@@ -43,10 +43,10 @@ class ApplicationController extends Controller
     public function show(Application $application)
     {
         $application->load(['users', 'applicant', 'reviewer']);
-
+    
         // Get support documents through the applicant
         $documents = $application->applicant->supportDocuments()->get();
-
+    
         // For individual applicants, load KYC verification data
         if ($application->applicant_type === 'App\\Models\\Individual') {
             $application->applicant->load(['kycVerifications' => function ($query) use ($application) {
@@ -54,8 +54,11 @@ class ApplicationController extends Controller
                     ->orderBy('created_at', 'desc');
             }]);
         }
-
-        return view('admin.applications.show', compact('application', 'documents'));
+    
+        // Determine if admin form should be shown
+        $showAdminForm = $this->shouldShowAdminForm($application, $documents);
+    
+        return view('admin.applications.show', compact('application', 'documents', 'showAdminForm'));
     }
 
     /**
@@ -118,6 +121,7 @@ class ApplicationController extends Controller
                 'additional_info' => ApplicationStatus::AdditionalInfoRequired,
                 'approved' => ApplicationStatus::Approved,
                 'rejected' => ApplicationStatus::Rejected,
+                'resubmitted' => ApplicationStatus::Resubmitted,
             ];
 
             if (isset($statusMap[$status])) {
@@ -146,6 +150,7 @@ class ApplicationController extends Controller
                 'additional_info' => $statusCounts[Individual::class][ApplicationStatus::AdditionalInfoRequired->value][0]->count ?? 0,
                 'approved' => $statusCounts[Individual::class][ApplicationStatus::Approved->value][0]->count ?? 0,
                 'rejected' => $statusCounts[Individual::class][ApplicationStatus::Rejected->value][0]->count ?? 0,
+                'resubmitted' => $statusCounts[Individual::class][ApplicationStatus::Resubmitted->value][0]->count ?? 0,
             ],
             'company' => [
                 'all' => Application::where('applicant_type', Company::class)->count(),
@@ -154,6 +159,7 @@ class ApplicationController extends Controller
                 'additional_info' => $statusCounts[Company::class][ApplicationStatus::AdditionalInfoRequired->value][0]->count ?? 0,
                 'approved' => $statusCounts[Company::class][ApplicationStatus::Approved->value][0]->count ?? 0,
                 'rejected' => $statusCounts[Company::class][ApplicationStatus::Rejected->value][0]->count ?? 0,
+                'resubmitted' => $statusCounts[Company::class][ApplicationStatus::Resubmitted->value][0]->count ?? 0,
             ],
             'total' => [
                 'all' => Application::count(),
@@ -162,8 +168,38 @@ class ApplicationController extends Controller
                 'additional_info' => Application::where('status', ApplicationStatus::AdditionalInfoRequired)->count(),
                 'approved' => Application::where('status', ApplicationStatus::Approved)->count(),
                 'rejected' => Application::where('status', ApplicationStatus::Rejected)->count(),
+                'resubmitted' => Application::where('status', ApplicationStatus::Resubmitted)->count(),
             ]
         ];
+    }
+
+    /**
+     * Determine if admin form should be displayed based on business rules
+     */
+    private function shouldShowAdminForm(Application $application, $documents): bool
+    {
+        // Rule 1: If there are any rejected support documents
+        $hasRejectedDocuments = $documents->where('status', 'rejected')->count() > 0;
+    
+        // Rule 2: For individual applications - check if KYC is NOT verified
+        $hasUnverifiedKyc = false;
+        if ($application->applicant_type === 'App\\Models\\Individual') {
+            $hasVerifiedKyc = $application->applicant
+                ->kycVerifications()
+                ->where('application_id', $application->id)
+                ->where('status', 'verified')
+                ->exists();
+            $hasUnverifiedKyc = !$hasVerifiedKyc;
+        }
+    
+        // Rule 3: For company applications with under_review status
+        $isCompanyUnderReview = ($application->applicant_type === 'App\\Models\\Company' && 
+                                $application->status->value === 'under_review');
+    
+        // Rule 4: If application status is neither submitted nor approved
+        $isNotSubmittedOrApproved = !in_array($application->status->value, ['submitted', 'approved']);
+    
+        return $hasRejectedDocuments || $hasUnverifiedKyc || $isCompanyUnderReview || $isNotSubmittedOrApproved;
     }
 
     /**
@@ -277,7 +313,16 @@ class ApplicationController extends Controller
      */
     public function approve(Request $request, $application)
     {
-        $application = Application::with(['applicant', 'applicant.supportDocuments', 'applicant.kycVerifications'])->findOrFail($application);
+        $application = Application::with([
+            'applicant',
+            'applicant.supportDocuments',
+            // Conditionally load kycVerifications only for Individual applicants
+            'applicant' => function ($query) {
+                $query->when($query->getModel()->applicant_type === 'App\\Models\\Individual', function ($q) {
+                    $q->with('kycVerifications');
+                });
+            }
+        ])->findOrFail($application);
 
         // Optional: Add authorization check
         // $this->authorize('update', $application);
@@ -337,6 +382,27 @@ class ApplicationController extends Controller
             ], 500);
         }
     }
+
+    /**
+ * Update application status and admin comments
+ */
+public function updateStatus(Request $request, Application $application)
+{
+    $request->validate([
+        'status' => 'required|in:additional_info_required,rejected',
+        'admin_comments' => 'nullable|string|max:1000',
+    ]);
+
+    $application->update([
+        'status' => $request->status,
+        'admin_comments' => $request->admin_comments,
+        'reviewed_by' =>Auth::id(),
+        'reviewed_at' => now(),
+    ]);
+
+    return redirect()->route('admin.applications.show', $application)
+        ->with('success', 'Application status updated successfully.');
+}
 
     /**
      * Validate documents for approval based on application type

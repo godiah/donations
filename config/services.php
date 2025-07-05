@@ -49,4 +49,12 @@ return [
         'sender_id' => env('AFRICASTALKING_SENDER_ID', 'wiGOPAY'),
         'whatsapp_number' => env('AFRICASTALKING_WHATSAPP_NUMBER', '+254745548093'), // Add your WhatsApp-enabled number
     ],
+
+    'cybersource' => [
+        'merchant_id' => env('CYBERSOURCE_MERCHANT_ID'),
+        'access_key' => env('CYBERSOURCE_ACCESS_KEY'),
+        'secret_key' => env('CYBERSOURCE_SECRET_KEY'),
+        'profile_id' => env('CYBERSOURCE_PROFILE_ID'),
+        'environment' => env('CYBERSOURCE_ENVIRONMENT', 'test'), // test or production
+    ],
 ];

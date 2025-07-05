@@ -77,6 +77,23 @@ class DonationLink extends Model
     }
 
     /**
+     * Get all contributions for this donation link
+     */
+    public function contributions()
+    {
+        return $this->hasMany(Contribution::class);
+    }
+
+    /**
+     * Get successful contributions only
+     */
+    public function successfulContributions()
+    {
+        return $this->hasMany(Contribution::class)->where('payment_status', Contribution::STATUS_COMPLETED);
+    }
+
+
+    /**
      * Get the full donation URL
      */
     public function getFullUrlAttribute()
@@ -89,8 +106,8 @@ class DonationLink extends Model
      */
     public function isActive()
     {
-        return $this->status === 'active' && 
-               ($this->expires_at === null || $this->expires_at->isFuture());
+        return $this->status === 'active' &&
+            ($this->expires_at === null || $this->expires_at->isFuture());
     }
 
     /**
@@ -107,11 +124,11 @@ class DonationLink extends Model
     public function recordAccess()
     {
         $this->increment('access_count');
-        
+
         if ($this->first_accessed_at === null) {
             $this->first_accessed_at = now();
         }
-        
+
         $this->last_accessed_at = now();
         $this->save();
     }
@@ -130,5 +147,33 @@ class DonationLink extends Model
     public function activate()
     {
         $this->update(['status' => 'active']);
+    }
+
+    /**
+     * Get total amount raised through this link
+     */
+    public function getTotalRaisedAttribute(): float
+    {
+        return $this->successfulContributions()->sum('amount');
+    }
+
+    /**
+     * Get total number of successful donations
+     */
+    public function getTotalDonationsAttribute(): int
+    {
+        return $this->successfulContributions()->count();
+    }
+
+    /**
+     * Scope for active donation links
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active')
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            });
     }
 }

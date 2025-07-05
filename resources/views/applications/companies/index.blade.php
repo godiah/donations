@@ -326,7 +326,7 @@
                                         <input type="file" id="bank_account_proof" name="bank_account_proof"
                                             accept=".pdf,.jpg,.jpeg,.png"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                        <div class="mt-1 text-sm text-gray-500">Bank statement, cancelled cheque, or
+                                        <div class="mt-1 text-sm text-gray-500">Bank statement, resubmitted cheque, or
                                             account confirmation letter. Max size: 5MB</div>
                                         <div class="hidden mt-1 text-sm text-red-500 error-message"></div>
                                     </div>

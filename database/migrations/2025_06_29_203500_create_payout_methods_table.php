@@ -26,7 +26,7 @@ return new class extends Migration
             $table->timestamps();
 
             // Ensure only one primary method per payable
-            $table->unique(['payable_type', 'payable_id', 'is_primary'], 'unique_primary_payout');
+            //$table->unique(['payable_type', 'payable_id', 'is_primary'], 'unique_primary_payout');
         });
     }
 

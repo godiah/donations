@@ -77,7 +77,7 @@ class PayoutMethod extends Model
             return $this->provider . ' - ' . $this->account_number;
         }
 
-        return $this->bank_name . ' - ' . $this->account_number;
+        return $this->bank ? ($this->bank->display_name . ' - ' . $this->account_number) : 'Bank Account - ' . $this->account_number;
     }
 
     /**

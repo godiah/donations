@@ -1,205 +1,679 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="text-xl font-semibold leading-tight text-gray-800">
-            Dashboard
-        </h2>
-    </x-slot>
 
-    <div class="py-12">
-        <div class="mx-auto space-y-6 max-w-7xl sm:px-6 lg:px-8">
-            <!-- Welcome Section -->
-            <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    @if ($user->hasRole('admin'))
-                        <div class="space-y-4">
-                            <div class="text-2xl font-bold">Welcome, {{ $user->name }}!</div>
-                            <div class="space-y-2">
-                                <p><span class="font-semibold">Email:</span> {{ $user->email }}</p>
+    <div class="pt-16 bg-gradient-to-br from-neutral-50 to-neutral-100">
+        <div class="relative py-8 sm:py-12">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <!-- Header Section -->
+                <div class="mb-8">
+                    <div
+                        class="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl p-6 sm:p-8 text-white shadow-xl">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <div
+                                    class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                        stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                                    </svg>
+
+                                </div>
+                                <div>
+                                    <h1 class="text-2xl sm:text-3xl font-heading font-bold">
+                                        Welcome back, {{ $user->name }}!
+                                    </h1>
+                                    <p class="text-primary-100 mt-1">
+                                        @if ($user->hasRole('admin'))
+                                            Admin Dashboard - Manage donations and applications
+                                        @else
+                                            Ready to make a difference? Let's get started.
+                                        @endif
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="hidden sm:block">
+                                <div class="text-right">
+                                    <div class="text-sm text-primary-200">{{ now()->format('l') }}</div>
+                                    <div class="text-lg font-semibold">{{ now()->format('M d, Y') }}</div>
+                                </div>
                             </div>
                         </div>
-                    @else
-                        <div class="space-y-4">
-                            <div class="text-2xl font-bold">Welcome, {{ $user->name }}!</div>
-                            <div class="space-y-2">
-                                <p><span class="font-semibold">Email:</span> {{ $user->email }}</p>
-                                <p><span class="font-semibold">User Type:</span> {{ $user->user_type }}</p>
-                            </div>
-                        </div>
-                        <div class="mt-4">
-                            @if ($user->user_type === \App\Enums\UserType::Individual)
-                                <a href="{{ route('individual.application') }}"
-                                    class="inline-flex items-center px-4 py-2 font-semibold text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700">
-                                    Set Up New Donation
-                                </a>
-                            @else
-                                <a href="{{ route('company.application') }}"
-                                    class="inline-flex items-center px-4 py-2 font-semibold text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700">
-                                    Set Up New Company Donation
-                                </a>
-                            @endif
-                        </div>
-                    @endif
-                </div>
-            </div>
-
-            @if ($user->hasRole('admin'))
-                <!-- Admin Panel -->
-                <div class="py-4">
-                    <h1>Quick Actions</h1>
-                    <div>
-                        <a href="{{ route('admin.applications.index') }}">View Applications</a>
-                        <a href="{{ route('admin.donation-links.index') }}">View Donations</a>
                     </div>
                 </div>
-            @endif
 
-            <!-- Applications Section -->
-            @if (!$user->hasRole('admin'))
-                <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold text-gray-800">Recent Applications</h3>
-                            <div class="flex items-center space-x-3">
-                                <span class="text-sm text-gray-600">{{ $recentApplications->count() }} of
-                                    {{ $totalActiveApplications }} active</span>
-                                @if ($totalActiveApplications > 4)
-                                    <a href="{{ route('active') }}"
-                                        class="inline-flex items-center px-3 py-1.5 bg-indigo-600 border border-transparent rounded-md text-xs font-medium text-white hover:bg-indigo-700 transition-colors">
-                                        View All Applications
-                                    </a>
-                                @endif
+                <div class="grid gap-6 lg:grid-cols-3">
+                    <!-- Main Content -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- User Information Card -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
+                            <div class="bg-gradient-to-r from-neutral-800 to-neutral-700 px-6 py-4">
+                                <h2 class="text-lg font-heading font-semibold text-white flex items-center gap-2">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                        <path
+                                            d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" />
+                                    </svg>
+                                    Account Information
+                                </h2>
                             </div>
-                        </div>
+                            <div class="p-6">
+                                <div class="grid gap-4 sm:grid-cols-2">
+                                    <div class="space-y-3">
+                                        <div class="flex items-center gap-3">
+                                            <div
+                                                class="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                    class="w-5 h-5 text-primary-600">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                                </svg>
 
-                        @if ($recentApplications->isEmpty())
-                            <div class="py-8 text-center">
-                                <div class="mb-2 text-lg text-gray-400">📋</div>
-                                <p class="text-gray-600">No active applications found.</p>
-                                <p class="mt-1 text-sm text-gray-500">Click "Set Up Donation" above to create your first
-                                    application.</p>
-                            </div>
-                        @else
-                            <div class="space-y-4">
-                                @foreach ($recentApplications as $application)
-                                    <div
-                                        class="p-4 transition-shadow border border-gray-200 rounded-lg hover:shadow-md">
-                                        <div class="flex items-start justify-between">
-                                            <div class="flex-1">
-                                                <div class="flex items-center mb-2 space-x-3">
-                                                    <span class="text-sm font-medium text-gray-900">
-                                                        #{{ $application->application_number }}
-                                                    </span>
-                                                    <span
-                                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $application->status->getColorClass() }}">
-                                                        {{ $application->status->getDisplayName() }}
-                                                    </span>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm text-neutral-500 font-medium">Full Name</p>
+                                                <p class="text-neutral-800 font-semibold">{{ $user->name }}</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex items-center gap-3">
+                                            <div
+                                                class="w-10 h-10 bg-secondary-100 rounded-lg flex items-center justify-center">
+                                                <svg class="w-5 h-5 text-secondary-600" fill="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path
+                                                        d="M20 4H4C2.89 4 2 4.89 2 6V18C2 19.11 2.89 20 4 20H20C21.11 20 22 19.11 22 18V6C22 4.89 21.11 4 20 4ZM20 8L12 13L4 8V6L12 11L20 6V8Z" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm text-neutral-500 font-medium">Email Address</p>
+                                                <p class="text-neutral-800 font-semibold">{{ $user->email }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    @if (!$user->hasRole('admin'))
+                                        <div class="space-y-3">
+                                            <div class="flex items-center gap-3">
+                                                <div
+                                                    class="w-10 h-10 bg-success-100 rounded-lg flex items-center justify-center">
+                                                    <svg class="w-5 h-5 text-success-600" fill="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        <path
+                                                            d="M16 4C18.2 4 20 5.8 20 8C20 10.2 18.2 12 16 12C13.8 12 12 10.2 12 8C12 5.8 13.8 4 16 4ZM16 14C18.7 14 24 15.3 24 18V20H8V18C8 15.3 13.3 14 16 14ZM8 12C10.2 12 12 10.2 12 8C12 5.8 10.2 4 8 4C5.8 4 4 5.8 4 8C4 10.2 5.8 12 8 12ZM8 14C5.3 14 0 15.3 0 18V20H6V18C6 16.4 6.7 15.1 7.6 14.1C7.1 14 6.6 14 8 14Z" />
+                                                    </svg>
                                                 </div>
-
-                                                <h4 class="mb-1 text-base font-medium text-gray-900">
-                                                    {{ $application->applicant->contribution_name }}
-                                                </h4>
-
-                                                <div class="space-y-1 text-sm text-gray-600">
-                                                    <p><span class="font-medium">Target Amount:</span> KSh
-                                                        {{ number_format($application->applicant->target_amount, 2) }}
-                                                    </p>
-                                                    <p><span class="font-medium">Target Date:</span>
-                                                        {{ $application->applicant->target_date->format('M j, Y') }}
-                                                    </p>
-                                                    <p><span class="font-medium">Submitted:</span>
-                                                        {{ $application->submitted_at->format('M j, Y g:i A') }}</p>
-                                                    @if ($application->reviewed_at)
-                                                        <p><span class="font-medium">Reviewed:</span>
-                                                            {{ $application->reviewed_at->format('M j, Y g:i A') }}</p>
-                                                    @endif
+                                                <div>
+                                                    <p class="text-sm text-neutral-500 font-medium">Account Type</p>
+                                                    <p class="text-neutral-800 font-semibold capitalize">
+                                                        {{ $user->user_type }}</p>
                                                 </div>
                                             </div>
 
-                                            <div class="flex flex-col ml-4 space-y-2">
-                                                @if ($application->applicant_type === \App\Models\Individual::class)
-                                                    <a href="{{ route('individual.applications.show', $application->application_number) }}"
-                                                        class="inline-flex items-center px-3 py-1.5 bg-indigo-600 border border-transparent rounded-md text-xs font-medium text-white hover:bg-indigo-700 transition-colors">
-                                                        View Details
+                                            <div class="flex items-center gap-3">
+                                                <div
+                                                    class="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                                                    <svg class="w-5 h-5 text-primary-600" fill="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        <path
+                                                            d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" />
+                                                    </svg>
+                                                </div>
+                                                <div>
+                                                    <p class="text-sm text-neutral-500 font-medium">Status</p>
+                                                    <span
+                                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success-100 text-success-800">
+                                                        Active
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (!$user->hasRole('admin'))
+                            <!-- Quick Actions for Regular Users -->
+                            <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
+                                <div class="bg-gradient-to-r from-success-600 to-success-700 px-6 py-4">
+                                    <h2 class="text-lg font-heading font-semibold text-white flex items-center gap-2">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+                                        </svg>
+                                        Create New Donation
+                                    </h2>
+                                    <p class="text-success-100 text-sm mt-1">Start raising funds for your cause</p>
+                                </div>
+                                <div class="p-6">
+                                    <div class="grid gap-4 sm:grid-cols-2">
+                                        @if ($user->user_type === \App\Enums\UserType::Individual)
+                                            <a href="{{ route('individual.application') }}"
+                                                class="group relative bg-gradient-to-br from-primary-50 to-primary-100 hover:from-primary-100 hover:to-primary-200 border-2 border-primary-200 hover:border-primary-300 rounded-xl p-6 transition-all duration-200 transform hover:scale-[1.02]">
+                                                <div class="flex items-center gap-4">
+                                                    <div
+                                                        class="w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
+                                                        <svg class="w-6 h-6 text-white" fill="none"
+                                                            viewBox="0 0 24 24" stroke-width="1.5"
+                                                            stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                d="M12 4.5v15m7.5-7.5h-15" />
+                                                        </svg>
+                                                    </div>
+                                                    <div class="flex-1">
+                                                        <h3
+                                                            class="font-heading font-semibold text-primary-800 group-hover:text-primary-900">
+                                                            Personal Donation</h3>
+                                                        <p class="text-sm text-primary-600 mt-1">Create an individual
+                                                            fundraising campaign</p>
+                                                    </div>
+                                                    <svg class="w-5 h-5 text-primary-400 group-hover:text-primary-600 transition-colors"
+                                                        fill="currentColor" viewBox="0 0 24 24">
+                                                        <path
+                                                            d="M8.59 16.59L13.17 12L8.59 7.41L10 6L16 12L10 18L8.59 16.59Z" />
+                                                    </svg>
+                                                </div>
+                                            </a>
+                                        @else
+                                            <a href="{{ route('company.application') }}"
+                                                class="group relative bg-gradient-to-br from-secondary-50 to-secondary-100 hover:from-secondary-100 hover:to-secondary-200 border-2 border-secondary-200 hover:border-secondary-300 rounded-xl p-6 transition-all duration-200 transform hover:scale-[1.02]">
+                                                <div class="flex items-center gap-4">
+                                                    <div
+                                                        class="w-12 h-12 bg-secondary-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
+                                                        <svg class="w-6 h-6 text-white" fill="currentColor"
+                                                            viewBox="0 0 24 24">
+                                                            <path
+                                                                d="M12 7V3H2V21H22V7H12ZM6 19H4V17H6V19ZM6 15H4V13H6V15ZM6 11H4V9H6V11ZM6 7H4V5H6V7ZM10 19H8V17H10V19ZM10 15H8V13H10V15ZM10 11H8V9H10V11ZM10 7H8V5H10V7ZM20 19H12V17H20V19ZM20 15H12V13H20V15ZM20 11H12V9H20V11Z" />
+                                                        </svg>
+                                                    </div>
+                                                    <div class="flex-1">
+                                                        <h3
+                                                            class="font-heading font-semibold text-secondary-800 group-hover:text-secondary-900">
+                                                            Company Donation</h3>
+                                                        <p class="text-sm text-secondary-600 mt-1">Set up corporate
+                                                            fundraising initiative</p>
+                                                    </div>
+                                                    <svg class="w-5 h-5 text-secondary-400 group-hover:text-secondary-600 transition-colors"
+                                                        fill="currentColor" viewBox="0 0 24 24">
+                                                        <path
+                                                            d="M8.59 16.59L13.17 12L8.59 7.41L10 6L16 12L10 18L8.59 16.59Z" />
+                                                    </svg>
+                                                </div>
+                                            </a>
+                                        @endif
+
+                                        <!-- Additional Quick Action -->
+                                        <a href="{{ route('donations') }}"
+                                            class="group relative bg-gradient-to-br from-neutral-50 to-neutral-100 border-2 hover:from-neutral-100 hover:to-neutral-200 border-neutral-200 hover:border-neutral-300 rounded-xl p-6 transition-all duration-200 transform hover:scale-[1.02]">
+                                            <div class="flex items-center gap-4">
+                                                <div
+                                                    class="w-12 h-12 bg-neutral-500 rounded-xl flex items-center justify-center shadow-lg">
+                                                    <svg class="w-6 h-6 text-white" fill="none"
+                                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+                                                    </svg>
+                                                </div>
+                                                <div class="flex-1">
+                                                    <h3 class="font-heading font-semibold text-neutral-800">View My
+                                                        Donations</h3>
+                                                    <p class="text-sm text-neutral-600 mt-1">Manage existing
+                                                        fundraising campaigns</p>
+                                                </div>
+                                                <svg class="w-5 h-5 text-neutral-400 group-hover:text-neutral-600 transition-colors"
+                                                    fill="currentColor" viewBox="0 0 24 24">
+                                                    <path
+                                                        d="M8.59 16.59L13.17 12L8.59 7.41L10 6L16 12L10 18L8.59 16.59Z" />
+                                                </svg>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
+                        <!-- Applications Section -->
+                        @if (!$user->hasRole('admin'))
+                            <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
+                                <!-- Header -->
+                                <div class="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <h3
+                                                class="text-lg font-heading font-semibold text-white flex items-center gap-2">
+                                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path
+                                                        d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20Z" />
+                                                </svg>
+                                                Recent Applications
+                                            </h3>
+                                            <p class="text-primary-100 text-sm mt-1">Track your fundraising campaign
+                                                applications</p>
+                                        </div>
+                                        <div class="flex items-center gap-3">
+                                            <div class="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1.5">
+                                                <span class="text-sm font-medium text-white">
+                                                    {{ $recentApplications->count() }} of
+                                                    {{ $totalActiveApplications }} active
+                                                </span>
+                                            </div>
+                                            @if ($totalActiveApplications > 2)
+                                                <a href="{{ route('active') }}"
+                                                    class="bg-white text-primary-600 hover:bg-primary-50 px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1">
+                                                    <span>View All</span>
+                                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                                        <path
+                                                            d="M8.59 16.59L13.17 12L8.59 7.41L10 6L16 12L10 18L8.59 16.59Z" />
+                                                    </svg>
+                                                </a>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="p-6">
+                                    @if ($recentApplications->isEmpty())
+                                        <!-- Empty State -->
+                                        <div class="text-center py-12">
+                                            <div
+                                                class="w-24 h-24 bg-gradient-to-br from-neutral-100 to-neutral-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                                <svg class="w-12 h-12 text-neutral-400" fill="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path
+                                                        d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20Z" />
+                                                </svg>
+                                            </div>
+                                            <h4 class="text-lg font-heading font-semibold text-neutral-800 mb-2">No
+                                                Applications Yet</h4>
+                                            <p class="text-neutral-600 mb-4 max-w-md mx-auto">
+                                                You haven't submitted any fundraising applications yet. Get started by
+                                                creating your first campaign.
+                                            </p>
+                                            <div class="flex justify-center gap-3">
+                                                @if ($user->user_type === \App\Enums\UserType::Individual)
+                                                    <a href="{{ route('individual.application') }}"
+                                                        class="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-[1.02] flex items-center gap-2">
+                                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+                                                        </svg>
+                                                        Create Personal Campaign
                                                     </a>
                                                 @else
-                                                    <a href="{{ route('company.applications.show', $application->application_number) }}"
-                                                        class="inline-flex items-center px-3 py-1.5 bg-indigo-600 border border-transparent rounded-md text-xs font-medium text-white hover:bg-indigo-700 transition-colors">
-                                                        View Details
+                                                    <a href="{{ route('company.application') }}"
+                                                        class="bg-gradient-to-r from-secondary-500 to-secondary-600 hover:from-secondary-600 hover:to-secondary-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-[1.02] flex items-center gap-2">
+                                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+                                                        </svg>
+                                                        Create Company Campaign
                                                     </a>
                                                 @endif
                                             </div>
                                         </div>
+                                    @else
+                                        <!-- Applications List -->
+                                        <div class="space-y-4 mb-6">
+                                            @foreach ($recentApplications as $application)
+                                                <div
+                                                    class="bg-gradient-to-r from-neutral-50 to-white border-2 border-neutral-200 hover:border-primary-300 rounded-xl p-6 transition-all duration-200 hover:shadow-md group">
+                                                    <div class="flex items-start justify-between">
+                                                        <div class="flex-1">
+                                                            <!-- Application Header -->
+                                                            <div class="flex items-center gap-3 mb-3">
+                                                                <div class="flex items-center gap-2">
+                                                                    <div
+                                                                        class="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
+                                                                        <svg class="w-4 h-4 text-primary-600"
+                                                                            fill="currentColor" viewBox="0 0 24 24">
+                                                                            <path
+                                                                                d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20Z" />
+                                                                        </svg>
+                                                                    </div>
+                                                                    <span
+                                                                        class="text-sm font-semibold text-neutral-700">
+                                                                        #{{ $application->application_number }}
+                                                                    </span>
+                                                                </div>
+                                                                <span
+                                                                    class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border {{ $application->status->getColorClass() }}">
+                                                                    {!! $application->status->getIcon() !!}
+                                                                    {{ $application->status->getDisplayName() }}
+                                                                </span>
+                                                            </div>
 
-                                        @if ($application->applicant->contribution_description)
-                                            <div class="pt-3 mt-3 border-t border-gray-100">
-                                                <p class="text-sm text-gray-600 line-clamp-2">
-                                                    {{ Str::limit($application->applicant->contribution_description, 150) }}
-                                                </p>
+                                                            <!-- Campaign Title -->
+                                                            <h4
+                                                                class="text-lg font-heading font-semibold text-neutral-800 mb-3 group-hover:text-primary-700 transition-colors">
+                                                                {{ $application->applicant->contribution_name }}
+                                                            </h4>
+
+                                                            <!-- Application Details -->
+                                                            <div class="grid gap-3 sm:grid-cols-2 text-sm">
+                                                                <div class="flex items-center gap-2">
+                                                                    <div
+                                                                        class="w-5 h-5 bg-neutral-200 rounded flex items-center justify-center">
+                                                                        <svg class="w-3 h-3 text-neutral-600"
+                                                                            fill="currentColor" viewBox="0 0 24 24">
+                                                                            <path
+                                                                                d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z" />
+                                                                        </svg>
+                                                                    </div>
+                                                                    <span
+                                                                        class="text-neutral-500 font-medium">Submitted:</span>
+                                                                    <span class="text-neutral-800 font-semibold">
+                                                                        {{ $application->submitted_at->format('M j, Y') }}
+                                                                    </span>
+                                                                </div>
+
+                                                                @if ($application->reviewed_at)
+                                                                    <div class="flex items-center gap-2">
+                                                                        <div
+                                                                            class="w-5 h-5 bg-success-200 rounded flex items-center justify-center">
+                                                                            <svg class="w-3 h-3 text-success-600"
+                                                                                fill="currentColor"
+                                                                                viewBox="0 0 24 24">
+                                                                                <path
+                                                                                    d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" />
+                                                                            </svg>
+                                                                        </div>
+                                                                        <span
+                                                                            class="text-neutral-500 font-medium">Reviewed:</span>
+                                                                        <span class="text-neutral-800 font-semibold">
+                                                                            {{ $application->reviewed_at->format('M j, Y') }}
+                                                                        </span>
+                                                                    </div>
+                                                                @endif
+                                                            </div>
+
+                                                            <!-- Description -->
+                                                            @if ($application->applicant->contribution_description)
+                                                                <div class="mt-4 pt-4 border-t border-neutral-200">
+                                                                    <p
+                                                                        class="text-sm text-neutral-600 leading-relaxed line-clamp-2">
+                                                                        {{ Str::limit($application->applicant->contribution_description, 150) }}
+                                                                    </p>
+                                                                </div>
+                                                            @endif
+                                                        </div>
+
+                                                        <!-- Action Button -->
+                                                        <div class="ml-6 flex-shrink-0">
+                                                            @if ($application->applicant_type === \App\Models\Individual::class)
+                                                                <a href="{{ route('individual.applications.show', $application->application_number) }}"
+                                                                    class="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 transform hover:scale-[1.02] flex items-center gap-2 shadow-md hover:shadow-lg">
+                                                                    <span>View Details</span>
+                                                                    <svg class="w-4 h-4" fill="currentColor"
+                                                                        viewBox="0 0 24 24">
+                                                                        <path
+                                                                            d="M8.59 16.59L13.17 12L8.59 7.41L10 6L16 12L10 18L8.59 16.59Z" />
+                                                                    </svg>
+                                                                </a>
+                                                            @else
+                                                                <a href="{{ route('company.applications.show', $application->application_number) }}"
+                                                                    class="bg-gradient-to-r from-secondary-500 to-secondary-600 hover:from-secondary-600 hover:to-secondary-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 transform hover:scale-[1.02] flex items-center gap-2 shadow-md hover:shadow-lg">
+                                                                    <span>View Details</span>
+                                                                    <svg class="w-4 h-4" fill="currentColor"
+                                                                        viewBox="0 0 24 24">
+                                                                        <path
+                                                                            d="M8.59 16.59L13.17 12L8.59 7.41L10 6L16 12L10 18L8.59 16.59Z" />
+                                                                    </svg>
+                                                                </a>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+
+                                        <!-- Quick Navigation Cards -->
+                                        <div class="border-t border-neutral-200 pt-6">
+                                            <h4
+                                                class="text-sm font-semibold text-neutral-700 mb-4 flex items-center gap-2">
+                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path
+                                                        d="M12 2L2 7L12 12L22 7L12 2ZM2 17L12 22L22 17M2 12L12 17L22 12" />
+                                                </svg>
+                                                Quick Navigation
+                                            </h4>
+                                            <div class="grid gap-4 sm:grid-cols-2">
+                                                <!-- All Applications -->
+                                                <a href="{{ route('active') }}"
+                                                    class="group bg-gradient-to-br from-primary-50 to-primary-100 hover:from-primary-100 hover:to-primary-200 border-2 border-primary-200 hover:border-primary-300 rounded-xl p-4 transition-all duration-200 transform hover:scale-[1.02]">
+                                                    <div class="flex items-center gap-3">
+                                                        <div
+                                                            class="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
+                                                            <svg class="w-5 h-5 text-white" fill="currentColor"
+                                                                viewBox="0 0 24 24">
+                                                                <path
+                                                                    d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20Z" />
+                                                            </svg>
+                                                        </div>
+                                                        <div class="flex-1">
+                                                            <h5
+                                                                class="font-semibold text-primary-800 group-hover:text-primary-900">
+                                                                All Applications</h5>
+                                                            <p class="text-xs text-primary-600 mt-0.5">View submitted &
+                                                                under review</p>
+                                                        </div>
+                                                        <svg class="w-4 h-4 text-primary-400 group-hover:text-primary-600 transition-colors"
+                                                            fill="currentColor" viewBox="0 0 24 24">
+                                                            <path
+                                                                d="M8.59 16.59L13.17 12L8.59 7.41L10 6L16 12L10 18L8.59 16.59Z" />
+                                                        </svg>
+                                                    </div>
+                                                </a>
+
+                                                <!-- Needs Attention -->
+                                                <a href="{{ route('pending') }}"
+                                                    class="group bg-gradient-to-br from-secondary-50 to-secondary-100 hover:from-secondary-100 hover:to-secondary-200 border-2 border-secondary-200 hover:border-secondary-300 rounded-xl p-4 transition-all duration-200 transform hover:scale-[1.02]">
+                                                    <div class="flex items-center gap-3">
+                                                        <div
+                                                            class="w-10 h-10 bg-secondary-500 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
+                                                            <svg class="w-5 h-5 text-white" fill="currentColor"
+                                                                viewBox="0 0 24 24">
+                                                                <path
+                                                                    d="M12 9V11H14V9H12ZM12 17H14V13H12V17ZM12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" />
+                                                            </svg>
+                                                        </div>
+                                                        <div class="flex-1">
+                                                            <h5
+                                                                class="font-semibold text-secondary-800 group-hover:text-secondary-900">
+                                                                Needs Attention</h5>
+                                                            <p class="text-xs text-secondary-600 mt-0.5">Rejected,
+                                                                resubmitted, or pending info</p>
+                                                        </div>
+                                                        <svg class="w-4 h-4 text-secondary-400 group-hover:text-secondary-600 transition-colors"
+                                                            fill="currentColor" viewBox="0 0 24 24">
+                                                            <path
+                                                                d="M8.59 16.59L13.17 12L8.59 7.41L10 6L16 12L10 18L8.59 16.59Z" />
+                                                        </svg>
+                                                    </div>
+                                                </a>
                                             </div>
-                                        @endif
-                                    </div>
-                                @endforeach
-                            </div>
-
-                            <!-- Quick Navigation Cards -->
-                            <div class="grid grid-cols-1 gap-4 mt-6 md:grid-cols-3">
-                                <a href="{{ route('active') }}"
-                                    class="block p-4 transition-colors bg-blue-50 rounded-lg hover:bg-blue-100">
-                                    <div class="flex items-center space-x-3">
-                                        <div class="p-2 bg-blue-200 rounded-full">
-                                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                                                </path>
-                                            </svg>
                                         </div>
-                                        <div>
-                                            <p class="text-sm font-medium text-blue-900">All Applications</p>
-                                            <p class="text-xs text-blue-600">View submitted & under review</p>
-                                        </div>
-                                    </div>
-                                </a>
-
-                                <a href="{{ route('donations') }}"
-                                    class="block p-4 transition-colors bg-green-50 rounded-lg hover:bg-green-100">
-                                    <div class="flex items-center space-x-3">
-                                        <div class="p-2 bg-green-200 rounded-full">
-                                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M5 13l4 4L19 7"></path>
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <p class="text-sm font-medium text-green-900">My Donations</p>
-                                            <p class="text-xs text-green-600">Approved applications</p>
-                                        </div>
-                                    </div>
-                                </a>
-
-                                <a href="{{ route('pending') }}"
-                                    class="block p-4 transition-colors bg-orange-50 rounded-lg hover:bg-orange-100">
-                                    <div class="flex items-center space-x-3">
-                                        <div class="p-2 bg-orange-200 rounded-full">
-                                            <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.664-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z">
-                                                </path>
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <p class="text-sm font-medium text-orange-900">Needs Attention</p>
-                                            <p class="text-xs text-orange-600">Rejected, cancelled, or pending info</p>
-                                        </div>
-                                    </div>
-                                </a>
+                                    @endif
+                                </div>
                             </div>
                         @endif
+
+                    </div>
+
+                    <!-- Sidebar -->
+                    <div class="space-y-6">
+                        @if ($user->hasRole('admin'))
+                            <!-- Admin Quick Actions -->
+                            <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
+                                <div class="bg-gradient-to-r from-danger-600 to-danger-700 px-6 py-4">
+                                    <h2 class="text-lg font-heading font-semibold text-white flex items-center gap-2">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 2L2 7L12 12L22 7L12 2ZM2 17L12 22L22 17M2 12L12 17L22 12" />
+                                        </svg>
+                                        Admin Panel
+                                    </h2>
+                                    <p class="text-danger-100 text-sm mt-1">Manage applications and donations</p>
+                                </div>
+                                <div class="p-6 space-y-4">
+                                    <a href="{{ route('admin.applications.index') }}"
+                                        class="group flex items-center gap-3 p-4 bg-gradient-to-r from-primary-50 to-primary-100 hover:from-primary-100 hover:to-primary-200 border border-primary-200 hover:border-primary-300 rounded-xl transition-all duration-200 transform hover:scale-[1.02]">
+                                        <div
+                                            class="w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center shadow-md">
+                                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                                <path
+                                                    d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20Z" />
+                                            </svg>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h3 class="font-semibold text-primary-800 group-hover:text-primary-900">
+                                                View Applications</h3>
+                                            <p class="text-sm text-primary-600">Review pending applications</p>
+                                        </div>
+                                        <svg class="w-4 h-4 text-primary-400 group-hover:text-primary-600 transition-colors"
+                                            fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M8.59 16.59L13.17 12L8.59 7.41L10 6L16 12L10 18L8.59 16.59Z" />
+                                        </svg>
+                                    </a>
+
+                                    <a href="{{ route('admin.donation-links.index') }}"
+                                        class="group flex items-center gap-3 p-4 bg-gradient-to-r from-success-50 to-success-100 hover:from-success-100 hover:to-success-200 border border-success-200 hover:border-success-300 rounded-xl transition-all duration-200 transform hover:scale-[1.02]">
+                                        <div
+                                            class="w-10 h-10 bg-success-500 rounded-lg flex items-center justify-center shadow-md">
+                                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                                <path
+                                                    d="M11.8 10.9C9.53 10.31 8.8 9.7 8.8 8.75C8.8 7.66 9.81 6.9 11.5 6.9C13.28 6.9 13.94 7.75 14 9H16.21C16.14 7.28 15.09 5.7 13 5.19V3H10V5.16C8.06 5.58 6.5 6.84 6.5 8.77C6.5 11.08 8.41 12.23 11.2 12.9C13.7 13.5 14.2 14.38 14.2 15.31C14.2 16 13.71 17.1 11.5 17.1C9.44 17.1 8.63 16.18 8.5 15H6.32C6.44 17.19 8.08 18.42 10 18.83V21H13V18.85C14.95 18.5 16.5 17.35 16.5 15.3C16.5 12.46 14.07 11.5 11.8 10.9Z" />
+                                            </svg>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h3 class="font-semibold text-success-800 group-hover:text-success-900">
+                                                View Donations</h3>
+                                            <p class="text-sm text-success-600">Monitor donation activity</p>
+                                        </div>
+                                        <svg class="w-4 h-4 text-success-400 group-hover:text-success-600 transition-colors"
+                                            fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M8.59 16.59L13.17 12L8.59 7.41L10 6L16 12L10 18L8.59 16.59Z" />
+                                        </svg>
+                                    </a>
+                                </div>
+                            </div>
+                        @endif
+
+                        <!-- Statistics Card -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
+                            <div class="bg-gradient-to-r from-secondary-600 to-secondary-700 px-6 py-4">
+                                <h2 class="text-lg font-heading font-semibold text-white flex items-center gap-2">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                        <path
+                                            d="M16 6L18.29 8.29L13.41 13.17L9.41 9.17L2 16.59L3.41 18L9.41 12L13.41 16L19.71 9.71L22 12V6H16Z" />
+                                    </svg>
+                                    Quick Stats
+                                </h2>
+                            </div>
+                            <div class="p-6 space-y-4">
+                                <div
+                                    class="flex items-center justify-between p-4 bg-gradient-to-r from-primary-50 to-primary-100 rounded-xl">
+                                    <div>
+                                        <p class="text-sm text-primary-600 font-medium">Active Campaigns</p>
+                                        <p class="text-2xl font-bold text-primary-800">
+                                            @if ($user->hasRole('admin'))
+                                                {{ $totalCampaigns ?? 0 }}
+                                            @else
+                                                {{ $userCampaigns ?? 0 }}
+                                            @endif
+                                        </p>
+                                    </div>
+                                    <div class="w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                            <path
+                                                d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM19 19H5V5H19V19ZM17 12H7V10H17V12ZM15 16H7V14H15V16ZM17 8H7V6H17V8Z" />
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="flex items-center justify-between p-4 bg-gradient-to-r from-success-50 to-success-100 rounded-xl">
+                                    <div>
+                                        <p class="text-sm text-success-600 font-medium">Total Raised</p>
+                                        <p class="text-2xl font-bold text-success-800">
+                                            KES {{ number_format($totalRaised ?? 0, 2) }}
+                                        </p>
+                                    </div>
+                                    <div class="w-12 h-12 bg-success-500 rounded-xl flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                            <path
+                                                d="M11.8 10.9C9.53 10.31 8.8 9.7 8.8 8.75C8.8 7.66 9.81 6.9 11.5 6.9C13.28 6.9 13.94 7.75 14 9H16.21C16.14 7.28 15.09 5.7 13 5.19V3H10V5.16C8.06 5.58 6.5 6.84 6.5 8.77C6.5 11.08 8.41 12.23 11.2 12.9C13.7 13.5 14.2 14.38 14.2 15.31C14.2 16 13.71 17.1 11.5 17.1C9.44 17.1 8.63 16.18 8.5 15H6.32C6.44 17.19 8.08 18.42 10 18.83V21H13V18.85C14.95 18.5 16.5 17.35 16.5 15.3C16.5 12.46 14.07 11.5 11.8 10.9Z" />
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                @if (!$user->hasRole('admin'))
+                                    <div
+                                        class="flex items-center justify-between p-4 bg-gradient-to-r from-secondary-50 to-secondary-100 rounded-xl">
+                                        <div>
+                                            <p class="text-sm text-secondary-600 font-medium">Contributors</p>
+                                            <p class="text-2xl font-bold text-secondary-800">
+                                                {{ $totalContributors ?? 0 }}</p>
+                                        </div>
+                                        <div
+                                            class="w-12 h-12 bg-secondary-500 rounded-xl flex items-center justify-center">
+                                            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                                <path
+                                                    d="M16 4C18.2 4 20 5.8 20 8C20 10.2 18.2 12 16 12C13.8 12 12 10.2 12 8C12 5.8 13.8 4 16 4ZM16 14C18.7 14 24 15.3 24 18V20H8V18C8 15.3 13.3 14 16 14ZM8 12C10.2 12 12 10.2 12 8C12 5.8 10.2 4 8 4C5.8 4 4 5.8 4 8C4 10.2 5.8 12 8 12ZM8 14C5.3 14 0 15.3 0 18V20H6V18C6 16.4 6.7 15.1 7.6 14.1C7.1 14 6.6 14 8 14Z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+
+                        <!-- Help & Support -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
+                            <div class="bg-gradient-to-r from-neutral-600 to-neutral-700 px-6 py-4">
+                                <h2 class="text-lg font-heading font-semibold text-white flex items-center gap-2">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                        <path
+                                            d="M11 18H13V16H11V18ZM12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20ZM12 6C9.79 6 8 7.79 8 10H10C10 8.9 10.9 8 12 8C13.1 8 14 8.9 14 10C14 12 11 11.75 11 15H13C13 12.75 16 12.5 16 10C16 7.79 14.21 6 12 6Z" />
+                                    </svg>
+                                    Help & Support
+                                </h2>
+                            </div>
+                            <div class="p-6 space-y-3">
+                                <a href="#"
+                                    class="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-lg transition-colors">
+                                    <div class="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-primary-600" fill="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path
+                                                d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20Z" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-sm font-medium text-neutral-700">Documentation</span>
+                                </a>
+
+                                <a href="#"
+                                    class="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-lg transition-colors">
+                                    <div class="w-8 h-8 bg-success-100 rounded-lg flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-success-600" fill="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path
+                                                d="M20 4H4C2.89 4 2 4.89 2 6V18C2 19.11 2.89 20 4 20H20C21.11 20 22 19.11 22 18V6C22 4.89 21.11 4 20 4ZM20 8L12 13L4 8V6L12 11L20 6V8Z" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-sm font-medium text-neutral-700">Contact Support</span>
+                                </a>
+
+                                <a href="#"
+                                    class="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-lg transition-colors">
+                                    <div class="w-8 h-8 bg-secondary-100 rounded-lg flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-secondary-600" fill="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path
+                                                d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-sm font-medium text-neutral-700">FAQ</span>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            @endif
+            </div>
         </div>
     </div>
 </x-app-layout>

@@ -134,4 +134,83 @@ class Application extends Model
     {
         return $this->payoutMandate ? $this->payoutMandate->checker : null;
     }
+
+     /**
+     * Check if application has any rejected support documents
+     */
+    public function hasRejectedDocuments(): bool
+    {
+        return $this->applicant->supportDocuments()
+            ->where('status', 'rejected')
+            ->exists();
+    }
+
+    /**
+     * Check if individual application has unverified KYC
+     */
+    public function hasUnverifiedKyc(): bool
+    {
+        if ($this->applicant_type !== 'App\\Models\\Individual') {
+            return false;
+        }
+
+        // Check if there's any verified KYC for this application
+        return !$this->applicant
+            ->kycVerifications()
+            ->where('application_id', $this->id)
+            ->where('status', 'verified')
+            ->exists();
+    }
+
+    /**
+     * Get KYC status for individual applications
+     */
+    public function getKycStatus(): string
+    {
+        if ($this->applicant_type !== 'App\\Models\\Individual') {
+            return 'not_applicable';
+        }
+
+        $hasVerified = $this->applicant
+            ->kycVerifications()
+            ->where('application_id', $this->id)
+            ->where('status', 'verified')
+            ->exists();
+
+        if ($hasVerified) {
+            return 'verified';
+        }
+
+        $latestKyc = $this->applicant
+            ->kycVerifications()
+            ->where('application_id', $this->id)
+            ->latest()
+            ->first();
+
+        return $latestKyc ? $latestKyc->status : 'pending';
+    }
+
+    /**
+     * Determine if admin form should be shown
+     */
+    public function shouldShowAdminForm(): bool
+    {
+        // Rule 1: Any rejected support documents
+        if ($this->hasRejectedDocuments()) {
+            return true;
+        }
+
+        // Rule 2: Individual without verified KYC
+        if ($this->hasUnverifiedKyc()) {
+            return true;
+        }
+
+        // Rule 3: Company application under review
+        if ($this->applicant_type === 'App\\Models\\Company' && 
+            $this->status->value === 'under_review') {
+            return true;
+        }
+
+        return false;
+    }
 }

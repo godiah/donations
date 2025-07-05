@@ -48,7 +48,8 @@
                     </div>
 
                     {{-- Mobile Money Fields --}}
-                    <div id="mobile_money_fields" class="space-y-4" style="display: none;">
+                    <div id="mobile_money_fields" class="space-y-4"
+                        style="{{ old('type', 'mobile_money') === 'mobile_money' ? 'display: block;' : 'display: none;' }}">
                         <div>
                             <label for="provider" class="block text-sm font-medium text-gray-700">Provider</label>
                             <select id="provider" name="provider"
@@ -170,15 +171,56 @@
 
             function toggleFields() {
                 const selectedType = document.querySelector('input[name="type"]:checked');
-                mobileFields.style.display = selectedType?.value === 'mobile_money' ? 'block' : 'none';
-                bankFields.style.display = selectedType?.value === 'bank_account' ? 'block' : 'none';
 
+                // Toggle visibility and disable/enable fields
                 if (selectedType?.value === 'mobile_money') {
+                    mobileFields.style.display = 'block';
+                    bankFields.style.display = 'none';
+
+                    // Enable mobile money fields
+                    mobileFields.querySelectorAll('input, select').forEach(field => {
+                        field.disabled = false;
+                    });
+
+                    // Disable bank account fields
+                    bankFields.querySelectorAll('input, select').forEach(field => {
+                        field.disabled = true;
+                    });
+
                     // Clear bank fields
                     document.getElementById('bank_id').value = '';
+                    bankFields.querySelectorAll('input').forEach(input => {
+                        input.value = '';
+                    });
                 } else if (selectedType?.value === 'bank_account') {
-                    // Clear mobile fields
+                    mobileFields.style.display = 'none';
+                    bankFields.style.display = 'block';
+
+                    // Enable bank account fields
+                    bankFields.querySelectorAll('input, select').forEach(field => {
+                        field.disabled = false;
+                    });
+
+                    // Disable mobile money fields
+                    mobileFields.querySelectorAll('input, select').forEach(field => {
+                        field.disabled = true;
+                    });
+
+                    // Clear mobile money fields
                     document.getElementById('provider').value = '';
+                    mobileFields.querySelectorAll('input').forEach(input => {
+                        input.value = '';
+                    });
+                } else {
+                    // If no type is selected, hide and disable both
+                    mobileFields.style.display = 'none';
+                    bankFields.style.display = 'none';
+                    mobileFields.querySelectorAll('input, select').forEach(field => {
+                        field.disabled = true;
+                    });
+                    bankFields.querySelectorAll('input, select').forEach(field => {
+                        field.disabled = true;
+                    });
                 }
             }
 

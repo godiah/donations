@@ -147,8 +147,7 @@ class IndividualDonationController extends Controller
     {
         // First, normalize the phone numbers in the request data
         $request->merge([
-            'phone' => $this->normalizePhoneNumber($request->phone),
-            'emergency_contact_phone' => $this->normalizePhoneNumber($request->emergency_contact_phone),
+            'phone' => $this->normalizePhoneNumber($request->phone),            
         ]);
 
         $rules = [
@@ -159,9 +158,7 @@ class IndividualDonationController extends Controller
             'middle_name' => 'nullable|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'nullable|email|max:255',
-            'phone' => 'required|string|regex:/^\+254\d{9}$/',
-            'emergency_contact_name' => 'nullable|string|max:255',
-            'emergency_contact_phone' => 'nullable|string|regex:/^\+254\d{9}$/',
+            'phone' => 'required|string|regex:/^\+254\d{9}$/',            
             'id_number' => 'required|string|max:50',
             'kra_pin' => 'nullable|string|max:20',
             'target_amount' => 'nullable|numeric|min:1|max:999999999.99',
@@ -207,14 +204,9 @@ class IndividualDonationController extends Controller
             'middle_name' => $request->middle_name,
             'last_name' => $request->last_name,
             'email' => $request->email,
-            'phone' => $request->phone,
-            'emergency_contact_name' => $request->emergency_contact_name,
-            'emergency_contact_phone' => $request->emergency_contact_phone,
+            'phone' => $request->phone,            
             'id_type_id' => $request->id_type_id,
             'id_number' => $request->id_number,
-            'kyc_verified' => false, // Will be updated via callback
-            'kyc_verified_at' => null,
-            'kyc_response_data' => null,
             'kra_pin' => $request->kra_pin,
             'target_amount' => $request->target_amount,
             'target_date' => $request->target_date,

@@ -29,7 +29,7 @@ class DashboardController extends Controller
                     });
             })
             ->orderBy('submitted_at', 'desc')
-            ->limit(4)
+            ->limit(2)
             ->get();
 
         // Count total applications for the "View All" button context

@@ -87,4 +87,23 @@ class ApplicationPolicy
 
         return false;
     }
+
+    /**
+     * Determine whether the user can update the application.
+     */
+    public function update(User $user, Application $application): bool
+    {
+        // Only the owner can update their application
+        if ($application->applicant->user_id !== $user->id) {
+            return false;
+        }
+    
+        // Only applications requiring additional information can be updated
+        if ($application->status !== \App\Enums\ApplicationStatus::AdditionalInfoRequired) {
+            return false;
+        }
+    
+        return true;
+    }
+
 }

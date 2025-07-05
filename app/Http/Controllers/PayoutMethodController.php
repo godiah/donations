@@ -62,9 +62,20 @@ class PayoutMethodController extends Controller
      */
     public function setPrimary($id)
     {
-        $applicant = Auth::user()->applicant;
+        $user = Auth::user();
+        $applicant = $user->applicant;
 
+        if (!$applicant) {
+            return redirect()->back()->with('error', 'No applicant profile found.');
+        }
+
+        // Find the payout method for the applicant
         $payoutMethod = $applicant->payoutMethods()->findOrFail($id);
+
+        // Unset any existing primary method for this applicant
+        $applicant->payoutMethods()->where('is_primary', true)->update(['is_primary' => false]);
+
+        // Set the selected method as primary
         $payoutMethod->update(['is_primary' => true]);
 
         return redirect()->back()->with('success', 'Primary payout method updated!');

@@ -26,7 +26,7 @@
                             {{ $application->status->value === 'additional_info_required' ? 'bg-orange-100 text-orange-800' : '' }}
                             {{ $application->status->value === 'approved' ? 'bg-green-100 text-green-800' : '' }}
                             {{ $application->status->value === 'rejected' ? 'bg-red-100 text-red-800' : '' }}
-                            {{ $application->status->value === 'cancelled' ? 'bg-purple-100 text-purple-800' : '' }}">
+                            {{ $application->status->value === 'resubmitted' ? 'bg-purple-100 text-purple-800' : '' }}">
                             {{ ucfirst(str_replace('_', ' ', $application->status->value)) }}
                         </span>
                     </div>

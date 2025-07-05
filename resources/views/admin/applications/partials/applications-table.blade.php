@@ -52,11 +52,13 @@
                                     'additional_info_required' => 'bg-orange-100 text-orange-800',
                                     'approved' => 'bg-green-100 text-green-800',
                                     'rejected' => 'bg-red-100 text-red-800',
+                                    'resubmitted' => 'bg-purple-100 text-purple-800',
                                     default => 'bg-gray-100 text-gray-800',
                                 };
                                 $statusText = match ($application->status->value) {
                                     'under_review' => 'Under Review',
                                     'additional_info_required' => 'Additional Info Required',
+                                    'resubmitted' => 'Resubmitted',
                                     default => ucfirst($application->status->value),
                                 };
                             @endphp
