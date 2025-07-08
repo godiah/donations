@@ -76,8 +76,6 @@ class User extends Authenticatable
         return $this->roles()->where('role_id', $role->id)->exists();
     }
 
-
-
     /**
      * Assign a role to the user, optionally scoped to an application.
      */
@@ -112,7 +110,6 @@ class User extends Authenticatable
         return true;
     }
 
-
     /**
      * Remove a role from the user, optionally scoped to an application.
      */
@@ -137,7 +134,6 @@ class User extends Authenticatable
         // Remove global role
         return $this->roles()->detach($role->id) > 0;
     }
-
 
     /**
      * Get name of roles
@@ -189,6 +185,21 @@ class User extends Authenticatable
     public function company()
     {
         return $this->hasOne(Company::class);
+    }
+
+    public function wallet()
+    {
+        return $this->hasOne(Wallet::class);
+    }
+
+    public function walletTransactions()
+    {
+        return $this->hasManyThrough(WalletTransaction::class, Wallet::class);
+    }
+
+    public function withdrawalRequests()
+    {
+        return $this->hasMany(WithdrawalRequest::class);
     }
 
     public function getApplicantAttribute()

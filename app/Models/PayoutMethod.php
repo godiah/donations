@@ -21,6 +21,9 @@ class PayoutMethod extends Model
         'is_primary',
         'is_verified',
         'additional_info',
+        'paybill_number',
+        'paybill_account_name',
+        'paybill_settings'
     ];
 
     protected $casts = [
@@ -66,6 +69,35 @@ class PayoutMethod extends Model
     public function bank()
     {
         return $this->belongsTo(Bank::class);
+    }
+
+    public function isPaybillMethod(): bool
+    {
+        return $this->type === 'paybill';
+    }
+
+    public function getPaybillDetails(): ?array
+    {
+        if (!$this->isPaybillMethod()) {
+            return null;
+        }
+
+        return [
+            'paybill_number' => $this->paybill_number,
+            'account_name' => $this->paybill_account_name,
+            'account_number' => $this->account_number,
+            'settings' => $this->paybill_settings,
+        ];
+    }
+
+    public function validatePaybillAccount(string $accountNumber, string $accountName): bool
+    {
+        if (!$this->isPaybillMethod()) {
+            return false;
+        }
+
+        return $this->account_number === $accountNumber &&
+            strcasecmp($this->paybill_account_name, $accountName) === 0;
     }
 
     /**

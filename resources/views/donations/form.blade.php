@@ -64,11 +64,12 @@
                     <h3 class="text-lg font-heading font-semibold text-neutral-800 mb-2">Fundraising Progress</h3>
                     <div class="flex items-center justify-center gap-4 text-sm text-neutral-600">
                         <span class="flex items-center gap-1">
-                            <svg class="w-4 h-4 text-success-500" fill="currentColor" viewBox="0 0 24 24">
-                                <path
-                                    d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1H5C3.9 1 3 1.9 3 3V21C3 22.1 3.9 23 5 23H19C20.1 23 21 22.1 21 21V9M19 9H14V4H19V9Z" />
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                stroke="currentColor"class="w-4 h-4 text-success-500">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
                             </svg>
-                            KES {{ number_format($application->applicant->amount_raised ?? 0, 2) }} raised
+                            KES {{ $contributionStats['total_raised_formatted'] }} raised
                         </span>
                         <span class="text-neutral-400">•</span>
                         <span class="flex items-center gap-1">
@@ -76,17 +77,20 @@
                                 <path
                                     d="M16 4C18.2 4 20 5.8 20 8C20 10.2 18.2 12 16 12C13.8 12 12 10.2 12 8C12 5.8 13.8 4 16 4ZM16 14C18.7 14 24 15.3 24 18V20H8V18C8 15.3 13.3 14 16 14ZM8 12C10.2 12 12 10.2 12 8C12 5.8 10.2 4 8 4C5.8 4 4 5.8 4 8C4 10.2 5.8 12 8 12ZM8 14C5.3 14 0 15.3 0 18V20H6V18C6 16.4 6.7 15.1 7.6 14.1C7.1 14 6.6 14 8 14Z" />
                             </svg>
-                            {{ $application->applicant->contributors_count ?? 0 }} people
+                            {{ $contributionStats['total_contributors'] }} contributors
                         </span>
+                        <span class="text-neutral-400">•</span>
+                        @if ($contributionStats['has_target'])
+                            <span class="flex items-center gap-1 text-sm text-gray-600">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                    <path
+                                        d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8Z" />
+                                </svg>
+                                Goal: KES {{ $contributionStats['target_amount_formatted'] }}
+                            </span>
+                        @endif
                     </div>
                 </div>
-
-                <!-- Progress Bar -->
-                @php
-                    $amountRaised = $application->applicant->amount_raised ?? 0;
-                    $targetAmount = $application->applicant->target_amount ?? 100000; // Default target for percentage calculation
-                    $progressPercentage = min(($amountRaised / $targetAmount) * 100, 100);
-                @endphp
 
                 <div class="space-y-3">
                     <div class="flex justify-between items-center text-sm">
@@ -99,6 +103,28 @@
                             style="width: {{ $progressPercentage }}%">
                             <div class="absolute inset-0 bg-white/20 animate-pulse"></div>
                         </div>
+                    </div>
+
+                    {{-- Progress Description --}}
+                    <div class="text-xs text-gray-500 text-center">
+                        @if ($contributionStats['progress_type'] === 'target_based')
+                            @if ($contributionStats['target_reached'])
+                                🎉 Target reached!
+                            @elseif($contributionStats['remaining_to_target'] > 0)
+                                KES {{ $contributionStats['remaining_to_target_formatted'] }} remaining to reach goal
+                            @endif
+                        @else
+                            @if ($contributionStats['total_contributors'] === 0)
+                                Be the first to contribute!
+                            @elseif($contributionStats['total_contributors'] < 10)
+                                Building momentum with {{ $contributionStats['total_contributors'] }}
+                                contribution{{ $contributionStats['total_contributors'] !== 1 ? 's' : '' }}
+                            @elseif($contributionStats['total_contributors'] < 50)
+                                Great progress with {{ $contributionStats['total_contributors'] }} contributors!
+                            @else
+                                Amazing support from {{ $contributionStats['total_contributors'] }} contributors!
+                            @endif
+                        @endif
                     </div>
                 </div>
             </section>
@@ -192,7 +218,7 @@
                         @enderror
                     </div>
 
-                    <!-- Phone Field (Optional for M-Pesa, Required for Card) -->
+                    <!-- Phone Field  -->
                     <div class="space-y-3">
                         <label for="phone">
                             Phone Number <span class="text-danger-500" id="phone-required"
@@ -243,7 +269,7 @@
                                         <div class="flex items-center gap-3">
                                             <div>
                                                 <h5 class="font-semibold text-neutral-800">Debit/Credit Card</h5>
-                                                <p class="text-sm text-neutral-600">Visa, Mastercard, etc.</p>
+                                                <p class="text-sm text-neutral-600">Visa or Mastercard</p>
                                             </div>
                                         </div>
                                     </div>
@@ -256,6 +282,116 @@
                                 {{ $message }}
                             </p>
                         @enderror
+                    </div>
+
+                    <!-- M-Pesa Payment Options (shown when M-Pesa is selected) -->
+                    <div id="mpesa-options" style="display: none;">
+                        @if ($stkPushEnabled && $paybillEnabled)
+                            <div class="card border-success mb-4">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-mobile-alt text-success me-2"></i>
+                                        Choose M-Pesa Payment Method
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="radio" name="mpesa_method"
+                                            id="stk_push" value="stk_push" checked>
+                                        <label class="form-check-label" for="stk_push">
+                                            <strong>STK Push (Recommended)</strong>
+                                            <br><small class="text-muted">Instant payment via phone prompt</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="mpesa_method"
+                                            id="paybill" value="paybill">
+                                        <label class="form-check-label" for="paybill">
+                                            <strong>Paybill Payment</strong>
+                                            <br><small class="text-muted">Manual payment using paybill number</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
+                        @if ($paybillEnabled && $paybillDetails)
+                            <!-- Paybill Details (shown when paybill option is selected) -->
+                            <div id="paybill-details" style="display: none;">
+                                <div class="card border-info mb-4">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-receipt text-info me-2"></i>
+                                            Paybill Payment Details
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="bg-light p-3 rounded mb-3">
+                                                    <div class="text-center">
+                                                        <h5 class="text-primary">{{ $paybillDetails['paybill_number'] }}
+                                                        </h5>
+                                                        <small class="text-muted">Paybill Number</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="bg-light p-3 rounded mb-3">
+                                                    <div class="text-center">
+                                                        <h6 class="text-primary">{{ $paybillDetails['account_number'] }}
+                                                        </h6>
+                                                        <small class="text-muted">Account Number</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            <strong>Please enter the exact details below to confirm your payment:</strong>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group mb-3">
+                                                    <label for="paybill_account_number" class="form-label">
+                                                        Account Number <span class="text-danger">*</span>
+                                                    </label>
+                                                    <input type="text"
+                                                        class="form-control @error('paybill_account_number') is-invalid @enderror"
+                                                        id="paybill_account_number" name="paybill_account_number"
+                                                        value="{{ old('paybill_account_number') }}"
+                                                        placeholder="{{ $paybillDetails['account_number'] }}">
+                                                    <small class="text-muted">Enter:
+                                                        {{ $paybillDetails['account_number'] }}</small>
+                                                    @error('paybill_account_number')
+                                                        <div class="invalid-feedback">{{ $message }}</div>
+                                                    @enderror
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group mb-3">
+                                                    <label for="paybill_account_name" class="form-label">
+                                                        Account Name <span class="text-danger">*</span>
+                                                    </label>
+                                                    <input type="text"
+                                                        class="form-control @error('paybill_account_name') is-invalid @enderror"
+                                                        id="paybill_account_name" name="paybill_account_name"
+                                                        value="{{ old('paybill_account_name') }}"
+                                                        placeholder="{{ $paybillDetails['account_name'] }}">
+                                                    <small class="text-muted">Enter:
+                                                        {{ $paybillDetails['account_name'] }}</small>
+                                                    @error('paybill_account_name')
+                                                        <div class="invalid-feedback">{{ $message }}</div>
+                                                    @enderror
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
                     </div>
 
                     <!-- Submit Button -->
@@ -298,27 +434,226 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
+            const mpesaMethods = document.querySelectorAll('input[name="mpesa_method"]');
             const phoneRequired = document.getElementById('phone-required');
             const phoneInput = document.getElementById('phone');
+            const phoneHint = document.getElementById('phone-hint');
+            const currencySelect = document.getElementById('currency');
+            const amountInput = document.getElementById('amount');
+            const amountHint = document.getElementById('amount-hint');
+            const mpesaOptions = document.getElementById('mpesa-options');
+            const paybillDetails = document.getElementById('paybill-details');
+            const submitBtn = document.getElementById('submit-btn');
+            const submitText = document.getElementById('submit-text');
+            const loadingText = document.getElementById('loading-text');
+            const form = document.getElementById('donation-form');
 
-            function updatePhoneRequirement() {
+            // Payment method change handler
+            function updateFormForPaymentMethod() {
                 const selectedMethod = document.querySelector('input[name="payment_method"]:checked');
-                if (selectedMethod && selectedMethod.value === 'card') {
-                    phoneRequired.style.display = 'inline';
-                    phoneInput.required = true;
+
+                // Reset all payment method cards
+                document.querySelectorAll('.payment-method-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+
+                if (selectedMethod) {
+                    // Highlight selected card
+                    const selectedCard = selectedMethod.closest('.payment-method-card');
+                    if (selectedCard) {
+                        selectedCard.classList.add('selected');
+                    }
+
+                    if (selectedMethod.value === 'mpesa') {
+                        handleMpesaSelection();
+                    } else if (selectedMethod.value === 'card') {
+                        handleCardSelection();
+                    }
+                }
+
+                updateSubmitButton();
+            }
+
+            function handleMpesaSelection() {
+                // Force currency to KES for M-Pesa
+                currencySelect.value = 'KES';
+                currencySelect.disabled = true;
+
+                // Make phone required
+                phoneRequired.style.display = 'inline';
+                phoneInput.required = true;
+                phoneHint.textContent = 'Required for M-Pesa payments (Kenyan number)';
+
+                // Show M-Pesa options
+                mpesaOptions.style.display = 'block';
+
+                // Update amount hint
+                amountHint.textContent = 'Minimum: KES 1';
+
+                // Update submit button text
+                updateSubmitButton();
+            }
+
+            function handleCardSelection() {
+                // Enable currency selection for cards
+                currencySelect.disabled = false;
+
+                // Phone required for cards too
+                phoneRequired.style.display = 'inline';
+                phoneInput.required = true;
+                phoneHint.textContent = 'Required for card payments';
+
+                // Hide M-Pesa options
+                mpesaOptions.style.display = 'none';
+                if (paybillDetails) paybillDetails.style.display = 'none';
+
+                // Update amount hint
+                updateAmountHint();
+
+                // Update submit button text
+                updateSubmitButton();
+            }
+
+            function updateAmountHint() {
+                const currency = currencySelect.value;
+                if (currency === 'KES') {
+                    amountHint.textContent = 'Minimum: KES 1';
                 } else {
-                    phoneRequired.style.display = 'none';
-                    phoneInput.required = false;
+                    amountHint.textContent = 'Minimum: $1';
                 }
             }
 
+            // Define Heroicons
+            const HeroIcons = {
+                mobile: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>`,
+
+                receipt: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>`,
+
+                creditCard: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                            </svg>`,
+
+                heart: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                        </svg>`
+            };
+
+            function updateSubmitButton() {
+                const selectedMethod = document.querySelector('input[name="payment_method"]:checked');
+                const selectedMpesaMethod = document.querySelector('input[name="mpesa_method"]:checked');
+
+                // Get the container span that has the flex layout
+                const submitContainer = document.querySelector(
+                    '#submit-btn .flex.items-center.justify-center.gap-2');
+                const submitText = document.getElementById('submit-text');
+
+                let iconHtml = '';
+                let textContent = '';
+
+                if (selectedMethod?.value === 'mpesa') {
+                    if (selectedMpesaMethod?.value === 'stk_push') {
+                        iconHtml = HeroIcons.mobile;
+                        textContent = 'Send STK Push';
+                    } else if (selectedMpesaMethod?.value === 'paybill') {
+                        iconHtml = HeroIcons.receipt;
+                        textContent = 'Get Paybill Details';
+                    } else {
+                        iconHtml = HeroIcons.mobile;
+                        textContent = 'Continue with M-Pesa';
+                    }
+                } else if (selectedMethod?.value === 'card') {
+                    iconHtml = HeroIcons.creditCard;
+                    textContent = 'Proceed to Card Payment';
+                } else {
+                    iconHtml = HeroIcons.heart;
+                    textContent = 'Complete Donation';
+                }
+
+                // Update the container with icon and text as separate elements
+                submitContainer.innerHTML = `
+                    ${iconHtml}
+                    <span>${textContent}</span>
+                `;
+            }
+
+            // M-Pesa method change handler
+            function updateMpesaMethod() {
+                const selectedMpesaMethod = document.querySelector('input[name="mpesa_method"]:checked');
+                const paybillAccountNumber = document.getElementById('paybill_account_number');
+                const paybillAccountName = document.getElementById('paybill_account_name');
+
+                if (selectedMpesaMethod?.value === 'paybill' && paybillDetails) {
+                    paybillDetails.style.display = 'block';
+                    if (paybillAccountNumber) paybillAccountNumber.required = true;
+                    if (paybillAccountName) paybillAccountName.required = true;
+                } else if (paybillDetails) {
+                    paybillDetails.style.display = 'none';
+                    if (paybillAccountNumber) paybillAccountNumber.required = false;
+                    if (paybillAccountName) paybillAccountName.required = false;
+                }
+
+                updateSubmitButton();
+            }
+
+            // Phone number formatting for Kenyan numbers
+            function formatKenyanPhone() {
+                if (phoneInput.value && document.querySelector('input[name="payment_method"]:checked')?.value ===
+                    'mpesa') {
+                    let value = phoneInput.value.replace(/\D/g, '');
+
+                    if (value.startsWith('0')) {
+                        value = '254' + value.substring(1);
+                    } else if (value.startsWith('254')) {
+                        // Already in correct format
+                    } else if (value.length === 9) {
+                        value = '254' + value;
+                    }
+
+                    // Format as +254 XXX XXX XXX
+                    if (value.length >= 12) {
+                        phoneInput.value = '+' + value.substring(0, 3) + ' ' + value.substring(3, 6) + ' ' + value
+                            .substring(6, 9) + ' ' + value.substring(9, 12);
+                    }
+                }
+            }
+
+            // Form submission handler
+            function handleFormSubmit(e) {
+                // Show loading state
+                submitText.style.display = 'none';
+                loadingText.style.display = 'inline';
+                submitBtn.disabled = true;
+
+                // Let form submit normally
+            }
+
+            // Event listeners
             paymentMethods.forEach(method => {
-                method.addEventListener('change', updatePhoneRequirement);
+                method.addEventListener('change', updateFormForPaymentMethod);
             });
 
-            // Initial check
-            updatePhoneRequirement();
+            if (mpesaMethods.length > 0) {
+                mpesaMethods.forEach(method => {
+                    method.addEventListener('change', updateMpesaMethod);
+                });
+            }
+
+            phoneInput.addEventListener('blur', formatKenyanPhone);
+            currencySelect.addEventListener('change', updateAmountHint);
+            form.addEventListener('submit', handleFormSubmit);
+
+            // Initial setup
+            updateFormForPaymentMethod();
+            updateAmountHint();
+
+            // Handle pre-selected values
+            if (mpesaMethods.length > 0) {
+                updateMpesaMethod();
+            }
         });
     </script>
-
 @endsection

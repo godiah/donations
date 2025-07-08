@@ -23,6 +23,8 @@ class DonationLink extends Model
         'last_accessed_at',
         'access_count',
         'created_by',
+        'mpesa_payment_method',
+        'paybill_payout_method_id',
     ];
 
     /**
@@ -82,6 +84,35 @@ class DonationLink extends Model
     public function contributions()
     {
         return $this->hasMany(Contribution::class);
+    }
+
+    public function paybillPayoutMethod()
+    {
+        return $this->belongsTo(PayoutMethod::class, 'paybill_payout_method_id');
+    }
+
+    public function isPaybillEnabled(): bool
+    {
+        return in_array($this->mpesa_payment_method, ['paybill', 'both']) && $this->paybillPayoutMethod;
+    }
+
+    public function isStkPushEnabled(): bool
+    {
+        return in_array($this->mpesa_payment_method, ['stk_push', 'both']);
+    }
+
+    public function getPaybillDetails(): ?array
+    {
+        if (!$this->isPaybillEnabled()) {
+            return null;
+        }
+
+        $payoutMethod = $this->paybillPayoutMethod;
+        return [
+            'paybill_number' => $payoutMethod->paybill_number,
+            'account_name' => $payoutMethod->paybill_account_name,
+            'account_number' => $payoutMethod->account_number,
+        ];
     }
 
     /**

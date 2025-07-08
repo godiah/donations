@@ -14,7 +14,6 @@ use App\Models\Invitation;
 use App\Models\PayoutMandate;
 use App\Models\SupportDocument;
 use App\Notifications\IndividualApplicationSubmitted;
-use App\Services\SmileIdentityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -26,13 +25,6 @@ use Illuminate\Support\Str;
 
 class IndividualDonationController extends Controller
 {
-    protected SmileIdentityService $smileIdentityService;
-
-    public function __construct(SmileIdentityService $smileIdentityService)
-    {
-        $this->smileIdentityService = $smileIdentityService;
-    }
-
     /**
      * Get document types for a specific contribution reason
      */
@@ -147,7 +139,7 @@ class IndividualDonationController extends Controller
     {
         // First, normalize the phone numbers in the request data
         $request->merge([
-            'phone' => $this->normalizePhoneNumber($request->phone),            
+            'phone' => $this->normalizePhoneNumber($request->phone),
         ]);
 
         $rules = [
@@ -158,7 +150,7 @@ class IndividualDonationController extends Controller
             'middle_name' => 'nullable|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'nullable|email|max:255',
-            'phone' => 'required|string|regex:/^\+254\d{9}$/',            
+            'phone' => 'required|string|regex:/^\+254\d{9}$/',
             'id_number' => 'required|string|max:50',
             'kra_pin' => 'nullable|string|max:20',
             'target_amount' => 'nullable|numeric|min:1|max:999999999.99',
@@ -204,7 +196,7 @@ class IndividualDonationController extends Controller
             'middle_name' => $request->middle_name,
             'last_name' => $request->last_name,
             'email' => $request->email,
-            'phone' => $request->phone,            
+            'phone' => $request->phone,
             'id_type_id' => $request->id_type_id,
             'id_number' => $request->id_number,
             'kra_pin' => $request->kra_pin,
@@ -364,272 +356,5 @@ class IndividualDonationController extends Controller
 
         // Fallback
         return $phone;
-    }
-
-    /**
-     * Initiate KYC verification for an individual record
-     */
-    private function initiateKycVerificationForIndividual(Individual $individual)
-    {
-        try {
-            if (!$this->smileIdentityService->isConfigured()) {
-                Log::warning('Smile Identity not configured, skipping KYC verification for individual: ' . $individual->id);
-                return;
-            }
-
-            $kycData = [
-                'country' => 'KE',
-                'id_type' => $individual->idType->type ?? 'NATIONAL_ID',
-                'id_number' => $individual->id_number,
-                'first_name' => $individual->first_name,
-                'middle_name' => $individual->middle_name,
-                'last_name' => $individual->last_name,
-                'phone_number' => $individual->phone,
-            ];
-
-            $verificationResponse = $this->smileIdentityService->performBasicKyc($kycData);
-
-            // Store the job ID for tracking
-            $individual->update([
-                'kyc_response_data' => [
-                    'job_id' => $verificationResponse['job_id'] ?? null,
-                    'initiated_at' => now()->toISOString(),
-                    'status' => 'pending'
-                ]
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Failed to initiate KYC verification for individual: ' . $individual->id, [
-                'error' => $e->getMessage(),
-                'individual_id' => $individual->id
-            ]);
-        }
-    }
-
-    /**
-     * Store KYC verification result for tracking
-     */
-    private function storeKycVerificationResult(array $data)
-    {
-        try {
-            // You can create a KycVerification model to store these results
-            // or add columns to your existing Individual model
-
-            // For now, just log the successful verification
-            Log::info('KYC Verification Completed', [
-                'user_id' => $data['user_id'],
-                'job_id' => $data['job_id'],
-                'verification_status' => $data['verification_status'],
-                'result' => $data['result_text']
-            ]);
-
-            // Example: Update individual record if it exists
-            // Individual::where('user_id', $data['user_id'])
-            //     ->where('id_number', $data['id_number'])
-            //     ->update([
-            //         'kyc_verified' => $data['verification_status'] === 'verified',
-            //         'kyc_response_data' => $data['verification_details'],
-            //         'kyc_verified_at' => now(),
-            //     ]);
-
-        } catch (\Exception $e) {
-            Log::error('Failed to store KYC verification result', [
-                'error' => $e->getMessage(),
-                'data' => $data
-            ]);
-        }
-    }
-
-    /**
-     * Verify callback signature from Smile Identity
-     */
-    private function verifyCallbackSignature(Request $request): bool
-    {
-        try {
-            $receivedSignature = $request->input('signature');
-            $timestamp = $request->input('timestamp');
-
-            if (!$receivedSignature || !$timestamp) {
-                return false;
-            }
-
-            // Generate expected signature
-            $partnerId = config('services.smile_identity.partner_id');
-            $apiKey = config('services.smile_identity.api_key');
-            $expectedSignature = hash_hmac('sha256', $timestamp . $partnerId . "sid_request", $apiKey);
-
-            return hash_equals($expectedSignature, $receivedSignature);
-        } catch (\Exception $e) {
-            Log::error('Error verifying callback signature', ['error' => $e->getMessage()]);
-            return false;
-        }
-    }
-
-    /**
-     * Update individual KYC status from callback
-     */
-    private function updateIndividualKycStatus(array $verificationResult)
-    {
-        try {
-            $partnerParams = $verificationResult['partner_params'] ?? [];
-            $jobId = $partnerParams['job_id'] ?? null;
-
-            if (!$jobId) {
-                Log::warning('No job_id found in callback data');
-                return;
-            }
-
-            // Find and update the individual record
-            // You'll need to modify this based on how you store the job_id
-            // Individual::where('kyc_job_id', $jobId)
-            //     ->update([
-            //         'kyc_verified' => $verificationResult['verified'],
-            //         'kyc_response_data' => $verificationResult,
-            //         'kyc_verified_at' => now(),
-            //     ]);
-
-            Log::info('Individual KYC status updated', [
-                'job_id' => $jobId,
-                'verified' => $verificationResult['verified']
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Failed to update individual KYC status', [
-                'error' => $e->getMessage(),
-                'verification_result' => $verificationResult
-            ]);
-        }
-    }
-
-    /**
-     * Perform KYC verification via API endpoint
-     */
-    public function verifyKyc(Request $request)
-    {
-        try {
-            // Validate the KYC request data
-            $validator = Validator::make($request->all(), [
-                'id_number' => 'required|string|max:50',
-                'id_type' => 'required|string',
-                'first_name' => 'required|string|max:255',
-                'middle_name' => 'nullable|string|max:255',
-                'last_name' => 'required|string|max:255',
-                'phone_number' => 'nullable|string',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid data provided for verification.',
-                    'errors' => $validator->errors(),
-                    'verified' => false
-                ], 422);
-            }
-
-            // Check if Smile Identity is properly configured
-            if (!$this->smileIdentityService->isConfigured()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Identity verification service is not available at the moment.',
-                    'verified' => false
-                ], 503);
-            }
-
-            // Prepare data for Smile Identity
-            $kycData = [
-                'country' => 'KE',
-                'id_type' => $request->id_type,
-                'id_number' => $request->id_number,
-                'first_name' => $request->first_name,
-                'middle_name' => $request->middle_name,
-                'last_name' => $request->last_name,
-                'phone_number' => $request->phone_number,
-            ];
-
-            // Perform synchronous KYC verification for real-time results
-            $verificationResponse = $this->smileIdentityService->performBasicKyc($kycData);
-
-            // Get detailed verification results
-            $verificationDetails = $this->smileIdentityService->getVerificationDetails(
-                $verificationResponse['response']
-            );
-
-            // Determine verification status
-            $isVerified = $verificationResponse['verified'];
-
-            // Store verification result for tracking (optional)
-            $this->storeKycVerificationResult([
-                'user_id' => Auth::id(),
-                'job_id' => $verificationResponse['job_id'],
-                'user_id_smile' => $verificationResponse['user_id'],
-                'smile_job_id' => $verificationDetails['smile_job_id'],
-                'id_number' => $request->id_number,
-                'id_type' => $request->id_type,
-                'verification_status' => $isVerified ? 'verified' : 'failed',
-                'result_code' => $verificationDetails['overall_code'],
-                'result_text' => $verificationDetails['overall_result'],
-                'verification_details' => $verificationDetails,
-                'raw_response' => $verificationResponse['response'],
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'verified' => $isVerified,
-                'message' => $isVerified
-                    ? 'Identity verification successful!'
-                    : 'Identity verification failed. Please check your details.',
-                'job_id' => $verificationResponse['job_id'],
-                'details' => [
-                    'overall_result' => $verificationDetails['overall_result'],
-                    'id_verified' => $verificationDetails['id_verified'],
-                    'name_match' => $verificationDetails['name_match'],
-                ]
-            ]);
-        } catch (\Exception $e) {
-            Log::error('KYC Verification Error', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'request_data' => $request->all(),
-                'user_id' => Auth::id()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Identity verification service is temporarily unavailable. Please try again later.',
-                'verified' => false
-            ], 500);
-        }
-    }
-
-    /**
-     * Handle Smile Identity callback (for async verification if needed)
-     */
-    public function handleKycCallback(Request $request)
-    {
-        try {
-            Log::info('Smile Identity Callback Received', $request->all());
-
-            // Verify the callback signature to ensure it's from Smile Identity
-            if (!$this->verifyCallbackSignature($request)) {
-                Log::warning('Invalid callback signature received');
-                return response()->json(['status' => 'invalid_signature'], 400);
-            }
-
-            // Process the callback data
-            $verificationResult = $this->smileIdentityService->processKycCallback($request->all());
-
-            // Update the individual record with verification status
-            $this->updateIndividualKycStatus($verificationResult);
-
-            // You can broadcast this result to the frontend via WebSockets
-            // or store it in cache for the user to poll
-
-            return response()->json(['status' => 'received'], 200);
-        } catch (\Exception $e) {
-            Log::error('KYC Callback Processing Error', [
-                'error' => $e->getMessage(),
-                'callback_data' => $request->all()
-            ]);
-
-            return response()->json(['status' => 'error'], 500);
-        }
     }
 }

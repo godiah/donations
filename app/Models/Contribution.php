@@ -22,12 +22,17 @@ class Contribution extends Model
         'cybersource_transaction_id',
         'payment_response',
         'processed_at',
+        'wallet_transaction_id',
+        'wallet_credited',
+        'wallet_credited_at'
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
         'payment_response' => 'array',
         'processed_at' => 'datetime',
+        'wallet_credited_at' => 'datetime',
+        'wallet_credited' => 'boolean',
     ];
 
     // Payment status constants
@@ -59,6 +64,11 @@ class Contribution extends Model
     public function transactions()
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    public function walletTransaction()
+    {
+        return $this->belongsTo(WalletTransaction::class);
     }
 
     /**

@@ -21,12 +21,21 @@ class Transaction extends Model
         'gateway_response',
         'processed_at',
         'notes',
+        'mpesa_checkout_request_id',
+        'mpesa_merchant_request_id',
+        'mpesa_receipt_number',
+        'mpesa_amount',
+        'mpesa_phone_number',
+        'mpesa_transaction_date',
+        'mpesa_payment_type',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
         'gateway_response' => 'array',
         'processed_at' => 'datetime',
+        'mpesa_amount' => 'decimal:2',
+        'mpesa_transaction_date' => 'datetime',
     ];
 
     // Transaction types
@@ -53,6 +62,28 @@ class Transaction extends Model
     public function contribution()
     {
         return $this->belongsTo(Contribution::class);
+    }
+
+    // Add method to check if transaction is M-Pesa
+    public function isMpesaTransaction(): bool
+    {
+        return $this->gateway === self::GATEWAY_MPESA;
+    }
+
+    // Add method to get M-Pesa receipt details
+    public function getMpesaReceiptDetails(): ?array
+    {
+        if (!$this->isMpesaTransaction()) {
+            return null;
+        }
+
+        return [
+            'receipt_number' => $this->mpesa_receipt_number,
+            'phone_number' => $this->mpesa_phone_number,
+            'amount' => $this->mpesa_amount,
+            'transaction_date' => $this->mpesa_transaction_date,
+            'payment_type' => $this->mpesa_payment_type,
+        ];
     }
 
     /**

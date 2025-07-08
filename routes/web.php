@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminWithdrawalController;
 use App\Http\Controllers\Admin\ApplicationController as AdminApplicationController;
 use App\Http\Controllers\Admin\KycController;
 use App\Http\Controllers\ApplicationController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\IndividualDonationController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\PayoutMethodController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\WithdrawalController;
 use App\Services\CyberSourceService;
 use Illuminate\Support\Facades\Route;
 
@@ -17,18 +19,13 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/test-cybersource', function () {
-    $service = new CyberSourceService();
-    return $service->testCredentials();
-});
+// Route::get('/test-cybersource', function () {
+//     $service = new CyberSourceService();
+//     return $service->testCredentials();
+// });
 
-Route::get('/compute-signature', function () {
-    $dataString = "access_key=ad01490521e53168ba4538f196840243,profile_id=00EAC2E6-F58C-4C1B-824E-A134DFF42EC8,transaction_uuid=REQ_1751624850_QwDwwOzk0z,signed_date_time=2025-07-04T10:27:30Z,locale=en,transaction_type=sale,reference_number=29,amount=100.00,currency=KES,payment_method=card,bill_to_forename=Donor,bill_to_email=mosesgodiah@gmail.com,override_custom_receipt_page=https://9030-102-213-251-139.ngrok-free.app/donate/success,override_custom_cancel_page=https://9030-102-213-251-139.ngrok-free.app/donate/cancel,override_custom_error_page=https://9030-102-213-251-139.ngrok-free.app/donate/error,bill_to_phone=+254745548093";
-    $secretKey = hex2bin('ab7e7228626745bd9a6f11d0842d7c8f17518d0de0504aaab9dcc0cb44604f011ea1a5a4344a40b3909733007ed41b63abaef30c56664e548c61e542b80e6188088fed2f33714a7083ccb42e91b795cd45a6534c5e264efa932521a763f7a773979d7376bbb64edd9fa256f7c264d9a04e839fd008c340a5b4506573bada9bb6');
-    $signature = base64_encode(hash_hmac('sha256', $dataString, $secretKey, true));
+Route::get('/cybersource/verify', [DonationController::class, 'verifyCyberSource']);
 
-    return response()->json(['signature' => $signature]);
-});
 
 // Invitation routes
 Route::get('/invitation/{token}/register', [InvitationController::class, 'showRegistrationForm'])->name('invitation.register');
@@ -49,8 +46,14 @@ Route::prefix('donate')->group(function () {
     Route::post('/webhook/cybersource', [DonationController::class, 'webhook'])->name('donation.webhook.cybersource');
 })->withoutMiddleware(['auth', 'verified', 'csrf']);
 
+// M-Pesa routes
+Route::post('/api/mpesa/callback', [DonationController::class, 'mpesaCallback'])->name('mpesa.callback')->withoutMiddleware(['auth', 'verified', 'csrf']);
+Route::post('/mpesa/status-check', [DonationController::class, 'checkStkPushStatus'])->name('mpesa.status.check');
+
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('verified')->name('dashboard');
+    // Route::post('/mpesa/manual-check/{transaction}', [DonationController::class, 'manualStatusCheck'])
+    //     ->name('mpesa.manual.check');
 
     // Individual applications
     Route::prefix('individual/application')->name('individual.')->group(function () {
@@ -95,6 +98,14 @@ Route::middleware('auth')->group(function () {
     Route::patch('/payout-methods/{id}/set-primary', [PayoutMethodController::class, 'setPrimary'])->name('payout-methods.set-primary');
     Route::delete('/payout-methods/{id}', [PayoutMethodController::class, 'destroy'])->name('payout-methods.destroy');
 
+    // Wallet routes
+    Route::get('/wallet', [WithdrawalController::class, 'dashboard'])->name('wallet.dashboard');
+    Route::get('/wallet/withdraw', [WithdrawalController::class, 'create'])->name('wallet.withdraw');
+    Route::post('/wallet/withdraw', [WithdrawalController::class, 'store'])->name('wallet.withdraw.store');
+    Route::get('/wallet/withdrawals/{withdrawal}', [WithdrawalController::class, 'show'])->name('wallet.withdrawal.show');
+    Route::patch('/wallet/withdrawals/{withdrawal}/cancel', [WithdrawalController::class, 'cancel'])->name('wallet.withdrawal.cancel');
+    Route::get('/wallet/transactions', [WithdrawalController::class, 'transactionHistory'])->name('wallet.transactions');
+
     // pending downloads
     Route::get('/company/applications/{application}/download/{file}', [CompanyDonationController::class, 'download'])
         ->name('company.download');
@@ -137,6 +148,11 @@ Route::middleware('auth')->group(function () {
         Route::patch('/donation-links/{donationLink}/toggle-status', [DonationController::class, 'toggleStatus'])->name('donation-links.toggle-status');
 
         Route::post('/payout-mandates/{payoutMandate}/invitations', [InvitationController::class, 'createAndSendInvitation'])->name('invitations.create');
+
+        Route::get('/withdrawals', [AdminWithdrawalController::class, 'index'])->name('withdrawals.index');
+        Route::get('/withdrawals/{withdrawal}', [AdminWithdrawalController::class, 'show'])->name('withdrawals.show');
+        Route::patch('/withdrawals/{withdrawal}/approve', [AdminWithdrawalController::class, 'approve'])->name('withdrawals.approve');
+        Route::patch('/withdrawals/{withdrawal}/reject', [AdminWithdrawalController::class, 'reject'])->name('withdrawals.reject');
     });
 });
 
