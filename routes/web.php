@@ -52,8 +52,6 @@ Route::post('/mpesa/status-check', [DonationController::class, 'checkStkPushStat
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('verified')->name('dashboard');
-    // Route::post('/mpesa/manual-check/{transaction}', [DonationController::class, 'manualStatusCheck'])
-    //     ->name('mpesa.manual.check');
 
     // Individual applications
     Route::prefix('individual/application')->name('individual.')->group(function () {
@@ -107,11 +105,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/wallet/transactions', [WithdrawalController::class, 'transactionHistory'])->name('wallet.transactions');
 
     // pending downloads
-    Route::get('/company/applications/{application}/download/{file}', [CompanyDonationController::class, 'download'])
-        ->name('company.download');
-    Route::get('/company/applications/{application}/download-support/{document}', [CompanyDonationController::class, 'downloadSupport'])
-        ->name('company.download.support');
-
+    Route::get('/company/applications/{application}/download/{file}', [CompanyDonationController::class, 'download'])->name('company.download');
+    Route::get('/company/applications/{application}/download-support/{document}', [CompanyDonationController::class, 'downloadSupport'])->name('company.download.support');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class PayoutMethod extends Model
 {
@@ -33,7 +32,7 @@ class PayoutMethod extends Model
     /**
      * Get the user that owns the payout method
      */
-    public function user(): BelongsTo
+    public function user()
     {
         return $this->belongsTo(User::class);
     }
@@ -98,8 +97,8 @@ class PayoutMethod extends Model
     }
 
     /**
-    * Validate paybill transaction
-    */
+     * Validate paybill transaction
+     */
     public function validatePaybillTransaction(string $paybillNumber, string $accountNumber, string $accountName): bool
     {
         if (!$this->isPaybillMethod()) {

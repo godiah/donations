@@ -280,11 +280,9 @@
 
             // Show/hide fields based on withdrawal method
             withdrawalMethod.addEventListener('change', function() {
-                // Hide all method fields first
                 mpesaFields.classList.add('hidden');
                 bankFields.classList.add('hidden');
 
-                // Show relevant fields
                 if (this.value === 'mpesa') {
                     mpesaFields.classList.remove('hidden');
                 } else if (this.value === 'bank_transfer') {
@@ -294,7 +292,6 @@
                 calculateFee();
             });
 
-            // Calculate fee when amount changes
             amountInput.addEventListener('input', calculateFee);
 
             function calculateFee() {
@@ -305,12 +302,12 @@
                     let feePercentage, minFee, maxFee, methodName;
 
                     if (method === 'mpesa') {
-                        feePercentage = 0.02; // 2%
+                        feePercentage = 0.02;
                         minFee = 10;
                         maxFee = 100;
                         methodName = 'M-Pesa';
                     } else if (method === 'bank_transfer') {
-                        feePercentage = 0.015; // 1.5%
+                        feePercentage = 0.015;
                         minFee = 50;
                         maxFee = 500;
                         methodName = 'Bank Transfer';
@@ -324,50 +321,142 @@
                     const netAmount = amount - actualFee;
 
                     feeDetails.innerHTML = `
-                        <div class="flex justify-between items-center p-3 bg-white/60 rounded-lg">
-                            <span class="font-medium">Withdrawal Amount:</span>
-                            <span class="font-bold">KES ${amount.toFixed(2)}</span>
-                        </div>
-                        <div class="flex justify-between items-center p-3 bg-white/60 rounded-lg">
-                            <span class="font-medium">${methodName} Processing Fee:</span>
-                            <span class="font-bold text-secondary-600">- KES ${actualFee.toFixed(2)}</span>
-                        </div>
-                        <div class="flex justify-between items-center p-3 bg-secondary-200 rounded-lg border-2 border-secondary-300">
-                            <span class="font-bold text-secondary-800">You will receive:</span>
-                            <span class="font-bold text-lg text-secondary-800">KES ${netAmount.toFixed(2)}</span>
-                        </div>
-                    `;
+                <div class="flex justify-between items-center p-3 bg-white/60 rounded-lg">
+                    <span class="font-medium">Withdrawal Amount:</span>
+                    <span class="font-bold">KES ${amount.toFixed(2)}</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-white/60 rounded-lg">
+                    <span class="font-medium">${methodName} Processing Fee:</span>
+                    <span class="font-bold text-secondary-600">- KES ${actualFee.toFixed(2)}</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-secondary-200 rounded-lg border-2 border-secondary-300">
+                    <span class="font-bold text-secondary-800">You will receive:</span>
+                    <span class="font-bold text-lg text-secondary-800">KES ${netAmount.toFixed(2)}</span>
+                </div>
+            `;
                     feeInfo.classList.remove('hidden');
                 } else {
                     feeInfo.classList.add('hidden');
                 }
             }
 
-            // Trigger initial calculation if values are preset
             if (withdrawalMethod.value) {
                 withdrawalMethod.dispatchEvent(new Event('change'));
             }
 
-            // Form submission handling
+            // SIMPLIFIED FORM SUBMISSION - REMOVE ALL EVENT LISTENERS
             const form = document.getElementById('withdrawalForm');
+            const submitButton = form.querySelector('button[type="submit"]');
+
+            // Check if form and button exist
+            if (!form) {
+                console.error('Form with ID "withdrawalForm" not found!');
+                return;
+            }
+
+            if (!submitButton) {
+                console.error('Submit button not found!');
+                return;
+            }
+
+            console.log('Form and submit button found successfully');
+            console.log('Form action:', form.action);
+            console.log('Form method:', form.method);
+
+            // Check CSRF token
+            const csrfToken = form.querySelector('input[name="_token"]');
+            if (!csrfToken) {
+                console.error('CSRF token not found!');
+            } else {
+                console.log('CSRF token found:', csrfToken.value.substring(0, 10) + '...');
+            }
+
+            // COMPLETELY REMOVE the submit event listener to test natural form submission
+            // Comment out the entire event listener block below to test
+
+            /*
             form.addEventListener('submit', function(e) {
-                const submitButton = form.querySelector('button[type="submit"]');
-                const originalContent = submitButton.innerHTML;
-
+                console.log('Submit event triggered');
+                console.log('Form data being submitted:');
+                
+                const formData = new FormData(form);
+                for (let [key, value] of formData.entries()) {
+                    console.log(key + ':', value);
+                }
+                
+                // Don't prevent default - let form submit naturally
+                
+                // Visual feedback only
                 submitButton.disabled = true;
-                submitButton.innerHTML = `
-                    <svg class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Processing Request...
-                `;
-
-                // Re-enable button after 3 seconds if form doesn't submit (for error cases)
+                submitButton.style.opacity = '0.7';
+                submitButton.innerHTML = 'Processing...';
+                
+                // Reset after 10 seconds if still on page
                 setTimeout(() => {
                     submitButton.disabled = false;
-                    submitButton.innerHTML = originalContent;
-                }, 3000);
+                    submitButton.style.opacity = '1';
+                    submitButton.innerHTML = `
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M2 21L23 12L2 3V10L17 12L2 14V21Z" />
+                    </svg>
+                    Submit Withdrawal Request
+                `;
+                }, 10000);
+            });
+            */
+
+            // Alternative: Add click handler to button instead
+            submitButton.addEventListener('click', function(e) {
+                console.log('Submit button clicked');
+
+                // Basic validation
+                const amount = parseFloat(amountInput.value);
+                const method = withdrawalMethod.value;
+
+                if (!amount || amount <= 0) {
+                    alert('Please enter a valid amount');
+                    e.preventDefault();
+                    return false;
+                }
+
+                if (!method) {
+                    alert('Please select a withdrawal method');
+                    e.preventDefault();
+                    return false;
+                }
+
+                if (method === 'mpesa') {
+                    const mpesaNumber = document.getElementById('mpesa_number').value;
+                    if (!mpesaNumber) {
+                        alert('Please enter M-Pesa number');
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+
+                if (method === 'bank_transfer') {
+                    const bankName = document.getElementById('bank_name').value;
+                    const accountNumber = document.getElementById('account_number').value;
+                    const accountName = document.getElementById('account_name').value;
+
+                    if (!bankName || !accountNumber || !accountName) {
+                        alert('Please fill all bank details');
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+
+                console.log('Validation passed, form should submit now');
+
+                // Let the click proceed naturally to trigger form submission
+                return true;
+            });
+
+            // Debug: Log when form actually starts submitting
+            form.addEventListener('submit', function(e) {
+                console.log('FORM IS ACTUALLY SUBMITTING NOW!');
+                console.log('Target URL:', e.target.action);
+                console.log('Method:', e.target.method);
             });
         });
     </script>

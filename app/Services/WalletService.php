@@ -45,6 +45,21 @@ class WalletService
     public function creditFromDonation(Contribution $contribution): WalletTransaction
     {
         return DB::transaction(function () use ($contribution) {
+            // CRITICAL: Check if wallet has already been credited (double-credit protection)
+            if ($contribution->wallet_credited) {
+                Log::info('Wallet already credited for contribution - preventing double credit', [
+                    'contribution_id' => $contribution->id,
+                    'wallet_credited_at' => $contribution->wallet_credited_at,
+                ]);
+
+                // Return existing wallet transaction if it exists
+                if ($contribution->wallet_transaction_id) {
+                    return WalletTransaction::find($contribution->wallet_transaction_id);
+                }
+
+                throw new Exception('Contribution already credited but wallet transaction not found');
+            }
+
             // Get the applicant (Individual or Company)
             $applicant = $contribution->donationLink->application->applicant ?? null;
 

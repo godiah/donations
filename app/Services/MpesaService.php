@@ -264,8 +264,17 @@ class MpesaService
                     'processed_at' => now(),
                 ]);
 
-                // Credit wallet
-                $this->walletService->creditFromDonation($contribution);
+                // Refresh contribution to get latest wallet_credited status
+                $contribution->refresh();
+
+                // Credit wallet only if not already credited
+                if (!$contribution->wallet_credited) {
+                    $this->walletService->creditFromDonation($contribution);
+                } else {
+                    Log::info('Wallet already credited for contribution via callback', [
+                        'contribution_id' => $contribution->id,
+                    ]);
+                }
 
                 Log::info('M-Pesa STK Push payment completed', [
                     'contribution_id' => $contribution->id,

@@ -193,7 +193,7 @@ class DonationController extends Controller
     }
 
     /**
-     * Handle successful payment return
+     * Handle successful payment return : Cybersource
      */
     public function success(Request $request)
     {
@@ -207,7 +207,7 @@ class DonationController extends Controller
     }
 
     /**
-     * Handle cancelled payment return
+     * Handle cancelled payment return : Cybersource
      */
     public function cancel(Request $request)
     {
@@ -225,7 +225,7 @@ class DonationController extends Controller
     }
 
     /**
-     * Handle error payment return
+     * Handle error payment return : Cybersource
      */
     public function error(Request $request)
     {
@@ -289,9 +289,7 @@ class DonationController extends Controller
             ->first();
 
         if ($existingTransaction) {
-            // Transaction already exists - check its status
             if ($existingTransaction->status === Transaction::STATUS_COMPLETED) {
-                // Payment already completed - show success modal instead of redirecting
                 Log::info('Payment already completed, showing success view', [
                     'contribution_id' => $contribution->id,
                     'transaction_id' => $existingTransaction->id,
@@ -303,10 +301,9 @@ class DonationController extends Controller
                     'merchant_request_id' => $existingTransaction->mpesa_merchant_request_id,
                     'message' => 'Payment already completed successfully',
                     'environment' => $this->mpesaService->getCurrentEnvironment(),
-                    'payment_completed' => true, // Flag to show success modal on load
+                    'payment_completed' => true,
                 ]);
             } elseif ($existingTransaction->status === Transaction::STATUS_PENDING) {
-                // Transaction is pending - show existing STK push view
                 Log::info('Existing pending M-Pesa transaction found', [
                     'contribution_id' => $contribution->id,
                     'transaction_id' => $existingTransaction->id,
@@ -320,8 +317,7 @@ class DonationController extends Controller
                     'message' => 'Please complete the payment on your phone',
                     'environment' => $this->mpesaService->getCurrentEnvironment(),
                 ]);
-            } elseif ($existingTransaction->status === Transaction::STATUS_FAILED) {
-                // Previous transaction failed - we can create a new one
+            } elseif ($existingTransaction->status === Transaction::STATUS_FAILED || $existingTransaction->status === Transaction::STATUS_CANCELLED) {
                 Log::info('Previous M-Pesa transaction failed, creating new transaction', [
                     'contribution_id' => $contribution->id,
                     'failed_transaction_id' => $existingTransaction->id,
@@ -363,13 +359,6 @@ class DonationController extends Controller
      */
     public function mpesaCallback(Request $request)
     {
-        Log::info('M-Pesa callback received', [
-            'data' => $request->all(),
-            'ip' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'environment' => $this->mpesaService->getCurrentEnvironment(),
-        ]);
-
         // Validate callback IP if enabled
         // if (config('mpesa.security.verify_callback_ip', false)) {
         //     $allowedIps = explode(',', config('mpesa.security.allowed_callback_ips', ''));
@@ -420,7 +409,7 @@ class DonationController extends Controller
     }
 
     /**
-     * Check STK Push status (for AJAX polling)
+     * Check STK Push status
      */
     public function checkStkPushStatus(Request $request)
     {
@@ -483,8 +472,17 @@ class DonationController extends Controller
                                 'processed_at' => now(),
                             ]);
 
-                            // Credit wallet
-                            $this->walletService->creditFromDonation($contribution);
+                            // Refresh contribution to get latest wallet_credited status
+                            $contribution->refresh();
+
+                            // Credit wallet only if not already credited
+                            if (!$contribution->wallet_credited) {
+                                $this->walletService->creditFromDonation($contribution);
+                            } else {
+                                Log::info('Wallet already credited for contribution via status check', [
+                                    'contribution_id' => $contribution->id,
+                                ]);
+                            }
 
                             DB::commit();
 
@@ -513,31 +511,33 @@ class DonationController extends Controller
                         ],
                     ]);
                 } elseif ($resultCode && $resultCode !== '500.001.1001') {
-                    // Payment failed - update database if not already updated
-                    if ($transaction->status !== Transaction::STATUS_FAILED) {
+                    // Payment failed, cancelled, or timed out
+                    if ($transaction->status !== Transaction::STATUS_FAILED && $transaction->status !== Transaction::STATUS_CANCELLED) {
+                        $status = ($resultCode == 1032) ? Transaction::STATUS_CANCELLED : Transaction::STATUS_FAILED;
                         $transaction->update([
-                            'status' => Transaction::STATUS_FAILED,
+                            'status' => $status,
                             'gateway_response' => array_merge($transaction->gateway_response ?? [], $result['data']),
                             'notes' => $resultDesc,
                             'processed_at' => now(),
                         ]);
 
                         $contribution->update([
-                            'payment_status' => Contribution::STATUS_FAILED,
+                            'payment_status' => $status === Transaction::STATUS_CANCELLED ? Contribution::STATUS_CANCELLED : Contribution::STATUS_FAILED,
                             'processed_at' => now(),
                         ]);
 
-                        Log::info('M-Pesa payment failed via status check', [
+                        Log::info('M-Pesa payment failed/cancelled via status check', [
                             'contribution_id' => $contribution->id,
                             'transaction_id' => $transaction->id,
                             'result_code' => $resultCode,
                             'result_desc' => $resultDesc,
+                            'status' => $status,
                         ]);
                     }
 
                     return response()->json([
                         'success' => true,
-                        'status' => 'failed',
+                        'status' => $status === Transaction::STATUS_CANCELLED ? 'cancelled' : 'failed',
                         'data' => [
                             'ResultCode' => $resultCode,
                             'ResultDesc' => $resultDesc,
@@ -668,7 +668,6 @@ class DonationController extends Controller
             // For now, we'll log the error but not fail the webhook
         }
     }
-
 
     /**
      * Admin: List all donation links

@@ -3,24 +3,24 @@
 @section('title', 'M-Pesa Payment - Complete Your Transaction')
 
 @section('content')
-    <div class="min-h-screen bg-gray-50 py-8">
+    <div class="min-h-screen py-8 bg-gray-50">
         <div class="max-w-md mx-auto">
-            <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="p-6 bg-white rounded-lg shadow-lg">
                 <!-- Header -->
-                <div class="text-center mb-6">
-                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div class="mb-6 text-center">
+                    <div class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full">
                         <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 18l9-9-9-9-3 3 6 6-6 6 3 3z" />
                         </svg>
                     </div>
                     <h1 class="text-2xl font-bold text-gray-900">M-Pesa Payment</h1>
-                    <p class="text-gray-600 mt-2">Complete your donation payment</p>
+                    <p class="mt-2 text-gray-600">Complete your donation payment</p>
                 </div>
 
                 <!-- Payment Details -->
-                <div class="bg-green-50 rounded-lg p-4 mb-6">
-                    <h3 class="font-semibold text-green-800 mb-3">Payment Details</h3>
+                <div class="p-4 mb-6 rounded-lg bg-green-50">
+                    <h3 class="mb-3 font-semibold text-green-800">Payment Details</h3>
                     <div class="space-y-2 text-sm">
                         <div class="flex justify-between">
                             <span class="text-green-700">Amount:</span>
@@ -42,17 +42,17 @@
                 <div class="mb-6">
                     <div id="payment-status" class="text-center">
                         <div
-                            class="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4">
+                            class="w-8 h-8 mx-auto mb-4 border-4 border-blue-500 rounded-full animate-spin border-t-transparent">
                         </div>
                         <p class="text-lg font-semibold text-gray-800">Processing Payment...</p>
-                        <p class="text-sm text-gray-600 mt-2">Please check your phone for the M-Pesa prompt</p>
+                        <p class="mt-2 text-sm text-gray-600">Please check your phone for the M-Pesa prompt</p>
                     </div>
                 </div>
 
                 <!-- Instructions -->
-                <div class="bg-blue-50 rounded-lg p-4 mb-6">
-                    <h3 class="font-semibold text-blue-800 mb-3">Instructions</h3>
-                    <ol class="text-sm text-blue-700 space-y-2">
+                <div class="p-4 mb-6 rounded-lg bg-blue-50">
+                    <h3 class="mb-3 font-semibold text-blue-800">Instructions</h3>
+                    <ol class="space-y-2 text-sm text-blue-700">
                         <li class="flex items-start">
                             <span
                                 class="bg-blue-200 text-blue-800 rounded-full w-5 h-5 flex items-center justify-center text-xs font-semibold mr-3 mt-0.5">1</span>
@@ -74,19 +74,19 @@
                 <!-- Action Buttons -->
                 <div class="space-y-3">
                     <button id="check-status-btn" onclick="checkPaymentStatus()"
-                        class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        class="w-full px-4 py-3 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
                         Check Payment Status
                     </button>
 
                     <button onclick="window.location.reload()"
-                        class="w-full bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors">
+                        class="w-full px-4 py-3 text-white transition-colors bg-gray-600 rounded-lg hover:bg-gray-700">
                         Refresh Page
                     </button>
                 </div>
 
                 <!-- Help Section -->
-                <div class="mt-6 p-4 bg-gray-50 rounded-lg">
-                    <h4 class="font-semibold text-gray-800 mb-2">Need Help?</h4>
+                <div class="p-4 mt-6 rounded-lg bg-gray-50">
+                    <h4 class="mb-2 font-semibold text-gray-800">Need Help?</h4>
                     <p class="text-sm text-gray-600">
                         If you don't receive the M-Pesa prompt or encounter any issues, please contact our support team.
                     </p>
@@ -96,22 +96,22 @@
     </div>
 
     <!-- Success Modal -->
-    <div id="success-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div id="success-modal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50">
         <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-lg max-w-md w-full p-6">
+            <div class="w-full max-w-md p-6 bg-white rounded-lg">
                 <div class="text-center">
-                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full">
                         <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         </svg>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Payment Successful!</h3>
-                    <p class="text-gray-600 mb-4">Thank you for your generous donation!</p>
-                    <div id="success-details" class="bg-green-50 rounded-lg p-4 mb-4 text-sm">
+                    <h3 class="mb-2 text-xl font-bold text-gray-900">Payment Successful!</h3>
+                    <p class="mb-4 text-gray-600">Thank you for your generous donation!</p>
+                    <div id="success-details" class="p-4 mb-4 text-sm rounded-lg bg-green-50">
                         <!-- Success details will be populated here -->
                     </div>
                     <button onclick="redirectToSuccess()"
-                        class="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors">
+                        class="w-full px-4 py-3 text-white transition-colors bg-green-600 rounded-lg hover:bg-green-700">
                         Close
                     </button>
                 </div>
@@ -120,25 +120,25 @@
     </div>
 
     <!-- Error Modal -->
-    <div id="error-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div id="error-modal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50">
         <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-lg max-w-md w-full p-6">
+            <div class="w-full max-w-md p-6 bg-white rounded-lg">
                 <div class="text-center">
-                    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full">
                         <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Payment Failed</h3>
-                    <p id="error-message" class="text-gray-600 mb-4">Something went wrong with your payment.</p>
+                    <h3 class="mb-2 text-xl font-bold text-gray-900">Payment Failed</h3>
+                    <p id="error-message" class="mb-4 text-gray-600">Something went wrong with your payment.</p>
                     <div class="space-y-3">
                         <button onclick="tryAgain()"
-                            class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                            class="w-full px-4 py-3 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700">
                             Try Again
                         </button>
                         <button onclick="closeModal('error-modal')"
-                            class="w-full bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors">
+                            class="w-full px-4 py-3 text-white transition-colors bg-gray-600 rounded-lg hover:bg-gray-700">
                             Close
                         </button>
                     </div>
@@ -212,10 +212,13 @@
                         // Show success modal instead of redirecting
                         showSuccessModal(data.data);
                         return;
-                    } else if (data.status === 'failed') {
-                        // Payment failed
+                    } else if (data.status === 'failed' || data.status === 'cancelled') {
+                        // Payment failed or cancelled
                         stopStatusChecking();
-                        showErrorModal(data.data.ResultDesc || 'Payment failed');
+                        const message = data.status === 'cancelled' ?
+                            'Payment was cancelled. Please try again.' :
+                            (data.data.ResultDesc || 'Payment failed');
+                        showErrorModal(message);
                         return;
                     } else if (data.status === 'processing') {
                         // Payment still processing, continue checking
@@ -261,12 +264,6 @@
                         <span class="text-green-700">Reference:</span>
                         <span class="font-semibold text-green-900">DON_{{ $contribution->id }}</span>
                     </div>
-                    ${result.ResultDesc ? `
-                            <div class="flex justify-between">
-                                <span class="text-green-700">Message:</span>
-                                <span class="font-semibold text-green-900 text-xs">${result.ResultDesc}</span>
-                            </div>
-                            ` : ''}
                 </div>
             `;
 
@@ -297,33 +294,33 @@
 
             if (status === 'success') {
                 statusDiv.innerHTML = `
-                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div class="flex items-center justify-center w-8 h-8 mx-auto mb-4 bg-green-100 rounded-full">
                         <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>
                     </div>
                     <p class="text-lg font-semibold text-green-800">Payment Successful!</p>
-                    <p class="text-sm text-green-600 mt-2">Your donation has been processed</p>
+                    <p class="mt-2 text-sm text-green-600">Your donation has been processed</p>
                 `;
             } else if (status === 'failed') {
                 statusDiv.innerHTML = `
-                    <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div class="flex items-center justify-center w-8 h-8 mx-auto mb-4 bg-red-100 rounded-full">
                         <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
                     </div>
                     <p class="text-lg font-semibold text-red-800">Payment Failed</p>
-                    <p class="text-sm text-red-600 mt-2">Please try again or contact support</p>
+                    <p class="mt-2 text-sm text-red-600">Please try again or contact support</p>
                 `;
             } else if (status === 'timeout') {
                 statusDiv.innerHTML = `
-                    <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div class="flex items-center justify-center w-8 h-8 mx-auto mb-4 bg-yellow-100 rounded-full">
                         <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"/>
                         </svg>
                     </div>
                     <p class="text-lg font-semibold text-yellow-800">Payment Timeout</p>
-                    <p class="text-sm text-yellow-600 mt-2">Please check your M-Pesa messages or try again</p>
+                    <p class="mt-2 text-sm text-yellow-600">Please check your M-Pesa messages or try again</p>
                 `;
             }
         }
@@ -334,18 +331,18 @@
             modal.classList.add('hidden');
         }
 
-        // Try again function
+        // Try again function - Creates new STK push request
         function tryAgain() {
-            window.location.reload();
+            // Redirect to donation form to start fresh payment process
+            window.location.href = '{{ route('donation.show', $contribution->donationLink->code) }}';
         }
 
         // Redirect to success page - REMOVED: Now just closes modal and stays on page
         function redirectToSuccess() {
-            // Close modal and stay on current page
+            // Close modal and redirect back to donation form
             closeModal('success-modal');
-            // Optionally reload to reset the form
             setTimeout(() => {
-                window.location.reload();
+                window.location.href = '{{ route('donation.show', $contribution->donationLink->code) }}';
             }, 1000);
         }
 
@@ -363,5 +360,4 @@
             stopStatusChecking();
         });
     </script>
-
 @endsection

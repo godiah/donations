@@ -59,10 +59,10 @@ class WithdrawalController extends Controller
         $user = Auth::user();
         $availableBalance = $this->walletService->getAvailableBalance($user);
 
-        // if ($availableBalance <= 0) {
-        //     return redirect()->route('wallet.dashboard')
-        //         ->with('error', 'No funds available for withdrawal');
-        // }
+        if ($availableBalance <= 0) {
+            return redirect()->route('wallet.dashboard')
+                ->with('error', 'No funds available for withdrawal');
+        }
 
         return view('wallet.withdraw', compact('availableBalance'));
     }
