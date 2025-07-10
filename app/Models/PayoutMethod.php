@@ -11,8 +11,7 @@ class PayoutMethod extends Model
     use HasFactory;
 
     protected $fillable = [
-        'payable_type',
-        'payable_id',
+        'user_id',
         'type',
         'provider',
         'account_number',
@@ -32,11 +31,11 @@ class PayoutMethod extends Model
     ];
 
     /**
-     * Get the owning payable model (Individual or Company).
+     * Get the user that owns the payout method
      */
-    public function payable(): MorphTo
+    public function user(): BelongsTo
     {
-        return $this->morphTo();
+        return $this->belongsTo(User::class);
     }
 
     /**
@@ -48,18 +47,16 @@ class PayoutMethod extends Model
 
         static::creating(function ($payoutMethod) {
             if ($payoutMethod->is_primary) {
-                // Make other methods non-primary for this payable
-                static::where('payable_type', $payoutMethod->payable_type)
-                    ->where('payable_id', $payoutMethod->payable_id)
+                // Make other methods non-primary for this user
+                static::where('user_id', $payoutMethod->user_id)
                     ->update(['is_primary' => false]);
             }
         });
 
         static::updating(function ($payoutMethod) {
             if ($payoutMethod->is_primary && $payoutMethod->isDirty('is_primary')) {
-                // Make other methods non-primary for this payable
-                static::where('payable_type', $payoutMethod->payable_type)
-                    ->where('payable_id', $payoutMethod->payable_id)
+                // Make other methods non-primary for this user
+                static::where('user_id', $payoutMethod->user_id)
                     ->where('id', '!=', $payoutMethod->id)
                     ->update(['is_primary' => false]);
             }
@@ -101,15 +98,70 @@ class PayoutMethod extends Model
     }
 
     /**
+    * Validate paybill transaction
+    */
+    public function validatePaybillTransaction(string $paybillNumber, string $accountNumber, string $accountName): bool
+    {
+        if (!$this->isPaybillMethod()) {
+            return false;
+        }
+
+        return $this->paybill_number === $paybillNumber &&
+            $this->account_number === $accountNumber &&
+            strcasecmp($this->paybill_account_name, $accountName) === 0;
+    }
+
+    /**
      * Get formatted account display
      */
     public function getFormattedAccountAttribute(): string
     {
         if ($this->type === 'mobile_money') {
             return $this->provider . ' - ' . $this->account_number;
+        } elseif ($this->type === 'bank_account') {
+            return $this->bank ? ($this->bank->display_name . ' - ' . $this->account_number) : 'Bank Account - ' . $this->account_number;
+        } elseif ($this->type === 'paybill') {
+            return 'Paybill ' . $this->paybill_number . ' - ' . $this->account_number . ' (' . $this->provider . ')';
         }
 
-        return $this->bank ? ($this->bank->display_name . ' - ' . $this->account_number) : 'Bank Account - ' . $this->account_number;
+        return $this->account_number;
+    }
+
+    /**
+     * Get paybill settings as array
+     */
+    public function getPaybillSettingsAttribute($value): ?array
+    {
+        if (!$value) {
+            return null;
+        }
+
+        return json_decode($value, true);
+    }
+
+    /**
+     * Set paybill settings as JSON
+     */
+    public function setPaybillSettingsAttribute($value): void
+    {
+        if (is_array($value)) {
+            $this->attributes['paybill_settings'] = json_encode($value);
+        } else {
+            $this->attributes['paybill_settings'] = $value;
+        }
+    }
+
+    /**
+     * Get paybill description from settings
+     */
+    public function getPaybillDescriptionAttribute(): ?string
+    {
+        if (!$this->isPaybillMethod()) {
+            return null;
+        }
+
+        $settings = $this->paybill_settings;
+        return $settings['description'] ?? null;
     }
 
     /**
@@ -121,7 +173,24 @@ class PayoutMethod extends Model
             return 'bg-yellow-100 text-yellow-800';
         }
 
-        return $this->is_primary ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
+        if ($this->is_primary) {
+            return 'bg-green-100 text-green-800';
+        }
+
+        return 'bg-gray-100 text-gray-800';
+    }
+
+    /**
+     * Get type display name
+     */
+    public function getTypeDisplayAttribute(): string
+    {
+        return match ($this->type) {
+            'mobile_money' => 'Mobile Money',
+            'bank_account' => 'Bank Account',
+            'paybill' => 'Paybill',
+            default => ucfirst(str_replace('_', ' ', $this->type))
+        };
     }
 
     /**
@@ -134,6 +203,11 @@ class PayoutMethod extends Model
         }
 
         return $this->is_primary ? 'Primary' : 'Secondary';
+    }
+
+    public function scopeForUser($query, $userId)
+    {
+        return $query->where('user_id', $userId);
     }
 
     /**
@@ -150,5 +224,29 @@ class PayoutMethod extends Model
     public function scopeVerified($query)
     {
         return $query->where('is_verified', true);
+    }
+
+    /**
+     * Scope for paybill methods
+     */
+    public function scopePaybill($query)
+    {
+        return $query->where('type', 'paybill');
+    }
+
+    /**
+     * Scope for mobile money methods
+     */
+    public function scopeMobileMoney($query)
+    {
+        return $query->where('type', 'mobile_money');
+    }
+
+    /**
+     * Scope for bank account methods
+     */
+    public function scopeBankAccount($query)
+    {
+        return $query->where('type', 'bank_account');
     }
 }

@@ -27,7 +27,7 @@ class MpesaStatusChecker
         // Get transactions that are still pending after 2 minutes
         $pendingTransactions = Transaction::where('status', Transaction::STATUS_PENDING)
             ->where('mpesa_payment_type', 'stk_push')
-            ->where('created_at', '<', now()->subMinutes(2))
+            ->where('created_at', '<', now()->subMinutes(1))
             ->where('created_at', '>', now()->subHours(3)) // Don't check very old transactions
             ->get();
 

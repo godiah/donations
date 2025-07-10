@@ -24,7 +24,6 @@ class DonationLink extends Model
         'access_count',
         'created_by',
         'mpesa_payment_method',
-        'paybill_payout_method_id',
     ];
 
     /**
@@ -86,19 +85,27 @@ class DonationLink extends Model
         return $this->hasMany(Contribution::class);
     }
 
-    public function paybillPayoutMethod()
-    {
-        return $this->belongsTo(PayoutMethod::class, 'paybill_payout_method_id');
-    }
-
     public function isPaybillEnabled(): bool
     {
-        return in_array($this->mpesa_payment_method, ['paybill', 'both']) && $this->paybillPayoutMethod;
+        // Check if user has a verified paybill payout method
+        return in_array($this->mpesa_payment_method, ['paybill', 'both']) && 
+               $this->application->user->payoutMethods()
+                   ->where('type', 'paybill')
+                   ->where('is_verified', true)
+                   ->exists();
     }
 
     public function isStkPushEnabled(): bool
     {
         return in_array($this->mpesa_payment_method, ['stk_push', 'both']);
+    }    
+
+    public function getUserPaybillMethod(): ?PayoutMethod
+    {
+        return $this->application->user->payoutMethods()
+            ->where('type', 'paybill')
+            ->where('is_verified', true)
+            ->first();
     }
 
     public function getPaybillDetails(): ?array

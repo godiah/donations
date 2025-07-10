@@ -73,24 +73,7 @@ class Individual extends Model
     public function supportDocuments()
     {
         return $this->morphMany(SupportDocument::class, 'documentable');
-    }
-
-    /**
-     * Get all payout methods for this individual
-     */
-    public function payoutMethods()
-    {
-        return $this->morphMany(PayoutMethod::class, 'payable');
-    }
-
-    /**
-     * Get primary payout method
-     */
-    public function primaryPayoutMethod()
-    {
-        return $this->morphOne(PayoutMethod::class, 'payable')
-            ->where('is_primary', true);
-    }
+    }   
 
     // KYC verifications relationship
     public function kycVerifications()

@@ -559,62 +559,96 @@
                             </div>
                             <div class="p-6">
                                 @if ($canViewPayoutMethods)
-                                    @if ($payoutMethods->count() > 0)
-                                        <div class="space-y-4">
-                                            @foreach ($payoutMethods as $method)
-                                                <div
-                                                    class="bg-gradient-to-r from-neutral-50 to-white rounded-xl p-4 border border-neutral-200 hover:shadow-sm transition-all duration-200">
-                                                    <div class="flex items-start justify-between">
-                                                        <div class="flex-1">
-                                                            <div class="flex items-center space-x-2 mb-2">
-                                                                <span class="font-heading font-bold text-neutral-800">
-                                                                    {{ $method->formatted_account }}
-                                                                </span>
-                                                                <span
-                                                                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ $method->status_badge_color }}">
-                                                                    {{ $method->status_text }}
-                                                                </span>
-                                                                @if ($method->is_primary)
-                                                                    <span
-                                                                        class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-success-100 text-success-700">
-                                                                        Primary
-                                                                    </span>
-                                                                @endif
-                                                            </div>
-                                                            <p class="text-sm font-medium text-neutral-600 mb-1">
-                                                                {{ $method->account_name }}</p>
-                                                            <p class="text-xs text-neutral-500">
-                                                                {{ $method->type === 'bank_account' ? 'Bank Account' : 'Mobile Money' }}
-                                                            </p>
-                                                        </div>
-                                                        @if (!$method->is_primary)
-                                                            <form method="POST"
-                                                                action="{{ route('payout-methods.set-primary', $method->id) }}"
-                                                                class="inline">
-                                                                @csrf
-                                                                @method('PATCH')
-                                                                <button type="submit"
-                                                                    class="text-xs font-medium text-primary-600 hover:text-primary-700 bg-primary-50 hover:bg-primary-100 px-2 py-1 rounded-lg transition-all duration-200">
-                                                                    Set Primary
-                                                                </button>
-                                                            </form>
+                                @if ($payoutMethods->count() > 0)
+                                <div class="space-y-4">
+                                    @foreach ($payoutMethods as $method)
+                                        <div class="bg-gradient-to-r from-neutral-50 to-white rounded-xl p-4 border border-neutral-200 hover:shadow-sm transition-all duration-200">
+                                            <div class="flex items-start justify-between">
+                                                <div class="flex-1">
+                                                    <div class="flex items-center space-x-2 mb-2">
+                                                        <span class="font-heading font-bold text-neutral-800">
+                                                            {{ $method->formatted_account }}
+                                                        </span>
+                                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ $method->status_badge_color }}">
+                                                            {{ $method->status_text }}
+                                                        </span>
+                                                        @if ($method->is_primary)
+                                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-success-100 text-success-700">
+                                                                Primary
+                                                            </span>
                                                         @endif
                                                     </div>
+                                                    
+                                                    {{-- Display account name based on type --}}
+                                                    <p class="text-sm font-medium text-neutral-600 mb-1">
+                                                        @if ($method->type === 'paybill')
+                                                            {{ $method->paybill_account_name }}
+                                                        @else
+                                                            {{ $method->account_name }}
+                                                        @endif
+                                                    </p>
+                                                    
+                                                    {{-- Display type with proper labels --}}
+                                                    <div class="flex items-center space-x-2 mb-2">
+                                                        <p class="text-xs text-neutral-500">
+                                                            @if ($method->type === 'bank_account')
+                                                                Bank Account
+                                                            @elseif ($method->type === 'mobile_money')
+                                                                Mobile Money
+                                                            @elseif ($method->type === 'paybill')
+                                                                Paybill
+                                                            @else
+                                                                {{ $method->type_display }}
+                                                            @endif
+                                                        </p>
+                                                        
+                                                        {{-- Show provider for mobile money and paybill --}}
+                                                        @if (in_array($method->type, ['mobile_money', 'paybill']) && $method->provider)
+                                                            <span class="text-xs text-neutral-400">•</span>
+                                                            <span class="text-xs text-neutral-500">{{ $method->provider }}</span>
+                                                        @endif
+                                                    </div>
+                                                    
+                                                    {{-- Additional paybill information --}}
+                                                    @if ($method->type === 'paybill')
+                                                        <div class="text-xs text-neutral-400 space-y-1">
+                                                            <p>Paybill: {{ $method->paybill_number }}</p>
+                                                            @if ($method->paybill_description)
+                                                                <p class="italic">{{ $method->paybill_description }}</p>
+                                                            @endif
+                                                        </div>
+                                                    @endif
+                                                    
+                                                    {{-- Bank information --}}
+                                                    @if ($method->type === 'bank_account' && $method->bank)
+                                                        <p class="text-xs text-neutral-400">{{ $method->bank->display_name }}</p>
+                                                    @endif
                                                 </div>
-                                            @endforeach
+                                                
+                                                {{-- Set Primary Button --}}
+                                                @if (!$method->is_primary)
+                                                    <form method="POST" action="{{ route('payout-methods.set-primary', $method->id) }}" class="inline mt-2">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <button type="submit" class="text-xs font-medium text-primary-600 hover:text-primary-700 bg-primary-50 hover:bg-primary-100 px-2 py-1 rounded-lg transition-all duration-200">
+                                                            Set Primary
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                            </div>
                                         </div>
-                                        <div class="mt-6 pt-4 border-t border-neutral-100">
-                                            <a href="{{ route('payout-methods.index') }}"
-                                                class="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors">
-                                                <span>Manage all methods</span>
-                                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2" d="M9 5l7 7-7 7" />
-                                                </svg>
-                                            </a>
-                                        </div>
-                                    @else
+                                    @endforeach
+                                </div>
+                                
+                                <div class="mt-6 pt-4 border-t border-neutral-100">
+                                    <a href="{{ route('payout-methods.index') }}" class="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors">
+                                        <span>Manage all methods</span>
+                                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </a>
+                                </div>
+                            @else
                                         <div class="text-center py-8">
                                             <div
                                                 class="w-16 h-16 bg-gradient-to-br from-neutral-100 to-neutral-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -628,7 +662,7 @@
                                             <h3 class="text-lg font-heading font-bold text-neutral-800 mb-2">No payout
                                                 methods
                                             </h3>
-                                            <p class="text-sm text-neutral-500 mb-6">Add a payout method to receive
+                                            <p class="text-sm text-neutral-500 mb-6">Add a payout method to withdraw
                                                 donations.
                                             </p>
                                             <a href="{{ route('payout-methods.create') }}"

@@ -46,6 +46,14 @@ class Application extends Model
     }
 
     /**
+     * For the application owner (uses user_id field)
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
      * Polymorphic relationship to Individual or Company
      */
     public function applicant()

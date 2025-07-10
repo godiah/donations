@@ -79,23 +79,6 @@ class Company extends Model
         return $this->morphMany(SupportDocument::class, 'documentable');
     }
 
-    /**
-     * Get all payout methods for this company
-     */
-    public function payoutMethods()
-    {
-        return $this->morphMany(PayoutMethod::class, 'payable');
-    }
-
-    /**
-     * Get primary payout method
-     */
-    public function primaryPayoutMethod()
-    {
-        return $this->morphOne(PayoutMethod::class, 'payable')
-            ->where('is_primary', true);
-    }
-
     public function getRequiredDocumentTypes()
     {
         return $this->contributionReason->getDocumentTypesWithDetails();

@@ -1,5 +1,5 @@
 <nav x-data="{ open: false }"
-    class="bg-white shadow-lg border-b border-neutral-200 w-full fixed top-0 z-50 backdrop-blur-sm">
+    class="bg-white border-b border-neutral-200 w-full fixed top-0 z-50 backdrop-blur-sm  @if(!isset($header)) shadow-lg @endif">
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 py-2 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">

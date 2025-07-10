@@ -24,13 +24,13 @@
                                     </p>
                                 </div>
                             </div>
-                            <a href="{{ route('donations') }}"
+                            {{-- <a href="{{ route('donations') }}"
                                 class="bg-white text-primary-600 hover:bg-primary-50 px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-[1.02] flex items-center gap-2 shadow-md hover:shadow-lg">
                                 <svg class="w-4 h-4 " fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z" />
                                 </svg>
                                 Back
-                            </a>
+                            </a> --}}
                         </div>
                     </div>
                 </div>
@@ -222,7 +222,7 @@
                                             <span class="font-medium text-neutral-600">Target Date</span>
                                         </div>
                                         <div class="text-lg font-heading font-bold text-neutral-800">
-                                            {{ $application->applicant->target_date->format('M j, Y') }}
+                                            {{ optional(optional($application->applicant)->target_date)->format('M j, Y') ?? 'Not Set' }}
                                         </div>
                                     </div>
 

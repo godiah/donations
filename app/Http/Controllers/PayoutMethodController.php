@@ -7,6 +7,7 @@ use App\Http\Requests\StorePayoutMethodRequest;
 use App\Models\Bank;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class PayoutMethodController extends Controller
 {
@@ -15,8 +16,26 @@ class PayoutMethodController extends Controller
      */
     public function index()
     {
-        $applicant = Auth::user()->applicant;
-        $payoutMethods = $applicant->payoutMethods()->get();
+        $user = Auth::user();
+        
+        // NEW APPROACH: Get payout methods directly from the user
+        $payoutMethods = $user->payoutMethods()
+            ->orderBy('is_primary', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        // // Optional: Group by type for better organization
+        // $payoutMethodsByType = $payoutMethods->groupBy('type');
+        
+        // // Optional: Get some statistics
+        // $stats = [
+        //     'total_methods' => $payoutMethods->count(),
+        //     'verified_methods' => $payoutMethods->where('is_verified', true)->count(),
+        //     'primary_method' => $payoutMethods->where('is_primary', true)->first(),
+        //     'has_paybill' => $payoutMethods->where('type', 'paybill')->count() > 0,
+        //     'has_mobile_money' => $payoutMethods->where('type', 'mobile_money')->count() > 0,
+        //     'has_bank_account' => $payoutMethods->where('type', 'bank_account')->count() > 0,
+        // ];
 
         return view('payout-methods.index', compact('payoutMethods'));
     }
@@ -35,27 +54,57 @@ class PayoutMethodController extends Controller
      */
     public function store(StorePayoutMethodRequest $request)
     {
-        $applicant = Auth::user()->applicant;
-
-        if (!$applicant) {
-            return redirect()->back()
-                ->with('error', 'No applicant profile found.');
-        }
-
-        $applicant->payoutMethods()->create([
+        $user = Auth::user();
+        
+        // Prepare data for user-linked payout method
+        $data = [
+            'user_id' => $user->id,
             'type' => $request->type,
-            'provider' => $request->provider,
             'account_number' => $request->account_number,
-            'account_name' => $request->account_name,
-            'bank_id' => $request->bank_id,
             'is_primary' => $request->boolean('is_primary'),
-            'payable_type' => get_class($applicant),
-            'payable_id' => $applicant->id,
-        ]);
+        ];
+    
+        // Add type-specific fields
+        if ($request->type === 'mobile_money') {
+            $data['provider'] = $request->provider;
+            $data['account_name'] = $request->account_name;
+        } elseif ($request->type === 'bank_account') {
+            $data['bank_id'] = $request->bank_id;
+            $data['account_name'] = $request->account_name;
+        } elseif ($request->type === 'paybill') {
+            $data['provider'] = $request->provider;
+            $data['paybill_number'] = $request->paybill_number;
+            $data['paybill_account_name'] = $request->paybill_account_name;
+            $data['account_name'] = $request->paybill_account_name;
+            
+            if ($request->filled('paybill_description')) {
+                $data['paybill_settings'] = json_encode([
+                    'description' => $request->paybill_description,
+                    'created_at' => now(),
+                ]);
+            }
+        }
+    
+        try {
+            $payoutMethod = $user->payoutMethods()->create($data);
+    
+            return redirect()->back()
+                ->with('success', 'Payout method added successfully!');
+        } catch (\Exception $e) {
+            Log::error('Failed to add payout method for applicant', [                
+                'payout_type' => $request->type,
+                'request_data' => array_diff_key($request->all(), array_flip(['account_number', 'paybill_account_name'])),
+                'error_message' => $e->getMessage(),
+                'stack_trace' => $e->getTraceAsString(),
+            ]);
 
-        return redirect()->back()
-            ->with('success', 'Payout method added successfully!');
+            return redirect()->back()
+                ->with('error', 'Failed to add payout method. Please try again.')
+                ->withInput();
+        }
     }
+
+    
 
     /**
      * Set primary payout method
@@ -63,21 +112,16 @@ class PayoutMethodController extends Controller
     public function setPrimary($id)
     {
         $user = Auth::user();
-        $applicant = $user->applicant;
-
-        if (!$applicant) {
-            return redirect()->back()->with('error', 'No applicant profile found.');
-        }
-
-        // Find the payout method for the applicant
-        $payoutMethod = $applicant->payoutMethods()->findOrFail($id);
-
-        // Unset any existing primary method for this applicant
-        $applicant->payoutMethods()->where('is_primary', true)->update(['is_primary' => false]);
-
+        
+        // Find the payout method for the user
+        $payoutMethod = $user->payoutMethods()->findOrFail($id);
+        
+        // Unset any existing primary method for this user
+        $user->payoutMethods()->where('is_primary', true)->update(['is_primary' => false]);
+        
         // Set the selected method as primary
         $payoutMethod->update(['is_primary' => true]);
-
+        
         return redirect()->back()->with('success', 'Primary payout method updated!');
     }
 
@@ -86,11 +130,11 @@ class PayoutMethodController extends Controller
      */
     public function destroy($id)
     {
-        $applicant = Auth::user()->applicant;
-
-        $payoutMethod = $applicant->payoutMethods()->findOrFail($id);
+        $user = Auth::user();
+        
+        $payoutMethod = $user->payoutMethods()->findOrFail($id);
         $payoutMethod->delete();
-
+        
         return redirect()->back()->with('success', 'Payout method deleted successfully!');
     }
 }

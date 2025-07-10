@@ -12,6 +12,7 @@ use App\Services\DonationStatisticsService;
 use App\Services\MpesaService;
 use App\Services\MpesaStatusChecker;
 use App\Services\WalletService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -72,9 +73,6 @@ class DonationController extends Controller
         // Record the access
         // $donationLink->recordAccess();
 
-        $stkPushEnabled = $donationLink->isStkPushEnabled();
-        $paybillEnabled = $donationLink->isPaybillEnabled();
-
         // Get application and contribution details
         $application = $donationLink->application;
         $applicant = $application->applicant;
@@ -91,7 +89,7 @@ class DonationController extends Controller
             'application_id' => $application->id,
         ]);
 
-        return view('donations.form', compact('donationLink', 'application', 'applicant', 'paybillDetails', 'stkPushEnabled', 'paybillEnabled', 'contributionStats', 'progressPercentage'));
+        return view('donations.form', compact('donationLink', 'application', 'applicant', 'paybillDetails', 'contributionStats', 'progressPercentage'));
     }
 
     /**
@@ -281,38 +279,57 @@ class DonationController extends Controller
     }
 
     /**
-     * Handle M-Pesa payment (placeholder for future implementation)
+     * Handle M-Pesa payment (STK Push only) - Prevents duplicate requests
      */
     protected function handleMpesaPayment(DonationLink $donationLink, Contribution $contribution, DonationRequest $request)
     {
-        try {
-            // Determine M-Pesa payment method (STK Push or Paybill)
-            if ($donationLink->isPaybillEnabled() && $request->has('paybill_account_number')) {
-                // Handle paybill payment
-                return $this->handlePaybillPayment($donationLink, $contribution, $request);
-            } elseif ($donationLink->isStkPushEnabled()) {
-                // Handle STK Push payment
-                return $this->handleStkPushPayment($contribution);
-            } else {
-                throw new \Exception('No valid M-Pesa payment method configured for this donation link');
+        // Check if transaction already exists for this contribution
+        $existingTransaction = Transaction::where('contribution_id', $contribution->id)
+            ->where('gateway', 'mpesa')
+            ->first();
+
+        if ($existingTransaction) {
+            // Transaction already exists - check its status
+            if ($existingTransaction->status === Transaction::STATUS_COMPLETED) {
+                // Payment already completed - show success modal instead of redirecting
+                Log::info('Payment already completed, showing success view', [
+                    'contribution_id' => $contribution->id,
+                    'transaction_id' => $existingTransaction->id,
+                ]);
+
+                return view('donations.mpesa-stk-push', [
+                    'contribution' => $contribution,
+                    'checkout_request_id' => $existingTransaction->mpesa_checkout_request_id,
+                    'merchant_request_id' => $existingTransaction->mpesa_merchant_request_id,
+                    'message' => 'Payment already completed successfully',
+                    'environment' => $this->mpesaService->getCurrentEnvironment(),
+                    'payment_completed' => true, // Flag to show success modal on load
+                ]);
+            } elseif ($existingTransaction->status === Transaction::STATUS_PENDING) {
+                // Transaction is pending - show existing STK push view
+                Log::info('Existing pending M-Pesa transaction found', [
+                    'contribution_id' => $contribution->id,
+                    'transaction_id' => $existingTransaction->id,
+                    'checkout_request_id' => $existingTransaction->mpesa_checkout_request_id,
+                ]);
+
+                return view('donations.mpesa-stk-push', [
+                    'contribution' => $contribution,
+                    'checkout_request_id' => $existingTransaction->mpesa_checkout_request_id,
+                    'merchant_request_id' => $existingTransaction->mpesa_merchant_request_id,
+                    'message' => 'Please complete the payment on your phone',
+                    'environment' => $this->mpesaService->getCurrentEnvironment(),
+                ]);
+            } elseif ($existingTransaction->status === Transaction::STATUS_FAILED) {
+                // Previous transaction failed - we can create a new one
+                Log::info('Previous M-Pesa transaction failed, creating new transaction', [
+                    'contribution_id' => $contribution->id,
+                    'failed_transaction_id' => $existingTransaction->id,
+                ]);
             }
-        } catch (\Exception $e) {
-            Log::error('M-Pesa payment handling failed', [
-                'contribution_id' => $contribution->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return redirect()->back()
-                ->withErrors(['error' => $e->getMessage()])
-                ->withInput();
         }
-    }
 
-    /**
-     * Handle STK Push payment
-     */
-    protected function handleStkPushPayment(Contribution $contribution)
-    {
+        // No existing pending/completed transaction - proceed with new STK push
         $result = $this->mpesaService->processStkPush($contribution);
 
         if ($result['success']) {
@@ -336,62 +353,8 @@ class DonationController extends Controller
                 'environment' => $this->mpesaService->getCurrentEnvironment(),
             ]);
 
-            return redirect()->back()
-                ->withErrors(['error' => $result['error']])
-                ->withInput();
-        }
-    }
-
-    /**
-     * Handle paybill payment
-     */
-    protected function handlePaybillPayment(DonationLink $donationLink, Contribution $contribution, DonationRequest $request)
-    {
-        $paybillMethod = $donationLink->paybillPayoutMethod;
-
-        if (!$paybillMethod) {
-            throw new \Exception('Paybill configuration not found');
-        }
-
-        // Validate provided account details
-        $isValid = $this->mpesaService->validatePaybillAccount(
-            $paybillMethod,
-            $request->paybill_account_number,
-            $request->paybill_account_name
-        );
-
-        if (!$isValid) {
-            return redirect()->back()
-                ->withErrors(['error' => 'Invalid paybill account details. Please check the account number and name.'])
-                ->withInput();
-        }
-
-        $result = $this->mpesaService->processPaybill($contribution, $paybillMethod);
-
-        if ($result['success']) {
-            Log::info('Paybill payment initiated successfully', [
-                'contribution_id' => $contribution->id,
-                'paybill_number' => $result['paybill_details']['paybill_number'],
-                'environment' => $this->mpesaService->getCurrentEnvironment(),
-            ]);
-
-            return view('donations.mpesa-paybill', [
-                'contribution' => $contribution,
-                'paybill_details' => $result['paybill_details'],
-                'instructions' => $result['instructions'],
-                'transaction' => $result['transaction'],
-                'environment' => $this->mpesaService->getCurrentEnvironment(),
-            ]);
-        } else {
-            Log::error('Paybill payment setup failed', [
-                'contribution_id' => $contribution->id,
-                'error' => $result['error'],
-                'environment' => $this->mpesaService->getCurrentEnvironment(),
-            ]);
-
-            return redirect()->back()
-                ->withErrors(['error' => $result['error']])
-                ->withInput();
+            // Throw exception to trigger rollback in main handler
+            throw new \Exception($result['error']);
         }
     }
 
@@ -400,18 +363,6 @@ class DonationController extends Controller
      */
     public function mpesaCallback(Request $request)
     {
-        // Log everything about the incoming request
-        Log::info('Raw M-Pesa callback received', [
-            'method' => $request->method(),
-            'url' => $request->fullUrl(),
-            'headers' => $request->headers->all(),
-            'body' => $request->getContent(),
-            'all_data' => $request->all(),
-            'ip' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'timestamp' => now(),
-        ]);
-
         Log::info('M-Pesa callback received', [
             'data' => $request->all(),
             'ip' => $request->ip(),
@@ -468,50 +419,6 @@ class DonationController extends Controller
         }
     }
 
-    public function manualStatusCheck(Transaction $transaction)
-    {
-        $statusChecker = app(MpesaStatusChecker::class);
-        $statusChecker->checkTransactionStatus($transaction);
-
-        return response()->json([
-            'message' => 'Status check initiated',
-            'transaction' => $transaction->fresh()
-        ]);
-    }
-
-    /**
-     * Credit wallet when donation is confirmed
-     */
-    protected function creditWalletFromDonation(Contribution $contribution): void
-    {
-        try {
-            // Check if wallet has already been credited
-            if ($contribution->wallet_credited) {
-                Log::info('Wallet already credited for contribution', [
-                    'contribution_id' => $contribution->id,
-                ]);
-                return;
-            }
-
-            // Credit the beneficiary's wallet
-            $walletTransaction = $this->walletService->creditFromDonation($contribution);
-
-            Log::info('Wallet credited successfully', [
-                'contribution_id' => $contribution->id,
-                'wallet_transaction_id' => $walletTransaction->id,
-                'amount' => $contribution->amount,
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Failed to credit wallet from donation', [
-                'contribution_id' => $contribution->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            // You might want to queue this for retry or send admin notification
-            // For now, we'll log the error but not fail the webhook
-        }
-    }
-
     /**
      * Check STK Push status (for AJAX polling)
      */
@@ -522,6 +429,7 @@ class DonationController extends Controller
         ]);
 
         try {
+            // Query M-Pesa API for status
             $result = $this->mpesaService->queryStkPushStatus($request->checkout_request_id);
 
             Log::info('STK Push status check', [
@@ -530,10 +438,126 @@ class DonationController extends Controller
                 'environment' => $this->mpesaService->getCurrentEnvironment(),
             ]);
 
+            // Find local transaction
+            $transaction = Transaction::where('mpesa_checkout_request_id', $request->checkout_request_id)->first();
+
+            if (!$transaction) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Transaction not found',
+                ], 404);
+            }
+
+            $contribution = $transaction->contribution;
+
+            // If M-Pesa query was successful, check the status
+            if ($result['success'] && isset($result['data']['ResultCode'])) {
+                $resultCode = $result['data']['ResultCode'];
+                $resultDesc = $result['data']['ResultDesc'] ?? '';
+
+                if ($resultCode === '0' || $resultCode === 0) {
+                    // Payment successful - update database if not already updated
+                    if ($transaction->status !== Transaction::STATUS_COMPLETED) {
+                        DB::beginTransaction();
+                        try {
+                            // Extract payment details from M-Pesa response
+                            $paymentData = [];
+                            if (isset($result['data']['CallbackMetadata']['Item'])) {
+                                $paymentData = $this->extractCallbackMetadata($result['data']['CallbackMetadata']['Item']);
+                            }
+
+                            // Update transaction
+                            $transaction->update([
+                                'status' => Transaction::STATUS_COMPLETED,
+                                'mpesa_receipt_number' => $paymentData['receipt_number'] ?? null,
+                                'mpesa_amount' => $paymentData['amount'] ?? $contribution->amount,
+                                'mpesa_transaction_date' => $paymentData['transaction_date'] ?? now(),
+                                'mpesa_phone_number' => $paymentData['phone_number'] ?? null,
+                                'gateway_response' => array_merge($transaction->gateway_response ?? [], $result['data']),
+                                'processed_at' => now(),
+                            ]);
+
+                            // Update contribution
+                            $contribution->update([
+                                'payment_status' => Contribution::STATUS_COMPLETED,
+                                'processed_at' => now(),
+                            ]);
+
+                            // Credit wallet
+                            $this->walletService->creditFromDonation($contribution);
+
+                            DB::commit();
+
+                            Log::info('M-Pesa payment completed via status check', [
+                                'contribution_id' => $contribution->id,
+                                'transaction_id' => $transaction->id,
+                                'receipt_number' => $paymentData['receipt_number'] ?? 'N/A',
+                            ]);
+                        } catch (\Exception $e) {
+                            DB::rollback();
+                            Log::error('Failed to update transaction status', [
+                                'transaction_id' => $transaction->id,
+                                'error' => $e->getMessage(),
+                            ]);
+                        }
+                    }
+
+                    return response()->json([
+                        'success' => true,
+                        'status' => 'completed',
+                        'data' => [
+                            'ResultCode' => $resultCode,
+                            'ResultDesc' => $resultDesc,
+                            'transaction_status' => $transaction->status,
+                            'contribution_status' => $contribution->payment_status,
+                        ],
+                    ]);
+                } elseif ($resultCode && $resultCode !== '500.001.1001') {
+                    // Payment failed - update database if not already updated
+                    if ($transaction->status !== Transaction::STATUS_FAILED) {
+                        $transaction->update([
+                            'status' => Transaction::STATUS_FAILED,
+                            'gateway_response' => array_merge($transaction->gateway_response ?? [], $result['data']),
+                            'notes' => $resultDesc,
+                            'processed_at' => now(),
+                        ]);
+
+                        $contribution->update([
+                            'payment_status' => Contribution::STATUS_FAILED,
+                            'processed_at' => now(),
+                        ]);
+
+                        Log::info('M-Pesa payment failed via status check', [
+                            'contribution_id' => $contribution->id,
+                            'transaction_id' => $transaction->id,
+                            'result_code' => $resultCode,
+                            'result_desc' => $resultDesc,
+                        ]);
+                    }
+
+                    return response()->json([
+                        'success' => true,
+                        'status' => 'failed',
+                        'data' => [
+                            'ResultCode' => $resultCode,
+                            'ResultDesc' => $resultDesc,
+                            'transaction_status' => $transaction->status,
+                            'contribution_status' => $contribution->payment_status,
+                        ],
+                    ]);
+                }
+            }
+
+            // Payment still processing or query failed - return current status
             return response()->json([
-                'success' => $result['success'],
-                'data' => $result['data'] ?? null,
-                'error' => $result['error'] ?? null,
+                'success' => true,
+                'status' => 'processing',
+                'data' => [
+                    'ResultCode' => $result['data']['ResultCode'] ?? '500.001.1001',
+                    'ResultDesc' => $result['data']['ResultDesc'] ?? 'Request is being processed',
+                    'transaction_status' => $transaction->status,
+                    'contribution_status' => $contribution->payment_status,
+                ],
             ]);
         } catch (\Exception $e) {
             Log::error('STK Push status check failed', [
@@ -547,6 +571,36 @@ class DonationController extends Controller
                 'error' => 'Failed to check payment status',
             ], 500);
         }
+    }
+
+    /**
+     * Extract callback metadata from M-Pesa response
+     */
+    private function extractCallbackMetadata(array $callbackMetadata): array
+    {
+        $data = [];
+
+        foreach ($callbackMetadata as $item) {
+            if (!isset($item['Name'])) continue;
+
+            switch ($item['Name']) {
+                case 'Amount':
+                    $data['amount'] = $item['Value'] ?? null;
+                    break;
+                case 'MpesaReceiptNumber':
+                    $data['receipt_number'] = $item['Value'] ?? null;
+                    break;
+                case 'TransactionDate':
+                    $data['transaction_date'] = isset($item['Value']) ?
+                        Carbon::createFromFormat('YmdHis', $item['Value']) : null;
+                    break;
+                case 'PhoneNumber':
+                    $data['phone_number'] = $item['Value'] ?? null;
+                    break;
+            }
+        }
+
+        return $data;
     }
 
     /**
@@ -579,6 +633,39 @@ class DonationController extends Controller
                 'message' => 'Connection test failed: ' . $e->getMessage(),
                 'environment' => $this->mpesaService->getCurrentEnvironment(),
             ], 500);
+        }
+    }
+
+    /**
+     * Credit wallet when donation is confirmed
+     */
+    protected function creditWalletFromDonation(Contribution $contribution): void
+    {
+        try {
+            // Check if wallet has already been credited
+            if ($contribution->wallet_credited) {
+                Log::info('Wallet already credited for contribution', [
+                    'contribution_id' => $contribution->id,
+                ]);
+                return;
+            }
+
+            // Credit the beneficiary's wallet
+            $walletTransaction = $this->walletService->creditFromDonation($contribution);
+
+            Log::info('Wallet credited successfully', [
+                'contribution_id' => $contribution->id,
+                'wallet_transaction_id' => $walletTransaction->id,
+                'amount' => $contribution->amount,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to credit wallet from donation', [
+                'contribution_id' => $contribution->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            // You might want to queue this for retry or send admin notification
+            // For now, we'll log the error but not fail the webhook
         }
     }
 
@@ -647,7 +734,11 @@ class DonationController extends Controller
         // Get payout methods only if user is authorized
         $payoutMethods = collect();
         if ($canViewPayoutMethods) {
-            $payoutMethods = $application->applicant->payoutMethods()->get();
+            // Get payout methods from the application owner (user)
+            $payoutMethods = $application->user->payoutMethods()
+                ->orderBy('is_primary', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->get();
         } else {
             // Get checker information for unauthorized users
             $checkerInfo = $this->getCheckerInfo($application);

@@ -201,7 +201,8 @@
                                                                 Date</span>
                                                         </div>
                                                         <p class="text-sm font-medium text-neutral-800">
-                                                            {{ $donation->applicant->target_date->format('M j, Y') }}
+                                                            {{-- {{ applicant->target_date->format('M j, Y') }} --}}
+                                                            {{ optional(optional($donation->applicant)->target_date)->format('M j, Y') ?? 'Not Set' }}
                                                         </p>
                                                     </div>
 

@@ -285,7 +285,7 @@
                     </div>
 
                     <!-- M-Pesa Payment Options (shown when M-Pesa is selected) -->
-                    <div id="mpesa-options" style="display: none;">
+                    {{-- <div id="mpesa-options" style="display: none;">
                         @if ($stkPushEnabled && $paybillEnabled)
                             <div class="card border-success mb-4">
                                 <div class="card-header bg-light">
@@ -392,7 +392,7 @@
                                 </div>
                             </div>
                         @endif
-                    </div>
+                    </div> --}}
 
                     <!-- Submit Button -->
                     <div class="pt-6 border-t border-neutral-200">
@@ -432,228 +432,137 @@
     </style>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
-            const mpesaMethods = document.querySelectorAll('input[name="mpesa_method"]');
-            const phoneRequired = document.getElementById('phone-required');
-            const phoneInput = document.getElementById('phone');
-            const phoneHint = document.getElementById('phone-hint');
-            const currencySelect = document.getElementById('currency');
-            const amountInput = document.getElementById('amount');
-            const amountHint = document.getElementById('amount-hint');
-            const mpesaOptions = document.getElementById('mpesa-options');
-            const paybillDetails = document.getElementById('paybill-details');
-            const submitBtn = document.getElementById('submit-btn');
-            const submitText = document.getElementById('submit-text');
-            const loadingText = document.getElementById('loading-text');
-            const form = document.getElementById('donation-form');
-
-            // Payment method change handler
-            function updateFormForPaymentMethod() {
-                const selectedMethod = document.querySelector('input[name="payment_method"]:checked');
-
-                // Reset all payment method cards
-                document.querySelectorAll('.payment-method-card').forEach(card => {
-                    card.classList.remove('selected');
-                });
-
-                if (selectedMethod) {
-                    // Highlight selected card
-                    const selectedCard = selectedMethod.closest('.payment-method-card');
-                    if (selectedCard) {
-                        selectedCard.classList.add('selected');
-                    }
-
-                    if (selectedMethod.value === 'mpesa') {
-                        handleMpesaSelection();
-                    } else if (selectedMethod.value === 'card') {
-                        handleCardSelection();
-                    }
-                }
-
-                updateSubmitButton();
-            }
-
-            function handleMpesaSelection() {
-                // Force currency to KES for M-Pesa
-                currencySelect.value = 'KES';
-                currencySelect.disabled = true;
-
-                // Make phone required
-                phoneRequired.style.display = 'inline';
-                phoneInput.required = true;
-                phoneHint.textContent = 'Required for M-Pesa payments (Kenyan number)';
-
-                // Show M-Pesa options
-                mpesaOptions.style.display = 'block';
-
-                // Update amount hint
-                amountHint.textContent = 'Minimum: KES 1';
-
-                // Update submit button text
-                updateSubmitButton();
-            }
-
-            function handleCardSelection() {
-                // Enable currency selection for cards
-                currencySelect.disabled = false;
-
-                // Phone required for cards too
-                phoneRequired.style.display = 'inline';
-                phoneInput.required = true;
-                phoneHint.textContent = 'Required for card payments';
-
-                // Hide M-Pesa options
-                mpesaOptions.style.display = 'none';
-                if (paybillDetails) paybillDetails.style.display = 'none';
-
-                // Update amount hint
-                updateAmountHint();
-
-                // Update submit button text
-                updateSubmitButton();
-            }
-
-            function updateAmountHint() {
-                const currency = currencySelect.value;
-                if (currency === 'KES') {
-                    amountHint.textContent = 'Minimum: KES 1';
-                } else {
-                    amountHint.textContent = 'Minimum: $1';
-                }
-            }
-
-            // Define Heroicons
-            const HeroIcons = {
-                mobile: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                        </svg>`,
-
-                receipt: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>`,
-
-                creditCard: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-                            </svg>`,
-
-                heart: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-                        </svg>`
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const elements = {
+                paymentMethods: document.querySelectorAll('input[name="payment_method"]'),
+                currencySelect: document.getElementById('currency'),
+                amountInput: document.getElementById('amount'),
+                amountHint: document.getElementById('amount-hint'),
+                phoneInput: document.getElementById('phone'),
+                phoneRequired: document.getElementById('phone-required'),
+                phoneHint: document.getElementById('phone-hint'),
+                mpesaOptions: document.getElementById('mpesa-options'),
+                paybillDetails: document.getElementById('paybill-details'),
+                submitBtn: document.getElementById('submit-btn'),
+                submitText: document.getElementById('submit-text'),
+                form: document.getElementById('donation-form')
             };
 
+            // Heroicons
+            const icons = {
+                mobile: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                </svg>`,
+                creditCard: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                    </svg>`,
+                heart: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                </svg>`,
+                loading: `<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>`
+            };
+
+            // Update submit button
             function updateSubmitButton() {
                 const selectedMethod = document.querySelector('input[name="payment_method"]:checked');
-                const selectedMpesaMethod = document.querySelector('input[name="mpesa_method"]:checked');
+                const submitContainer = elements.submitBtn.querySelector('.flex');
 
-                // Get the container span that has the flex layout
-                const submitContainer = document.querySelector(
-                    '#submit-btn .flex.items-center.justify-center.gap-2');
-                const submitText = document.getElementById('submit-text');
+                const config = selectedMethod?.value === 'mpesa' ? {
+                        icon: icons.mobile,
+                        text: 'Continue with M-Pesa'
+                    } :
+                    selectedMethod?.value === 'card' ? {
+                        icon: icons.creditCard,
+                        text: 'Proceed to Card Payment'
+                    } : {
+                        icon: icons.heart,
+                        text: 'Complete Donation'
+                    };
 
-                let iconHtml = '';
-                let textContent = '';
-
-                if (selectedMethod?.value === 'mpesa') {
-                    if (selectedMpesaMethod?.value === 'stk_push') {
-                        iconHtml = HeroIcons.mobile;
-                        textContent = 'Send STK Push';
-                    } else if (selectedMpesaMethod?.value === 'paybill') {
-                        iconHtml = HeroIcons.receipt;
-                        textContent = 'Get Paybill Details';
-                    } else {
-                        iconHtml = HeroIcons.mobile;
-                        textContent = 'Continue with M-Pesa';
-                    }
-                } else if (selectedMethod?.value === 'card') {
-                    iconHtml = HeroIcons.creditCard;
-                    textContent = 'Proceed to Card Payment';
-                } else {
-                    iconHtml = HeroIcons.heart;
-                    textContent = 'Complete Donation';
-                }
-
-                // Update the container with icon and text as separate elements
-                submitContainer.innerHTML = `
-                    ${iconHtml}
-                    <span>${textContent}</span>
-                `;
+                submitContainer.innerHTML = `${config.icon}<span id="submit-text">${config.text}</span>`;
             }
 
-            // M-Pesa method change handler
-            function updateMpesaMethod() {
-                const selectedMpesaMethod = document.querySelector('input[name="mpesa_method"]:checked');
-                const paybillAccountNumber = document.getElementById('paybill_account_number');
-                const paybillAccountName = document.getElementById('paybill_account_name');
+            // Update amount hint based on currency
+            function updateAmountHint() {
+                elements.amountHint.textContent = elements.currencySelect.value === 'KES' ? 'Minimum: KES 1' :
+                    'Minimum: $1';
+            }
 
-                if (selectedMpesaMethod?.value === 'paybill' && paybillDetails) {
-                    paybillDetails.style.display = 'block';
-                    if (paybillAccountNumber) paybillAccountNumber.required = true;
-                    if (paybillAccountName) paybillAccountName.required = true;
-                } else if (paybillDetails) {
-                    paybillDetails.style.display = 'none';
-                    if (paybillAccountNumber) paybillAccountNumber.required = false;
-                    if (paybillAccountName) paybillAccountName.required = false;
+            // Format Kenyan phone number
+            function formatKenyanPhone() {
+                if (elements.phoneInput.value && document.querySelector('input[name="payment_method"]:checked')
+                    ?.value === 'mpesa') {
+                    let value = elements.phoneInput.value.replace(/\D/g, '');
+                    if (value.startsWith('0')) value = '254' + value.substring(1);
+                    else if (value.length === 9) value = '254' + value;
+                    if (value.length >= 12) {
+                        elements.phoneInput.value =
+                            `+${value.slice(0,3)} ${value.slice(3,6)} ${value.slice(6,9)} ${value.slice(9,12)}`;
+                    }
                 }
+            }
 
+            // Handle M-Pesa selection
+            function handleMpesaSelection() {
+                elements.currencySelect.value = 'KES';
+                elements.currencySelect.disabled = true;
+                elements.phoneRequired.style.display = 'inline';
+                elements.phoneInput.required = true;
+                elements.phoneHint.textContent = 'Required for M-Pesa payments (Kenyan number)';
+                if (elements.mpesaOptions) elements.mpesaOptions.style.display = 'block';
+                if (elements.paybillDetails) elements.paybillDetails.style.display = 'none';
+                elements.amountHint.textContent = 'Minimum: KES 1';
                 updateSubmitButton();
             }
 
-            // Phone number formatting for Kenyan numbers
-            function formatKenyanPhone() {
-                if (phoneInput.value && document.querySelector('input[name="payment_method"]:checked')?.value ===
-                    'mpesa') {
-                    let value = phoneInput.value.replace(/\D/g, '');
-
-                    if (value.startsWith('0')) {
-                        value = '254' + value.substring(1);
-                    } else if (value.startsWith('254')) {
-                        // Already in correct format
-                    } else if (value.length === 9) {
-                        value = '254' + value;
-                    }
-
-                    // Format as +254 XXX XXX XXX
-                    if (value.length >= 12) {
-                        phoneInput.value = '+' + value.substring(0, 3) + ' ' + value.substring(3, 6) + ' ' + value
-                            .substring(6, 9) + ' ' + value.substring(9, 12);
-                    }
-                }
+            // Handle card selection
+            function handleCardSelection() {
+                elements.currencySelect.disabled = false;
+                elements.phoneRequired.style.display = 'inline';
+                elements.phoneInput.required = true;
+                elements.phoneHint.textContent = 'Required for card payments';
+                if (elements.mpesaOptions) elements.mpesaOptions.style.display = 'none';
+                if (elements.paybillDetails) elements.paybillDetails.style.display = 'none';
+                updateAmountHint();
+                updateSubmitButton();
             }
 
-            // Form submission handler
-            function handleFormSubmit(e) {
-                // Show loading state
-                submitText.style.display = 'none';
-                loadingText.style.display = 'inline';
-                submitBtn.disabled = true;
+            // Update form based on payment method
+            function updateFormForPaymentMethod() {
+                document.querySelectorAll('.payment-method-card').forEach(card =>
+                    card.classList.toggle('selected', card.querySelector('input').checked)
+                );
 
-                // Let form submit normally
+                const selectedMethod = document.querySelector('input[name="payment_method"]:checked');
+                if (selectedMethod?.value === 'mpesa') handleMpesaSelection();
+                else if (selectedMethod?.value === 'card') handleCardSelection();
+                else updateSubmitButton();
+            }
+
+            // Handle form submission
+            function handleFormSubmit(e) {
+                e.preventDefault();
+                elements.submitBtn.disabled = true;
+                elements.submitText.style.display = 'none';
+                elements.submitBtn.querySelector('.flex').innerHTML = `${icons.loading}<span>Loading...</span>`;
+                elements.form.submit();
             }
 
             // Event listeners
-            paymentMethods.forEach(method => {
-                method.addEventListener('change', updateFormForPaymentMethod);
-            });
-
-            if (mpesaMethods.length > 0) {
-                mpesaMethods.forEach(method => {
-                    method.addEventListener('change', updateMpesaMethod);
-                });
-            }
-
-            phoneInput.addEventListener('blur', formatKenyanPhone);
-            currencySelect.addEventListener('change', updateAmountHint);
-            form.addEventListener('submit', handleFormSubmit);
+            elements.paymentMethods.forEach(method =>
+                method.addEventListener('change', updateFormForPaymentMethod)
+            );
+            elements.phoneInput.addEventListener('blur', formatKenyanPhone);
+            elements.currencySelect.addEventListener('change', updateAmountHint);
+            elements.form.addEventListener('submit', handleFormSubmit);
 
             // Initial setup
             updateFormForPaymentMethod();
             updateAmountHint();
-
-            // Handle pre-selected values
-            if (mpesaMethods.length > 0) {
-                updateMpesaMethod();
-            }
         });
     </script>
 @endsection

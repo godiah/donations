@@ -202,6 +202,24 @@ class User extends Authenticatable
         return $this->hasMany(WithdrawalRequest::class);
     }
 
+    // Add payout method relationships
+    public function payoutMethods()
+    {
+        return $this->hasMany(PayoutMethod::class);
+    }
+
+    public function primaryPayoutMethod()
+    {
+        return $this->hasOne(PayoutMethod::class)
+            ->where('is_primary', true);
+    }
+
+    public function verifiedPayoutMethods()
+    {
+        return $this->hasMany(PayoutMethod::class)
+            ->where('is_verified', true);
+    }
+
     public function getApplicantAttribute()
     {
         return $this->individual ?? $this->company;

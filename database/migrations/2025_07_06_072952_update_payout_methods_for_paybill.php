@@ -12,8 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('payout_methods', function (Blueprint $table) {
-            $table->string('paybill_number')->nullable()->after('bank_account_no');
+        Schema::table('payout_methods', function (Blueprint $table) {            
             $table->string('paybill_account_name')->nullable()->after('paybill_number');
             $table->json('paybill_settings')->nullable()->after('paybill_account_name'); // For additional paybill configurations
         });

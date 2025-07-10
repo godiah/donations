@@ -216,59 +216,6 @@ class MpesaService
     }
 
     /**
-     * Process paybill payment (display details for manual payment)
-     */
-    public function processPaybill(Contribution $contribution, PayoutMethod $paybillMethod): array
-    {
-        try {
-            // Get paybill details
-            $paybillDetails = $paybillMethod->getPaybillDetails();
-
-            if (!$paybillDetails) {
-                throw new \Exception('Invalid paybill configuration');
-            }
-
-            // Validate transaction amount
-            $this->validateTransactionAmount($contribution->amount);
-
-            // Create pending transaction
-            $transaction = $this->createTransaction($contribution, [
-                'mpesa_payment_type' => 'paybill',
-                'status' => Transaction::STATUS_PENDING,
-                'gateway_response' => [
-                    'payment_method' => 'paybill',
-                    'paybill_details' => $paybillDetails,
-                ],
-                'notes' => 'Awaiting manual paybill payment confirmation',
-            ]);
-
-            Log::info('Paybill payment initiated', [
-                'contribution_id' => $contribution->id,
-                'paybill_number' => $paybillDetails['paybill_number'],
-                'account_number' => $paybillDetails['account_number'],
-            ]);
-
-            return [
-                'success' => true,
-                'payment_method' => 'paybill',
-                'paybill_details' => $paybillDetails,
-                'transaction' => $transaction,
-                'instructions' => $this->generatePaybillInstructions($contribution, $paybillDetails),
-            ];
-        } catch (\Exception $e) {
-            Log::error('Paybill payment setup failed', [
-                'contribution_id' => $contribution->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return [
-                'success' => false,
-                'error' => $e->getMessage(),
-            ];
-        }
-    }
-
-    /**
      * Handle M-Pesa callback
      */
     public function handleCallback(array $callbackData): array
@@ -277,31 +224,11 @@ class MpesaService
             Log::info('M-Pesa callback received', $callbackData);
 
             // Extract STK Push callback data
-            if (isset($callbackData['Body']['stkCallback'])) {
-                return $this->handleStkPushCallback($callbackData['Body']['stkCallback']);
+            if (!isset($callbackData['Body']['stkCallback'])) {
+                throw new \Exception('Unknown callback type');
             }
 
-            // Handle other callback types if needed
-            throw new \Exception('Unknown callback type');
-        } catch (\Exception $e) {
-            Log::error('M-Pesa callback processing failed', [
-                'error' => $e->getMessage(),
-                'callback_data' => $callbackData,
-            ]);
-
-            return [
-                'success' => false,
-                'error' => $e->getMessage(),
-            ];
-        }
-    }
-
-    /**
-     * Handle STK Push callback
-     */
-    protected function handleStkPushCallback(array $stkCallback): array
-    {
-        try {
+            $stkCallback = $callbackData['Body']['stkCallback'];
             $checkoutRequestId = $stkCallback['CheckoutRequestID'];
             $resultCode = $stkCallback['ResultCode'];
             $resultDesc = $stkCallback['ResultDesc'];
@@ -381,9 +308,9 @@ class MpesaService
                 ];
             }
         } catch (\Exception $e) {
-            Log::error('STK Push callback processing failed', [
+            Log::error('M-Pesa callback processing failed', [
                 'error' => $e->getMessage(),
-                'callback_data' => $stkCallback,
+                'callback_data' => $callbackData,
             ]);
 
             return [

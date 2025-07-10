@@ -106,13 +106,13 @@
                         </svg>
                     </div>
                     <h3 class="text-xl font-bold text-gray-900 mb-2">Payment Successful!</h3>
-                    <p class="text-gray-600 mb-4">Your donation has been processed successfully.</p>
+                    <p class="text-gray-600 mb-4">Thank you for your generous donation!</p>
                     <div id="success-details" class="bg-green-50 rounded-lg p-4 mb-4 text-sm">
                         <!-- Success details will be populated here -->
                     </div>
                     <button onclick="redirectToSuccess()"
                         class="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors">
-                        Continue
+                        Close
                     </button>
                 </div>
             </div>
@@ -147,194 +147,221 @@
         </div>
     </div>
 
-@endsection
+    <script>
+        // Global variables
+        const checkoutRequestId = '{{ $checkout_request_id }}';
+        const contributionId = '{{ $contribution->id }}';
+        const donationName = '{{ $contribution->donationLink->name ?? 'this cause' }}';
+        const contributionAmount = '{{ number_format($contribution->amount, 2) }}';
+        let statusCheckInterval;
+        let statusCheckCount = 0;
+        const maxStatusChecks = 60; // 5 minutes with 5-second intervals
 
-<script>
-    // Global variables
-    const checkoutRequestId = '{{ $checkout_request_id }}';
-    const contributionId = '{{ $contribution->id }}';
-    let statusCheckInterval;
-    let statusCheckCount = 0;
-    const maxStatusChecks = 60; // 5 minutes with 5-second intervals
+        // Start automatic status checking
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if payment is already completed
+            @if (isset($payment_completed) && $payment_completed)
+                showSuccessModal({
+                    ResultDesc: 'Payment completed successfully'
+                });
+            @else
+                startStatusChecking();
+            @endif
+        });
 
-    // Start automatic status checking
-    document.addEventListener('DOMContentLoaded', function() {
-        startStatusChecking();
-    });
-
-    // Start automatic status checking
-    function startStatusChecking() {
-        statusCheckInterval = setInterval(checkPaymentStatus, 5000); // Check every 5 seconds
-    }
-
-    // Stop automatic status checking
-    function stopStatusChecking() {
-        if (statusCheckInterval) {
-            clearInterval(statusCheckInterval);
-        }
-    }
-
-    // Check payment status
-    async function checkPaymentStatus() {
-        if (statusCheckCount >= maxStatusChecks) {
-            stopStatusChecking();
-            showTimeoutMessage();
-            return;
+        // Start automatic status checking
+        function startStatusChecking() {
+            statusCheckInterval = setInterval(checkPaymentStatus, 5000); // Check every 5 seconds
         }
 
-        statusCheckCount++;
+        // Stop automatic status checking
+        function stopStatusChecking() {
+            if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
+            }
+        }
 
-        try {
-            const response = await fetch('{{ route('mpesa.status.check') }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                },
-                body: JSON.stringify({
-                    checkout_request_id: checkoutRequestId
-                })
-            });
-
-            const data = await response.json();
-
-            if (data.success && data.data) {
-                const result = data.data;
-
-                // Check if payment is complete
-                if (result.ResultCode === '0' || result.ResultCode === 0) {
-                    stopStatusChecking();
-                    showSuccessModal(result);
-                } else if (result.ResultCode && result.ResultCode !== '500.001.1001') {
-                    // Payment failed
-                    stopStatusChecking();
-                    showErrorModal(result.ResultDesc || 'Payment failed');
-                }
-                // If ResultCode is '500.001.1001', payment is still processing, continue checking
+        // Check payment status
+        async function checkPaymentStatus() {
+            if (statusCheckCount >= maxStatusChecks) {
+                stopStatusChecking();
+                showTimeoutMessage();
+                return;
             }
 
-            // Update button text to show checking progress
-            updateStatusButton();
+            statusCheckCount++;
 
-        } catch (error) {
-            console.error('Status check error:', error);
-            // Don't stop checking on network errors, just continue
+            try {
+                const response = await fetch('{{ route('mpesa.status.check') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    },
+                    body: JSON.stringify({
+                        checkout_request_id: checkoutRequestId
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.status) {
+                    if (data.status === 'completed') {
+                        // Payment completed successfully
+                        stopStatusChecking();
+                        // Show success modal instead of redirecting
+                        showSuccessModal(data.data);
+                        return;
+                    } else if (data.status === 'failed') {
+                        // Payment failed
+                        stopStatusChecking();
+                        showErrorModal(data.data.ResultDesc || 'Payment failed');
+                        return;
+                    } else if (data.status === 'processing') {
+                        // Payment still processing, continue checking
+                        console.log('Payment still processing...');
+                    }
+                } else {
+                    // API call failed, but don't stop checking yet
+                    console.log('Status check API failed:', data.error);
+                }
+
+                // Update button text to show checking progress
+                updateStatusButton();
+
+            } catch (error) {
+                console.error('Status check error:', error);
+                // Don't stop checking on network errors, just continue
+            }
         }
-    }
 
-    // Update status button text
-    function updateStatusButton() {
-        const button = document.getElementById('check-status-btn');
-        const remaining = maxStatusChecks - statusCheckCount;
-        button.textContent = `Checking Status... (${remaining} checks remaining)`;
-    }
-
-    // Show success modal
-    function showSuccessModal(result) {
-        const modal = document.getElementById('success-modal');
-        const detailsDiv = document.getElementById('success-details');
-
-        detailsDiv.innerHTML = `
-        <div class="space-y-2">
-            <div class="flex justify-between">
-                <span class="text-green-700">Status:</span>
-                <span class="font-semibold text-green-900">Completed</span>
-            </div>
-            <div class="flex justify-between">
-                <span class="text-green-700">Amount:</span>
-                <span class="font-semibold text-green-900">KES {{ number_format($contribution->amount, 2) }}</span>
-            </div>
-            <div class="flex justify-between">
-                <span class="text-green-700">Reference:</span>
-                <span class="font-semibold text-green-900">DON_{{ $contribution->id }}</span>
-            </div>
-        </div>
-        `;
-
-        modal.classList.remove('hidden');
-        updatePaymentStatus('success');
-    }
-
-    // Show error modal
-    function showErrorModal(message) {
-        const modal = document.getElementById('error-modal');
-        const messageElement = document.getElementById('error-message');
-
-        messageElement.textContent = message;
-        modal.classList.remove('hidden');
-        updatePaymentStatus('failed');
-    }
-
-    // Show timeout message
-    function showTimeoutMessage() {
-        updatePaymentStatus('timeout');
-    }
-
-    // Update payment status display
-    function updatePaymentStatus(status) {
-        const statusDiv = document.getElementById('payment-status');
-
-        if (status === 'success') {
-            statusDiv.innerHTML = `
-            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-            </div>
-            <p class="text-lg font-semibold text-green-800">Payment Successful!</p>
-            <p class="text-sm text-green-600 mt-2">Your donation has been processed</p>
-        `;
-        } else if (status === 'failed') {
-            statusDiv.innerHTML = `
-            <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </div>
-            <p class="text-lg font-semibold text-red-800">Payment Failed</p>
-            <p class="text-sm text-red-600 mt-2">Please try again or contact support</p>
-        `;
-        } else if (status === 'timeout') {
-            statusDiv.innerHTML = `
-            <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"/>
-                </svg>
-            </div>
-            <p class="text-lg font-semibold text-yellow-800">Status Check Timeout</p>
-            <p class="text-sm text-yellow-600 mt-2">Please check your M-Pesa messages or contact support</p>
-        `;
+        // Update status button text
+        function updateStatusButton() {
+            const button = document.getElementById('check-status-btn');
+            const remaining = maxStatusChecks - statusCheckCount;
+            button.textContent = `Checking Status... (${remaining} checks remaining)`;
         }
-    }
 
-    // Close modal
-    function closeModal(modalId) {
-        const modal = document.getElementById(modalId);
-        modal.classList.add('hidden');
-    }
+        // Show success modal
+        function showSuccessModal(result) {
+            const modal = document.getElementById('success-modal');
+            const detailsDiv = document.getElementById('success-details');
 
-    // Try again function
-    function tryAgain() {
-        window.location.reload();
-    }
+            detailsDiv.innerHTML = `
+                <div class="space-y-2">
+                    <div class="flex justify-between">
+                        <span class="text-green-700">Status:</span>
+                        <span class="font-semibold text-green-900">Completed</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-green-700">Amount:</span>
+                        <span class="font-semibold text-green-900">KES {{ number_format($contribution->amount, 2) }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-green-700">Reference:</span>
+                        <span class="font-semibold text-green-900">DON_{{ $contribution->id }}</span>
+                    </div>
+                    ${result.ResultDesc ? `
+                            <div class="flex justify-between">
+                                <span class="text-green-700">Message:</span>
+                                <span class="font-semibold text-green-900 text-xs">${result.ResultDesc}</span>
+                            </div>
+                            ` : ''}
+                </div>
+            `;
 
-    // Redirect to success page
-    function redirectToSuccess() {
-        // Redirect to success page or back to donation form
-        window.location.href = '/donate/success;
-    }
+            modal.classList.remove('hidden');
+            updatePaymentStatus('success');
+        }
 
-    // Handle page visibility changes
-    document.addEventListener('visibilitychange', function() {
-        if (document.hidden) {
+        // Show error modal
+        function showErrorModal(message) {
+            const modal = document.getElementById('error-modal');
+            const messageElement = document.getElementById('error-message');
+
+            messageElement.textContent = message || 'Payment failed. Please try again.';
+            modal.classList.remove('hidden');
+            updatePaymentStatus('failed');
+        }
+
+        // Show timeout message
+        function showTimeoutMessage() {
+            updatePaymentStatus('timeout');
+            // Also show error modal for timeout
+            showErrorModal('Payment request timed out. Please try again or check your M-Pesa messages.');
+        }
+
+        // Update payment status display
+        function updatePaymentStatus(status) {
+            const statusDiv = document.getElementById('payment-status');
+
+            if (status === 'success') {
+                statusDiv.innerHTML = `
+                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                    <p class="text-lg font-semibold text-green-800">Payment Successful!</p>
+                    <p class="text-sm text-green-600 mt-2">Your donation has been processed</p>
+                `;
+            } else if (status === 'failed') {
+                statusDiv.innerHTML = `
+                    <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </div>
+                    <p class="text-lg font-semibold text-red-800">Payment Failed</p>
+                    <p class="text-sm text-red-600 mt-2">Please try again or contact support</p>
+                `;
+            } else if (status === 'timeout') {
+                statusDiv.innerHTML = `
+                    <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"/>
+                        </svg>
+                    </div>
+                    <p class="text-lg font-semibold text-yellow-800">Payment Timeout</p>
+                    <p class="text-sm text-yellow-600 mt-2">Please check your M-Pesa messages or try again</p>
+                `;
+            }
+        }
+
+        // Close modal
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.add('hidden');
+        }
+
+        // Try again function
+        function tryAgain() {
+            window.location.reload();
+        }
+
+        // Redirect to success page - REMOVED: Now just closes modal and stays on page
+        function redirectToSuccess() {
+            // Close modal and stay on current page
+            closeModal('success-modal');
+            // Optionally reload to reset the form
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        }
+
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                stopStatusChecking();
+            } else {
+                startStatusChecking();
+            }
+        });
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', function() {
             stopStatusChecking();
-        } else {
-            startStatusChecking();
-        }
-    });
+        });
+    </script>
 
-    // Clean up on page unload
-    window.addEventListener('beforeunload', function() {
-        stopStatusChecking();
-    });
-</script>
+@endsection
