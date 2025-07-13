@@ -35,8 +35,8 @@ class WithdrawalController extends Controller
         $balance = $this->walletService->getBalance($user);
         $availableBalance = $this->walletService->getAvailableBalance($user);
 
-        $pendingWithdrawals = $user->withdrawalRequests()
-            ->pending()
+        $activeWithdrawals = $user->withdrawalRequests()
+            ->whereIn('status', ['pending', 'approved'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -46,7 +46,7 @@ class WithdrawalController extends Controller
             'wallet',
             'balance',
             'availableBalance',
-            'pendingWithdrawals',
+            'activeWithdrawals',
             'recentTransactions'
         ));
     }
@@ -64,7 +64,29 @@ class WithdrawalController extends Controller
                 ->with('error', 'No funds available for withdrawal');
         }
 
-        return view('wallet.withdraw', compact('availableBalance'));
+        // Check if user has any payout method
+        if (!$this->walletService->userHasPayoutMethod($user)) {
+            return redirect()->route('payout-methods.create')
+                ->with('error', 'Please set up a payout method to proceed with withdrawal');
+        }
+
+        // Get user's primary or latest payout method
+        $payoutMethod = $this->walletService->getUserPayoutMethod($user);
+
+        if (!$payoutMethod) {
+            return redirect()->route('payout-methods.create')
+                ->with('error', 'Please set up a payout method to proceed with withdrawal');
+        }
+
+        // Get fee preview for display (using minimum withdrawal amount for preview)
+        $previewAmount = 100; // Default preview amount
+        $feePreview = $this->walletService->getWithdrawalFeePreview($previewAmount, $payoutMethod);
+
+        return view('wallet.withdraw', compact(
+            'availableBalance',
+            'payoutMethod',
+            'feePreview'
+        ));
     }
 
     /**
@@ -75,18 +97,26 @@ class WithdrawalController extends Controller
         try {
             $user = Auth::user();
 
+            // Get the payout method to use for withdrawal
+            $payoutMethod = $this->walletService->getUserPayoutMethod($user);
+
+            if (!$payoutMethod) {
+                return redirect()->route('payout-methods.create')
+                    ->with('error', 'Please set up a payout method to proceed with withdrawal');
+            }
+
             $withdrawalRequest = $this->walletService->processWithdrawalRequest(
                 $user,
                 $request->amount,
-                $request->withdrawal_method,
-                $request->getWithdrawalDetails()
+                $payoutMethod
             );
 
             Log::info('Withdrawal request submitted', [
                 'user_id' => $user->id,
                 'withdrawal_id' => $withdrawalRequest->id,
                 'amount' => $request->amount,
-                'method' => $request->withdrawal_method,
+                'payout_method_id' => $payoutMethod->id,
+                'method' => $withdrawalRequest->withdrawal_method,
             ]);
 
             return redirect()->route('wallet.dashboard')
@@ -133,18 +163,74 @@ class WithdrawalController extends Controller
     }
 
     /**
-     * Get wallet transaction history (AJAX)
+     * Get wallet transaction history
      */
     public function transactionHistory(Request $request)
     {
         $user = Auth::user();
-        $limit = $request->get('limit', 50);
+        $page = $request->get('page', 1);
+        $limit = 25; // Load 25 transactions per page
+        $offset = ($page - 1) * $limit;
 
-        $transactions = $this->walletService->getTransactionHistory($user, $limit);
+        // Get total count of transactions
+        $totalTransactions = $this->walletService->getTransactionCount($user);
 
-        return response()->json([
-            'success' => true,
-            'transactions' => $transactions,
+        // Get transactions for current page
+        $transactions = $this->walletService->getTransactionHistory($user, $limit, 'KES', $offset);
+
+        // Calculate pagination info
+        $hasMore = ($offset + count($transactions)) < $totalTransactions;
+        $currentCount = $offset + count($transactions);
+
+        // If it's an AJAX request (load more), return JSON
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'transactions' => $transactions,
+                'hasMore' => $hasMore,
+                'currentCount' => $currentCount,
+                'totalCount' => $totalTransactions
+            ]);
+        }
+
+        // Return view for initial page load
+        return view('wallet.transactions', compact('transactions', 'hasMore', 'currentCount', 'totalTransactions'));
+    }
+
+    /**
+     * Get withdrawal fee preview via AJAX
+     */
+    public function getFeePreview(Request $request)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:1'
         ]);
+
+        try {
+            $user = Auth::user();
+            $payoutMethod = $this->walletService->getUserPayoutMethod($user);
+
+            if (!$payoutMethod) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No payout method found'
+                ], 400);
+            }
+
+            $feePreview = $this->walletService->getWithdrawalFeePreview(
+                $request->amount,
+                $payoutMethod
+            );
+
+            return response()->json([
+                'success' => true,
+                'data' => $feePreview
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }

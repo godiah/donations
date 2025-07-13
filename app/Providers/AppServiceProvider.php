@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Channels\SmsChannel;
 use App\Channels\WhatsAppChannel;
 use App\Services\CyberSourceService;
+use App\Services\DonationNotificationService;
 use App\Services\MpesaService;
 use App\Services\SmileIdentityService;
 use App\Services\WalletService;
@@ -29,7 +30,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(MpesaService::class, function ($app) {
-            return new MpesaService($app->make(WalletService::class));
+            return new MpesaService($app->make(WalletService::class), ($app->make(DonationNotificationService::class)));
         });
 
         $this->app->singleton(\App\Services\MpesaStatusChecker::class, function ($app) {

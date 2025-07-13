@@ -1,94 +1,70 @@
-<!DOCTYPE html>
-<html lang="en">
+@extends('layouts.app')
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Successful</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            margin: 0;
-            padding: 2rem;
-            background-color: #f0fdf4;
-        }
+@section('title', 'Donation Successful')
 
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        .success-icon {
-            width: 64px;
-            height: 64px;
-            margin: 0 auto 1rem;
-            background-color: #10b981;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .checkmark {
-            color: white;
-            font-size: 32px;
-        }
-
-        h1 {
-            color: #065f46;
-            margin-bottom: 1rem;
-        }
-
-        .details {
-            background-color: #f9fafb;
-            padding: 1rem;
-            border-radius: 8px;
-            margin: 1rem 0;
-            text-align: left;
-        }
-
-        .btn {
-            background-color: #10b981;
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            text-decoration: none;
-            display: inline-block;
-            margin-top: 1rem;
-        }
-    </style>
-</head>
-
-<body>
+@section('content')
     <div class="container">
-        <div class="success-icon">
-            <span class="checkmark">✓</span>
-        </div>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card border-success">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0">
+                            <i class="fas fa-check-circle"></i> Donation Successful
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-success">
+                            <strong>Thank you!</strong> Your donation has been processed successfully.
+                        </div>
 
-        <h1>Payment Successful!</h1>
-        <p>Thank you for your generous donation. Your payment has been processed successfully.</p>
+                        @if ($contribution)
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Donation Details:</h6>
+                                    <ul class="list-unstyled">
+                                        <li><strong>Amount:</strong> {{ $contribution->currency }}
+                                            {{ number_format($contribution->amount, 2) }}</li>
+                                        <li><strong>Transaction ID:</strong>
+                                            {{ $contribution->cybersource_transaction_id ?? $contribution->id }}</li>
+                                        <li><strong>Date:</strong>
+                                            {{ $contribution->processed_at ? $contribution->processed_at->format('M j, Y g:i A') : 'Processing...' }}
+                                        </li>
+                                        @if ($contribution->cybersource_auth_code)
+                                            <li><strong>Authorization Code:</strong>
+                                                {{ $contribution->cybersource_auth_code }}</li>
+                                        @endif
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Donor Information:</h6>
+                                    <ul class="list-unstyled">
+                                        <li><strong>Email:</strong> {{ $contribution->email }}</li>
+                                        @if ($contribution->billing_name)
+                                            <li><strong>Name:</strong> {{ $contribution->billing_name }}</li>
+                                        @endif
+                                        @if ($contribution->phone)
+                                            <li><strong>Phone:</strong> {{ $contribution->phone }}</li>
+                                        @endif
+                                    </ul>
+                                </div>
+                            </div>
+                        @endif
 
-        @if ($contribution)
-            <div class="details">
-                <strong>Payment Details:</strong><br>
-                Amount: {{ $contribution->currency }} {{ number_format($contribution->amount, 2) }}<br>
-                Email: {{ $contribution->email }}<br>
-                Donation Type: {{ ucfirst($contribution->donation_type) }}<br>
-                @if ($contribution->cybersource_transaction_id)
-                    Transaction ID: {{ $contribution->cybersource_transaction_id }}
-                @endif
+                        <div class="mt-4">
+                            <p class="text-muted">
+                                <i class="fas fa-envelope"></i>
+                                A confirmation email will be sent to your email address shortly.
+                            </p>
+                        </div>
+
+                        <div class="mt-4 text-center">
+                            <a href="{{ route('donation.show', $donationLink->code) }}" class="btn btn-primary">
+                                Make Another Donation
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
-        @endif
-
-        <p><small>You will receive a confirmation email shortly.</small></p>
-        <a href="/" class="btn">Return to Home</a>
+        </div>
     </div>
-</body>
-
-</html>
+@endsection

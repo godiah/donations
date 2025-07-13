@@ -51,10 +51,11 @@ return [
     ],
 
     'cybersource' => [
-        'merchant_id' => env('CYBERSOURCE_MERCHANT_ID'),
+        'profile_id' => env('CYBERSOURCE_PROFILE_ID'),
         'access_key' => env('CYBERSOURCE_ACCESS_KEY'),
         'secret_key' => env('CYBERSOURCE_SECRET_KEY'),
-        'profile_id' => env('CYBERSOURCE_PROFILE_ID'),
-        'environment' => env('CYBERSOURCE_ENVIRONMENT', 'test'), // test or production
+        'test_mode' => env('CYBERSOURCE_TEST_MODE', true),
+        'test_url' => env('CYBERSOURCE_TEST_URL', 'https://testsecureacceptance.cybersource.com/pay'),
+        'live_url' => env('CYBERSOURCE_LIVE_URL', 'https://secureacceptance.cybersource.com/pay'),
     ],
 ];

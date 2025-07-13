@@ -12,6 +12,7 @@ class WithdrawalRequest extends Model
     protected $fillable = [
         'user_id',
         'wallet_id',
+        'payout_method_id',
         'request_reference',
         'amount',
         'fee_amount',
@@ -47,6 +48,14 @@ class WithdrawalRequest extends Model
     // Withdrawal methods
     const METHOD_MPESA = 'mpesa';
     const METHOD_BANK_TRANSFER = 'bank_transfer';
+    const METHOD_PAYBILL = 'paybill';
+
+    // Method mapping from payout types to withdrawal methods
+    const PAYOUT_TO_WITHDRAWAL_METHOD_MAP = [
+        'mobile_money' => self::METHOD_MPESA,
+        'bank_account' => self::METHOD_BANK_TRANSFER,
+        'paybill' => self::METHOD_PAYBILL,
+    ];
 
     /**
      * Get the user that owns this withdrawal request
@@ -62,6 +71,64 @@ class WithdrawalRequest extends Model
     public function wallet()
     {
         return $this->belongsTo(Wallet::class);
+    }
+
+    public function payoutMethod()
+    {
+        return $this->belongsTo(PayoutMethod::class);
+    }
+
+    /**
+     * Get withdrawal method from payout method type
+     */
+    public static function getWithdrawalMethodFromPayoutType(string $payoutType): string
+    {
+        return self::PAYOUT_TO_WITHDRAWAL_METHOD_MAP[$payoutType] ?? $payoutType;
+    }
+
+    public static function getAvailableWithdrawalMethods(): array
+    {
+        return [
+            self::METHOD_MPESA,
+            self::METHOD_BANK_TRANSFER,
+            self::METHOD_PAYBILL,
+        ];
+    }
+
+    /**
+     * Create withdrawal details from payout method
+     */
+    public static function createWithdrawalDetailsFromPayoutMethod(PayoutMethod $payoutMethod): array
+    {
+        switch ($payoutMethod->type) {
+            case 'mobile_money':
+                return [
+                    'method' => self::METHOD_MPESA,
+                    'phone_number' => $payoutMethod->account_number,
+                    'provider' => $payoutMethod->provider,
+                ];
+
+            case 'bank_account':
+                return [
+                    'method' => self::METHOD_BANK_TRANSFER,
+                    'bank_name' => $payoutMethod->bank->name ?? $payoutMethod->provider,
+                    'bank_code' => $payoutMethod->bank->code ?? null,
+                    'account_number' => $payoutMethod->account_number,
+                    'account_name' => $payoutMethod->account_name,
+                ];
+
+            case 'paybill':
+                return [
+                    'method' => self::METHOD_PAYBILL,
+                    'paybill_number' => $payoutMethod->paybill_number,
+                    'account_number' => $payoutMethod->account_number,
+                    'account_name' => $payoutMethod->paybill_account_name,
+                    'provider' => $payoutMethod->provider,
+                ];
+
+            default:
+                throw new \InvalidArgumentException("Unsupported payout method type: {$payoutMethod->type}");
+        }
     }
 
     /**
@@ -97,6 +164,14 @@ class WithdrawalRequest extends Model
     }
 
     /**
+     * Check if withdrawal can be rejected
+     */
+    public function canBeRejected(): bool
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    /**
      * Scope for pending withdrawals
      */
     public function scopePending($query)
@@ -118,5 +193,29 @@ class WithdrawalRequest extends Model
     public function scopeCompleted($query)
     {
         return $query->where('status', self::STATUS_COMPLETED);
+    }
+
+    /**
+     * Get formatted status attribute
+     */
+    public function getFormattedStatusAttribute(): string
+    {
+        return ucfirst($this->status);
+    }
+
+    /**
+     * Get status color for UI
+     */
+    public function getStatusColorAttribute(): string
+    {
+        return match ($this->status) {
+            self::STATUS_PENDING => 'secondary',
+            self::STATUS_APPROVED => 'primary',
+            self::STATUS_PROCESSING => 'primary',
+            self::STATUS_COMPLETED => 'success',
+            self::STATUS_FAILED => 'danger',
+            self::STATUS_CANCELLED => 'neutral',
+            default => 'neutral'
+        };
     }
 }

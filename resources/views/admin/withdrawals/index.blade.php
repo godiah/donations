@@ -229,14 +229,12 @@
                                         </th>
                                         <th class="px-6 py-4 text-left text-sm font-semibold text-neutral-800">User
                                         </th>
-                                        <th class="px-6 py-4 text-left text-sm font-semibold text-neutral-800">Amount
+                                        <th class="px-6 py-4 text-left text-sm font-semibold text-neutral-800">
+                                            Amount
                                         </th>
                                         <th class="px-6 py-4 text-left text-sm font-semibold text-neutral-800">Method
                                         </th>
                                         <th class="px-6 py-4 text-left text-sm font-semibold text-neutral-800">Status
-                                        </th>
-                                        <th class="px-6 py-4 text-left text-sm font-semibold text-neutral-800">
-                                            Requested
                                         </th>
                                         <th class="px-6 py-4 text-left text-sm font-semibold text-neutral-800">Actions
                                         </th>
@@ -247,53 +245,40 @@
                                         <tr class="hover:bg-neutral-50 transition-colors">
                                             <td class="px-6 py-4">
                                                 <a href="{{ route('admin.withdrawals.show', $withdrawal) }}"
-                                                    class="text-primary-600 hover:text-primary-800 font-semibold transition-colors">
+                                                    class="text-primary-600 hover:text-primary-800 font-semibold transition-colors text-sm">
                                                     {{ $withdrawal->request_reference }}
                                                 </a>
                                             </td>
                                             <td class="px-6 py-4">
                                                 <div class="flex items-center gap-3">
-                                                    <div
-                                                        class="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
-                                                        <span class="text-white font-semibold text-sm">
-                                                            {{ substr($withdrawal->user->name, 0, 2) }}
-                                                        </span>
-                                                    </div>
                                                     <div>
-                                                        <div class="font-semibold text-neutral-800">
+                                                        <div class="font-semibold text-sm text-neutral-800">
                                                             {{ $withdrawal->user->name }}</div>
-                                                        <div class="text-sm text-neutral-500">
+                                                        <div class="text-xs text-neutral-500">
                                                             {{ $withdrawal->user->email }}</div>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4">
                                                 <div class="space-y-1">
-                                                    <div class="font-semibold text-neutral-800">KES
+                                                    {{-- <div class="font-semibold text-neutral-800 text-sm">KES
                                                         {{ number_format($withdrawal->amount, 2) }}</div>
-                                                    <div class="text-sm text-neutral-500">Fee: KES
-                                                        {{ number_format($withdrawal->fee_amount, 2) }}</div>
-                                                    <div class="font-bold text-success-600">Net: KES
+                                                    <div class="text-neutral-500 text-xs">Fee: KES
+                                                        {{ number_format($withdrawal->fee_amount, 2) }}</div> --}}
+                                                    <div class="font-bold text-success-600 text-sm">KES
                                                         {{ number_format($withdrawal->net_amount, 2) }}</div>
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4">
                                                 @if ($withdrawal->withdrawal_method === 'mpesa')
                                                     <span
-                                                        class="inline-flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-semibold bg-success-100 text-success-800 border border-success-200">
-                                                        <div
-                                                            class="w-4 h-4 bg-success-500 rounded flex items-center justify-center">
-                                                            <span class="text-white text-xs font-bold">M</span>
-                                                        </div>
+                                                        class="text-xs inline-flex items-center gap-2 px-3 py-1 rounded-lg font-semibold bg-success-100 text-success-800 border border-success-200">
                                                         M-Pesa
                                                     </span>
                                                 @else
                                                     <span
-                                                        class="inline-flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-semibold bg-primary-100 text-primary-800 border border-primary-200">
-                                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                                            <path d="M5 6H23V18H5V6ZM7 8V16H21V8H7ZM1 4H3V20H1V4Z" />
-                                                        </svg>
-                                                        Bank Transfer
+                                                        class="inline-flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-semibold bg-primary-100 text-primary-800 border border-primary-200">
+                                                        Bank
                                                     </span>
                                                 @endif
                                             </td>
@@ -330,17 +315,9 @@
                                                         $statusConfig[$withdrawal->status] ?? $statusConfig['pending'];
                                                 @endphp
                                                 <span
-                                                    class="inline-flex items-center px-3 py-1 rounded-lg text-sm font-semibold border {{ $config['bg'] }} {{ $config['text'] }} {{ $config['border'] }}">
+                                                    class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold border {{ $config['bg'] }} {{ $config['text'] }} {{ $config['border'] }}">
                                                     {{ ucfirst($withdrawal->status) }}
                                                 </span>
-                                            </td>
-                                            <td class="px-6 py-4">
-                                                <div class="space-y-1">
-                                                    <div class="font-semibold text-neutral-800">
-                                                        {{ $withdrawal->created_at->format('M d, Y') }}</div>
-                                                    <div class="text-sm text-neutral-500">
-                                                        {{ $withdrawal->created_at->format('H:i') }}</div>
-                                                </div>
                                             </td>
                                             <td class="px-6 py-4">
                                                 <div class="flex items-center gap-2">

@@ -1,463 +1,328 @@
 <x-app-layout>
+    <x-slot name="header">
+        <div class="flex items-center justify-between">
+            <div class="py-3">
+                <h1 class="text-2xl font-heading font-bold text-neutral-800 tracking-tight">
+                    Request Withdrawal
+                </h1>
+                <p class="text-sm text-neutral-500 font-medium">
+                    Withdraw funds from your wallet
+                </p>
+            </div>
+            <a href="{{ route('wallet.dashboard') }}"
+                class="group inline-flex items-center text-sm gap-2 px-6 py-3 bg-gradient-to-r from-neutral-600 to-neutral-700 text-white font-semibold rounded-2xl hover:from-neutral-700 hover:to-neutral-800 focus:outline-none focus:ring-4 focus:ring-neutral-200 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                <svg class="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="currentColor"
+                    viewBox="0 0 24 24">
+                    <path d="M15.41 7.41L14 6L8 12L14 18L15.41 16.59L10.83 12L15.41 7.41Z" />
+                </svg>
+                <span>Back to Wallet</span>
+            </a>
+        </div>
+    </x-slot>
 
-    <div class="pt-16 bg-gradient-to-br from-neutral-50 to-neutral-100">
-        <div class="relative py-8 sm:py-12">
-            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
-                <!--Header -->
-                <div class="bg-gradient-to-r from-secondary-600 to-secondary-700 rounded-2xl p-6 text-white shadow-xl">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-4">
-                            <div
-                                class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                    stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M15.042 21.672 13.684 16.6m0 0-2.51 2.225.569-9.47 5.227 7.917-3.286-.672Zm-7.518-.267A8.25 8.25 0 1 1 20.25 10.5M8.288 14.212A5.25 5.25 0 1 1 17.25 10.5" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h2 class="text-2xl font-heading font-bold">Request Withdrawal</h2>
-                                <p class="text-secondary-100 mt-1">Withdraw funds from your wallet</p>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-sm text-secondary-200">Available Balance</div>
-                            <div class="text-2xl font-bold text-white">KES {{ number_format($availableBalance, 2) }}
-                            </div>
-                        </div>
+    <div class="pt-8 pb-12 min-h-screen">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Available Balance Card -->
+            <div class="bg-gradient-to-br from-primary-500 to-primary-600 rounded-3xl p-8 text-white shadow-xl mb-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-primary-100 text-sm font-medium mb-2">Available Balance</p>
+                        <p class="text-4xl font-bold font-heading">KES {{ number_format($availableBalance, 2) }}</p>
+                        <p class="text-primary-200 text-sm mt-2">Ready for withdrawal</p>
+                    </div>
+                    <div class="w-16 h-16 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path
+                                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                        </svg>
                     </div>
                 </div>
+            </div>
 
-                <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
-                    <!-- Form Header -->
-                    <div class="bg-gradient-to-r from-neutral-800 to-neutral-700 px-6 py-4">
-                        <h3 class="text-lg font-heading font-semibold text-white flex items-center gap-2">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                <path
-                                    d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20Z" />
-                            </svg>
-                            Withdrawal Details
-                        </h3>
-                        <p class="text-neutral-300 text-sm mt-1">Complete the form below to request your withdrawal</p>
+            <div class="flex flex-col lg:flex-row gap-8 items-start">
+                <!-- Withdrawal Form -->
+                <div
+                    class="w-full lg:w-1/2 bg-white rounded-3xl shadow-xl border border-neutral-100 overflow-hidden min-h-fit">
+                    <div class="bg-gradient-to-r from-neutral-50 to-white p-6 border-b border-neutral-100">
+                        <h2 class="text-xl font-heading font-semibold text-neutral-800">Withdrawal Details</h2>
+                        <p class="text-neutral-500 text-sm mt-1">Enter the amount you want to withdraw</p>
                     </div>
 
-                    <form method="POST" action="{{ route('wallet.withdraw.store') }}" id="withdrawalForm"
-                        class="p-6 space-y-6">
+                    <form action="{{ route('wallet.withdraw.store') }}" method="POST" class="p-6">
                         @csrf
 
-                        <!-- Amount and Method Row -->
-                        <div class="grid gap-6 md:grid-cols-2">
-                            <!-- Withdrawal Amount -->
-                            <div class="space-y-3">
-                                <label for="amount" class="block text-sm font-semibold text-neutral-800">
-                                    Withdrawal Amount (KES) <span class="text-danger-500">*</span>
+                        <!-- Amount Input -->
+                        <div class="space-y-4">
+                            <div>
+                                <label for="amount" class="block text-sm font-semibold text-neutral-700 mb-3">
+                                    Withdrawal Amount
                                 </label>
                                 <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                        <span class="text-neutral-500 font-medium">KES</span>
-                                    </div>
-                                    <input type="number" id="amount" name="amount" value="{{ old('amount') }}"
-                                        min="1" max="{{ $availableBalance }}" step="0.01" required
-                                        class="w-full pl-16 pr-4 py-4 text-lg font-semibold border-2 border-neutral-200 rounded-xl focus:border-secondary-500 focus:ring-0 transition-colors @error('amount') border-danger-500 @enderror"
-                                        placeholder="0.00">
+                                    <span
+                                        class="absolute left-4 top-1/2 transform -translate-y-1/2 text-neutral-500 font-medium">KES</span>
+                                    <input type="number" id="amount" name="amount" step="0.01" min="1"
+                                        max="{{ $availableBalance }}" value="{{ old('amount') }}" placeholder="0.00"
+                                        class="w-full pl-16 pr-6 py-4 border border-neutral-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary-100 focus:border-primary-500 transition-all duration-200 text-lg font-semibold"
+                                        oninput="updateFeePreview()">
                                 </div>
                                 @error('amount')
-                                    <p class="text-sm text-danger-600 flex items-center gap-1">
+                                    <p class="text-danger-600 text-sm mt-2 flex items-center gap-2">
                                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                                             <path
-                                                d="M13 13H11V7H13M13 17H11V15H13M12 2A10 10 0 0 0 2 12A10 10 0 0 0 12 22A10 10 0 0 0 22 12A10 10 0 0 0 12 2Z" />
-                                        </svg>
-                                        {{ $message }}
-                                    </p>
-                                @enderror
-                                <p class="text-sm text-neutral-500">
-                                    Minimum: KES 100 • Maximum: KES
-                                    {{ number_format(min($availableBalance, 50000), 2) }}
-                                </p>
-                            </div>
-
-                            <!-- Withdrawal Method -->
-                            <div class="space-y-3">
-                                <label for="withdrawal_method" class="block text-sm font-semibold text-neutral-800">
-                                    Withdrawal Method <span class="text-danger-500">*</span>
-                                </label>
-                                <div class="relative">
-                                    <select id="withdrawal_method" name="withdrawal_method" required
-                                        class="w-full px-4 py-4 border-2 border-neutral-200 rounded-xl focus:border-secondary-500 focus:ring-0 transition-colors appearance-none bg-white @error('withdrawal_method') border-danger-500 @enderror">
-                                        <option value="">Select withdrawal method</option>
-                                        <option value="mpesa"
-                                            {{ old('withdrawal_method') === 'mpesa' ? 'selected' : '' }}>
-                                            M-Pesa</option>
-                                        <option value="bank_transfer"
-                                            {{ old('withdrawal_method') === 'bank_transfer' ? 'selected' : '' }}>Bank
-                                            Transfer</option>
-                                    </select>
-                                </div>
-                                @error('withdrawal_method')
-                                    <p class="text-sm text-danger-600 flex items-center gap-1">
-                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                            <path
-                                                d="M13 13H11V7H13M13 17H11V15H13M12 2A10 10 0 0 0 2 12A10 10 0 0 0 12 22A10 10 0 0 0 22 12A10 10 0 0 0 12 2Z" />
+                                                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                                         </svg>
                                         {{ $message }}
                                     </p>
                                 @enderror
                             </div>
-                        </div>
 
-                        <!-- M-Pesa Fields -->
-                        <div id="mpesa_fields" class="hidden space-y-4">
-                            <div class="bg-success-50 rounded-xl p-6 border border-success-200">
-                                <h4 class="font-semibold text-success-800 mb-4 flex items-center gap-2">
-                                    <div class="w-8 h-8 bg-success-500 rounded-lg flex items-center justify-center">
-                                        <span class="text-white font-bold text-sm">M</span>
-                                    </div>
-                                    M-Pesa Withdrawal Details
-                                </h4>
-
-                                <div class="space-y-3">
-                                    <label for="mpesa_number" class="block text-sm font-semibold text-success-800">
-                                        M-Pesa Phone Number <span class="text-danger-500">*</span>
-                                    </label>
-                                    <input type="tel" id="mpesa_number" name="mpesa_number"
-                                        value="{{ old('mpesa_number') }}" placeholder="254XXXXXXXXX"
-                                        class="w-full px-4 py-3 border-2 border-success-200 rounded-lg focus:border-success-500 focus:ring-0 transition-colors bg-white @error('mpesa_number') border-danger-500 @enderror">
-                                    @error('mpesa_number')
-                                        <p class="text-sm text-danger-600 flex items-center gap-1">
-                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                                <path
-                                                    d="M13 13H11V7H13M13 17H11V15H13M12 2A10 10 0 0 0 2 12A10 10 0 0 0 12 22A10 10 0 0 0 22 12A10 10 0 0 0 12 2Z" />
-                                            </svg>
-                                            {{ $message }}
-                                        </p>
-                                    @enderror
-                                    <p class="text-sm text-success-600">Enter your M-Pesa number in format 254XXXXXXXXX
-                                    </p>
+                            <!-- Fee Breakdown -->
+                            <div id="feeBreakdown" class="bg-neutral-50 rounded-2xl p-4 space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-neutral-600 text-sm">Withdrawal Amount:</span>
+                                    <span class="font-semibold text-neutral-800" id="grossAmount">KES 0.00</span>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Bank Transfer Fields -->
-                        <div id="bank_fields" class="hidden space-y-4">
-                            <div class="bg-primary-50 rounded-xl p-6 border border-primary-200">
-                                <h4 class="font-semibold text-primary-800 mb-4 flex items-center gap-2">
-                                    <div class="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
-                                        <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M5 6H23V18H5V6ZM7 8V16H21V8H7ZM1 4H3V20H1V4Z" />
-                                        </svg>
-                                    </div>
-                                    Bank Transfer Details
-                                </h4>
-
-                                <div class="grid gap-4 md:grid-cols-2">
-                                    <!-- Bank Name -->
-                                    <div class="space-y-2">
-                                        <label for="bank_name" class="block text-sm font-semibold text-primary-800">
-                                            Bank Name <span class="text-danger-500">*</span>
-                                        </label>
-                                        <input type="text" id="bank_name" name="bank_name"
-                                            value="{{ old('bank_name') }}"
-                                            class="w-full px-4 py-3 border-2 border-primary-200 rounded-lg focus:border-primary-500 focus:ring-0 transition-colors bg-white @error('bank_name') border-danger-500 @enderror">
-                                        @error('bank_name')
-                                            <p class="text-sm text-danger-600 flex items-center gap-1">
-                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                                    <path
-                                                        d="M13 13H11V7H13M13 17H11V15H13M12 2A10 10 0 0 0 2 12A10 10 0 0 0 12 22A10 10 0 0 0 22 12A10 10 0 0 0 12 2Z" />
-                                                </svg>
-                                                {{ $message }}
-                                            </p>
-                                        @enderror
-                                    </div>
-
-                                    <!-- Account Number -->
-                                    <div class="space-y-2">
-                                        <label for="account_number"
-                                            class="block text-sm font-semibold text-primary-800">
-                                            Account Number <span class="text-danger-500">*</span>
-                                        </label>
-                                        <input type="text" id="account_number" name="account_number"
-                                            value="{{ old('account_number') }}"
-                                            class="w-full px-4 py-3 border-2 border-primary-200 rounded-lg focus:border-primary-500 focus:ring-0 transition-colors bg-white @error('account_number') border-danger-500 @enderror">
-                                        @error('account_number')
-                                            <p class="text-sm text-danger-600 flex items-center gap-1">
-                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                                    <path
-                                                        d="M13 13H11V7H13M13 17H11V15H13M12 2A10 10 0 0 0 2 12A10 10 0 0 0 12 22A10 10 0 0 0 22 12A10 10 0 0 0 12 2Z" />
-                                                </svg>
-                                                {{ $message }}
-                                            </p>
-                                        @enderror
-                                    </div>
-
-                                    <!-- Account Name -->
-                                    <div class="space-y-2">
-                                        <label for="account_name"
-                                            class="block text-sm font-semibold text-primary-800">
-                                            Account Name <span class="text-danger-500">*</span>
-                                        </label>
-                                        <input type="text" id="account_name" name="account_name"
-                                            value="{{ old('account_name') }}"
-                                            class="w-full px-4 py-3 border-2 border-primary-200 rounded-lg focus:border-primary-500 focus:ring-0 transition-colors bg-white @error('account_name') border-danger-500 @enderror">
-                                        @error('account_name')
-                                            <p class="text-sm text-danger-600 flex items-center gap-1">
-                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                                    <path
-                                                        d="M13 13H11V7H13M13 17H11V15H13M12 2A10 10 0 0 0 2 12A10 10 0 0 0 12 22A10 10 0 0 0 22 12A10 10 0 0 0 12 2Z" />
-                                                </svg>
-                                                {{ $message }}
-                                            </p>
-                                        @enderror
-                                    </div>
-
-                                    <!-- Branch Code -->
-                                    <div class="space-y-2">
-                                        <label for="branch_code" class="block text-sm font-semibold text-primary-800">
-                                            Branch Code <span class="text-neutral-500">(Optional)</span>
-                                        </label>
-                                        <input type="text" id="branch_code" name="branch_code"
-                                            value="{{ old('branch_code') }}"
-                                            class="w-full px-4 py-3 border-2 border-primary-200 rounded-lg focus:border-primary-500 focus:ring-0 transition-colors bg-white @error('branch_code') border-danger-500 @enderror">
-                                        @error('branch_code')
-                                            <p class="text-sm text-danger-600 flex items-center gap-1">
-                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                                    <path
-                                                        d="M13 13H11V7H13M13 17H11V15H13M12 2A10 10 0 0 0 2 12A10 10 0 0 0 12 22A10 10 0 0 0 22 12A10 10 0 0 0 12 2Z" />
-                                                </svg>
-                                                {{ $message }}
-                                            </p>
-                                        @enderror
+                                <div class="flex justify-between items-center">
+                                    <span class="text-neutral-600 text-sm">Processing Fee (<span
+                                            id="feePercentage">{{ $feePreview['fee_percentage'] }}%</span>):</span>
+                                    <span class="font-semibold text-danger-600" id="feeAmount">KES 0.00</span>
+                                </div>
+                                <div class="border-t border-neutral-200 pt-3">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-neutral-800 font-semibold">You'll Receive:</span>
+                                        <span class="font-bold text-success-600 text-lg" id="netAmount">KES 0.00</span>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Fee Calculation -->
-                        <div id="fee_info" class="hidden">
-                            <div
-                                class="bg-gradient-to-r from-secondary-50 to-secondary-100 border-2 border-secondary-200 rounded-xl p-6">
-                                <h4 class="font-semibold text-secondary-800 mb-4 flex items-center gap-2">
-                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                        <path
-                                            d="M11.8 10.9C9.53 10.31 8.8 9.7 8.8 8.75C8.8 7.66 9.81 6.9 11.5 6.9C13.28 6.9 13.94 7.75 14 9H16.21C16.14 7.28 15.09 5.7 13 5.19V3H10V5.16C8.06 5.58 6.5 6.84 6.5 8.77C6.5 11.08 8.41 12.23 11.2 12.9C13.7 13.5 14.2 14.38 14.2 15.31C14.2 16 13.71 17.1 11.5 17.1C9.44 17.1 8.63 16.18 8.5 15H6.32C6.44 17.19 8.08 18.42 10 18.83V21H13V18.85C14.95 18.5 16.5 17.35 16.5 15.3C16.5 12.46 14.07 11.5 11.8 10.9Z" />
-                                    </svg>
-                                    Fee Breakdown
-                                </h4>
-                                <div id="fee_details" class="space-y-2 text-sm text-secondary-700"></div>
-                            </div>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-neutral-200">
-                            <a href="{{ route('wallet.dashboard') }}"
-                                class="flex-1 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 px-6 py-4 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2">
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z" />
-                                </svg>
-                                Back to Wallet
-                            </a>
+                            <!-- Submit Button -->
                             <button type="submit"
-                                class="flex-1 bg-gradient-to-r from-secondary-500 to-secondary-600 hover:from-secondary-600 hover:to-secondary-700 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-200 transform hover:scale-[1.02] flex items-center justify-center gap-2 shadow-md hover:shadow-lg">
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M2 21L23 12L2 3V10L17 12L2 14V21Z" />
-                                </svg>
-                                Submit Withdrawal Request
+                                class="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-semibold py-4 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-primary-200">
+                                <span class="flex items-center justify-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                        stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M9 3.75H6.912a2.25 2.25 0 0 0-2.15 1.588L2.35 13.177a2.25 2.25 0 0 0-.1.661V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 0 0-2.15-1.588H15M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859M12 3v8.25m0 0-3-3m3 3 3-3" />
+                                    </svg>
+
+                                    Request Withdrawal
+                                </span>
                             </button>
                         </div>
                     </form>
+                </div>
+
+                <!-- Payout Method Information -->
+                <div class="w-full lg:w-1/2 space-y-6">
+                    <!-- Current Payout Method -->
+                    <div class="bg-white rounded-3xl shadow-xl border border-neutral-100 overflow-hidden">
+                        <div class="bg-gradient-to-r from-success-50 to-success-100 p-6 border-b border-success-200">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-lg font-heading font-semibold text-success-800">Payout Method</h3>
+                                    <p class="text-success-600 text-sm mt-1">Funds will be transferred to this account
+                                    </p>
+                                </div>
+                                @if ($payoutMethod->is_primary)
+                                    <span
+                                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-success-100 text-success-800 border border-success-200">
+                                        <span class="w-2 h-2 bg-success-500 rounded-full mr-2"></span>
+                                        Primary
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="p-6">
+                            <div class="flex items-center gap-4 mb-4">
+                                <div
+                                    class="w-12 h-12 rounded-2xl flex items-center justify-center {{ $payoutMethod->type === 'mobile_money' ? 'bg-success-100' : ($payoutMethod->type === 'bank_account' ? 'bg-primary-100' : 'bg-secondary-100') }}">
+                                    @if ($payoutMethod->type === 'mobile_money')
+                                        <svg class="w-6 h-6 text-success-600" fill="currentColor" viewBox="0 0 24 24">
+                                            <path
+                                                d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
+                                        </svg>
+                                    @elseif($payoutMethod->type === 'bank_account')
+                                        <svg class="w-6 h-6 text-primary-600" fill="currentColor" viewBox="0 0 24 24">
+                                            <path
+                                                d="M11.5 1L2 6v2h19V6m-5 4v7h3v-7M2 17v2h19v-2M6 10v7h3v-7H6m6 0v7h3v-7h-3Z" />
+                                        </svg>
+                                    @else
+                                        <svg class="w-6 h-6 text-secondary-600" fill="currentColor" viewBox="0 0 24 24">
+                                            <path
+                                                d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z" />
+                                        </svg>
+                                    @endif
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-lg text-neutral-800">{{ $payoutMethod->type_display }}
+                                    </h4>
+                                    <p class="text-neutral-500">{{ $payoutMethod->formatted_account }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Payout Method Details -->
+                            <div class="bg-neutral-50 rounded-2xl p-4 space-y-3">
+                                @if ($payoutMethod->type === 'mobile_money')
+                                    <div class="flex justify-between">
+                                        <span class="text-neutral-600 text-sm">Provider:</span>
+                                        <span
+                                            class="font-medium text-neutral-800">{{ $payoutMethod->provider }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-neutral-600 text-sm">Phone Number:</span>
+                                        <span
+                                            class="font-medium text-neutral-800">{{ $payoutMethod->account_number }}</span>
+                                    </div>
+                                @elseif($payoutMethod->type === 'bank_account')
+                                    <div class="flex justify-between">
+                                        <span class="text-neutral-600 text-sm">Bank:</span>
+                                        <span
+                                            class="font-medium text-neutral-800">{{ $payoutMethod->bank->name ?? $payoutMethod->provider }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-neutral-600 text-sm">Account Number:</span>
+                                        <span
+                                            class="font-medium text-neutral-800">{{ $payoutMethod->account_number }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-neutral-600 text-sm">Account Name:</span>
+                                        <span
+                                            class="font-medium text-neutral-800">{{ $payoutMethod->account_name }}</span>
+                                    </div>
+                                @elseif($payoutMethod->type === 'paybill')
+                                    <div class="flex justify-between">
+                                        <span class="text-neutral-600 text-sm">Paybill Number:</span>
+                                        <span
+                                            class="font-medium text-neutral-800">{{ $payoutMethod->paybill_number }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-neutral-600 text-sm">Account Number:</span>
+                                        <span
+                                            class="font-medium text-neutral-800">{{ $payoutMethod->account_number }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-neutral-600 text-sm">Account Name:</span>
+                                        <span
+                                            class="font-medium text-neutral-800">{{ $payoutMethod->paybill_account_name }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-neutral-600 text-sm">Provider:</span>
+                                        <span
+                                            class="font-medium text-neutral-800">{{ $payoutMethod->provider }}</span>
+                                    </div>
+                                @endif
+
+                                @if ($payoutMethod->is_verified)
+                                    <div
+                                        class="flex items-center justify-center gap-2 pt-2 border-t border-neutral-200">
+                                        <svg class="w-4 h-4 text-success-600" fill="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                                        </svg>
+                                        <span class="text-success-600 text-sm font-medium">Verified</span>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <!-- Update Payout Method Link -->
+                            <div class="mt-4">
+                                <a href="{{ route('payout-methods.index') }}"
+                                    class="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-medium transition-colors">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                        <path
+                                            d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+                                    </svg>
+                                    Update Payout Method
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Processing Information -->
+                    <div class="bg-white rounded-3xl shadow-lg border border-neutral-100 p-6">
+                        <h3 class="text-lg font-heading font-semibold text-neutral-800 mb-4">Processing Information
+                        </h3>
+                        <div class="space-y-3 text-sm">
+                            <div class="flex items-start gap-3">
+                                <div class="w-2 h-2 bg-primary-500 rounded-full mt-2"></div>
+                                <p class="text-neutral-600">Withdrawal requests are processed within 24-48 hours</p>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <div class="w-2 h-2 bg-primary-500 rounded-full mt-2"></div>
+                                <p class="text-neutral-600">Processing fees vary by payout method</p>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <div class="w-2 h-2 bg-primary-500 rounded-full mt-2"></div>
+                                <p class="text-neutral-600">You'll receive an email confirmation once processed</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const withdrawalMethod = document.getElementById('withdrawal_method');
-            const mpesaFields = document.getElementById('mpesa_fields');
-            const bankFields = document.getElementById('bank_fields');
+        function updateFeePreview() {
             const amountInput = document.getElementById('amount');
-            const feeInfo = document.getElementById('fee_info');
-            const feeDetails = document.getElementById('fee_details');
+            const amount = parseFloat(amountInput.value) || 0;
 
-            // Show/hide fields based on withdrawal method
-            withdrawalMethod.addEventListener('change', function() {
-                mpesaFields.classList.add('hidden');
-                bankFields.classList.add('hidden');
-
-                if (this.value === 'mpesa') {
-                    mpesaFields.classList.remove('hidden');
-                } else if (this.value === 'bank_transfer') {
-                    bankFields.classList.remove('hidden');
-                }
-
-                calculateFee();
-            });
-
-            amountInput.addEventListener('input', calculateFee);
-
-            function calculateFee() {
-                const amount = parseFloat(amountInput.value) || 0;
-                const method = withdrawalMethod.value;
-
-                if (amount > 0 && method) {
-                    let feePercentage, minFee, maxFee, methodName;
-
-                    if (method === 'mpesa') {
-                        feePercentage = 0.02;
-                        minFee = 10;
-                        maxFee = 100;
-                        methodName = 'M-Pesa';
-                    } else if (method === 'bank_transfer') {
-                        feePercentage = 0.015;
-                        minFee = 50;
-                        maxFee = 500;
-                        methodName = 'Bank Transfer';
-                    } else {
-                        feeInfo.classList.add('hidden');
-                        return;
-                    }
-
-                    const calculatedFee = amount * feePercentage;
-                    const actualFee = Math.max(minFee, Math.min(calculatedFee, maxFee));
-                    const netAmount = amount - actualFee;
-
-                    feeDetails.innerHTML = `
-                <div class="flex justify-between items-center p-3 bg-white/60 rounded-lg">
-                    <span class="font-medium">Withdrawal Amount:</span>
-                    <span class="font-bold">KES ${amount.toFixed(2)}</span>
-                </div>
-                <div class="flex justify-between items-center p-3 bg-white/60 rounded-lg">
-                    <span class="font-medium">${methodName} Processing Fee:</span>
-                    <span class="font-bold text-secondary-600">- KES ${actualFee.toFixed(2)}</span>
-                </div>
-                <div class="flex justify-between items-center p-3 bg-secondary-200 rounded-lg border-2 border-secondary-300">
-                    <span class="font-bold text-secondary-800">You will receive:</span>
-                    <span class="font-bold text-lg text-secondary-800">KES ${netAmount.toFixed(2)}</span>
-                </div>
-            `;
-                    feeInfo.classList.remove('hidden');
-                } else {
-                    feeInfo.classList.add('hidden');
-                }
-            }
-
-            if (withdrawalMethod.value) {
-                withdrawalMethod.dispatchEvent(new Event('change'));
-            }
-
-            // SIMPLIFIED FORM SUBMISSION - REMOVE ALL EVENT LISTENERS
-            const form = document.getElementById('withdrawalForm');
-            const submitButton = form.querySelector('button[type="submit"]');
-
-            // Check if form and button exist
-            if (!form) {
-                console.error('Form with ID "withdrawalForm" not found!');
-                return;
-            }
-
-            if (!submitButton) {
-                console.error('Submit button not found!');
-                return;
-            }
-
-            console.log('Form and submit button found successfully');
-            console.log('Form action:', form.action);
-            console.log('Form method:', form.method);
-
-            // Check CSRF token
-            const csrfToken = form.querySelector('input[name="_token"]');
-            if (!csrfToken) {
-                console.error('CSRF token not found!');
+            if (amount > 0) {
+                // Make AJAX request to get fee preview
+                fetch('{{ route('wallet.withdrawals.fee-preview') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            amount: amount
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.getElementById('grossAmount').textContent = 'KES ' + Number(data.data.gross_amount)
+                                .toLocaleString('en-US', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                });
+                            document.getElementById('feeAmount').textContent = 'KES ' + Number(data.data.fee_amount)
+                                .toLocaleString('en-US', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                });
+                            document.getElementById('netAmount').textContent = 'KES ' + Number(data.data.net_amount)
+                                .toLocaleString('en-US', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                });
+                            document.getElementById('feePercentage').textContent = data.data.fee_percentage;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching fee preview:', error);
+                    });
             } else {
-                console.log('CSRF token found:', csrfToken.value.substring(0, 10) + '...');
+                // Reset to zero
+                document.getElementById('grossAmount').textContent = 'KES 0.00';
+                document.getElementById('feeAmount').textContent = 'KES 0.00';
+                document.getElementById('netAmount').textContent = 'KES 0.00';
             }
+        }
 
-            // COMPLETELY REMOVE the submit event listener to test natural form submission
-            // Comment out the entire event listener block below to test
-
-            /*
-            form.addEventListener('submit', function(e) {
-                console.log('Submit event triggered');
-                console.log('Form data being submitted:');
-                
-                const formData = new FormData(form);
-                for (let [key, value] of formData.entries()) {
-                    console.log(key + ':', value);
+        // Format number input with commas
+        document.getElementById('amount').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/,/g, '');
+            if (value && !isNaN(value)) {
+                // Don't format while typing decimals
+                if (!value.includes('.') || (value.includes('.') && value.split('.')[1].length <= 2)) {
+                    updateFeePreview();
                 }
-                
-                // Don't prevent default - let form submit naturally
-                
-                // Visual feedback only
-                submitButton.disabled = true;
-                submitButton.style.opacity = '0.7';
-                submitButton.innerHTML = 'Processing...';
-                
-                // Reset after 10 seconds if still on page
-                setTimeout(() => {
-                    submitButton.disabled = false;
-                    submitButton.style.opacity = '1';
-                    submitButton.innerHTML = `
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M2 21L23 12L2 3V10L17 12L2 14V21Z" />
-                    </svg>
-                    Submit Withdrawal Request
-                `;
-                }, 10000);
-            });
-            */
-
-            // Alternative: Add click handler to button instead
-            submitButton.addEventListener('click', function(e) {
-                console.log('Submit button clicked');
-
-                // Basic validation
-                const amount = parseFloat(amountInput.value);
-                const method = withdrawalMethod.value;
-
-                if (!amount || amount <= 0) {
-                    alert('Please enter a valid amount');
-                    e.preventDefault();
-                    return false;
-                }
-
-                if (!method) {
-                    alert('Please select a withdrawal method');
-                    e.preventDefault();
-                    return false;
-                }
-
-                if (method === 'mpesa') {
-                    const mpesaNumber = document.getElementById('mpesa_number').value;
-                    if (!mpesaNumber) {
-                        alert('Please enter M-Pesa number');
-                        e.preventDefault();
-                        return false;
-                    }
-                }
-
-                if (method === 'bank_transfer') {
-                    const bankName = document.getElementById('bank_name').value;
-                    const accountNumber = document.getElementById('account_number').value;
-                    const accountName = document.getElementById('account_name').value;
-
-                    if (!bankName || !accountNumber || !accountName) {
-                        alert('Please fill all bank details');
-                        e.preventDefault();
-                        return false;
-                    }
-                }
-
-                console.log('Validation passed, form should submit now');
-
-                // Let the click proceed naturally to trigger form submission
-                return true;
-            });
-
-            // Debug: Log when form actually starts submitting
-            form.addEventListener('submit', function(e) {
-                console.log('FORM IS ACTUALLY SUBMITTING NOW!');
-                console.log('Target URL:', e.target.action);
-                console.log('Method:', e.target.method);
-            });
+            }
         });
     </script>
 </x-app-layout>

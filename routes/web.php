@@ -12,20 +12,11 @@ use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\PayoutMethodController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\WithdrawalController;
-use App\Services\CyberSourceService;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
-
-// Route::get('/test-cybersource', function () {
-//     $service = new CyberSourceService();
-//     return $service->testCredentials();
-// });
-
-Route::get('/cybersource/verify', [DonationController::class, 'verifyCyberSource']);
-
 
 // Invitation routes
 Route::get('/invitation/{token}/register', [InvitationController::class, 'showRegistrationForm'])->name('invitation.register');
@@ -37,13 +28,14 @@ Route::prefix('donate')->group(function () {
     Route::get('/{code}', [DonationController::class, 'show'])->name('donation.show');
     Route::post('/{code}', [DonationController::class, 'process'])->name('donation.process');
 
-    // CyberSource return URLs
-    Route::get('/success', [DonationController::class, 'success'])->name('donation.success');
-    Route::get('/cancel', [DonationController::class, 'cancel'])->name('donation.cancel');
-    Route::get('/error', [DonationController::class, 'error'])->name('donation.error');
+    // CyberSource callback routes
+    Route::prefix('cybersource')->group(function () {
+        Route::post('/callback', [DonationController::class, 'cyberSourceCallback'])->name('donation.cybersource.callback');
 
-    // CyberSource webhook (should be POST)
-    Route::post('/webhook/cybersource', [DonationController::class, 'webhook'])->name('donation.webhook.cybersource');
+        Route::get('/success/{code}', [DonationController::class, 'showSuccess'])->name('donation.success');
+        Route::get('/cancel/{code}', [DonationController::class, 'showCancel'])->name('donation.cancel');
+        Route::get('/failure/{code}', [DonationController::class, 'showFailure'])->name('donation.failure');
+    });
 })->withoutMiddleware(['auth', 'verified', 'csrf']);
 
 // M-Pesa routes
@@ -103,6 +95,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/wallet/withdrawals/{withdrawal}', [WithdrawalController::class, 'show'])->name('wallet.withdrawal.show');
     Route::patch('/wallet/withdrawals/{withdrawal}/cancel', [WithdrawalController::class, 'cancel'])->name('wallet.withdrawal.cancel');
     Route::get('/wallet/transactions', [WithdrawalController::class, 'transactionHistory'])->name('wallet.transactions');
+    Route::post('/wallet/withdrawals/fee-preview', [WithdrawalController::class, 'getFeePreview'])->name('wallet.withdrawals.fee-preview');
 
     // pending downloads
     Route::get('/company/applications/{application}/download/{file}', [CompanyDonationController::class, 'download'])->name('company.download');

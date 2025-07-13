@@ -7,6 +7,7 @@ use App\Models\Transaction;
 use App\Models\PayoutMethod;
 use App\Services\WalletService;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -15,11 +16,13 @@ class MpesaService
 {
     protected $config;
     protected $walletService;
+    protected $notificationService;
 
-    public function __construct(WalletService $walletService)
+    public function __construct(WalletService $walletService, DonationNotificationService $notificationService)
     {
         $this->config = config('mpesa');
         $this->walletService = $walletService;
+        $this->notificationService = $notificationService;
     }
 
     /**
@@ -62,6 +65,14 @@ class MpesaService
     protected function getStkPushQueryUrl(): string
     {
         return $this->getBaseUrl() . '/mpesa/stkpushquery/v1/query';
+    }
+
+    /**
+     * Get B2C Payment URL
+     */
+    protected function getB2CPaymentUrl(): string
+    {
+        return $this->getBaseUrl() . '/mpesa/b2c/v1/paymentrequest';
     }
 
     /**
@@ -258,9 +269,19 @@ class MpesaService
                     'processed_at' => now(),
                 ]);
 
+                // Calculate platform fee before marking contribution as completed
+                if (!$contribution->hasPlatformFeeCalculated()) {
+                    $contribution->refresh();
+                    $contribution->calculatePlatformFee();
+                    $contribution->save();
+                }
+
                 // Update contribution status
                 $contribution->update([
                     'payment_status' => Contribution::STATUS_COMPLETED,
+                    'platform_fee' => $contribution->platform_fee,
+                    'net_amount' => $contribution->net_amount,
+                    'platform_fee_percentage' => $contribution->platform_fee_percentage,
                     'processed_at' => now(),
                 ]);
 
@@ -276,11 +297,17 @@ class MpesaService
                     ]);
                 }
 
-                Log::info('M-Pesa STK Push payment completed', [
+                if ($contribution->payment_status === Contribution::STATUS_COMPLETED) {
+                    $this->notificationService->sendDonationNotifications($contribution);
+                }
+
+                Log::info('M-Pesa STK Push payment completed with platform fee', [
                     'contribution_id' => $contribution->id,
                     'transaction_id' => $transaction->id,
                     'receipt_number' => $paymentData['receipt_number'],
-                    'amount' => $paymentData['amount'],
+                    'gross_amount' => $paymentData['amount'],
+                    'platform_fee' => $contribution->platform_fee,
+                    'net_amount' => $contribution->net_amount,
                 ]);
 
                 return [
@@ -410,6 +437,67 @@ class MpesaService
             Log::error('STK Push query failed', [
                 'checkout_request_id' => $checkoutRequestId,
                 'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Initiate B2C payment: edits required
+     */
+    public function initiateB2CPayment(array $data): array
+    {
+        try {
+            // Get access token
+            $accessToken = $this->getAccessToken();
+
+            if (!$accessToken) {
+                throw new Exception('Failed to get M-Pesa access token');
+            }
+
+            // Prepare B2C request
+            $requestData = [
+                'InitiatorName' => config('services.mpesa.initiator_name'),
+                'SecurityCredential' => config('services.mpesa.security_credential'),
+                'CommandID' => 'BusinessPayment',
+                'Amount' => $data['amount'],
+                'PartyA' => config('services.mpesa.shortcode'),
+                'PartyB' => $data['phone_number'],
+                'Remarks' => $data['description'] ?? 'Withdrawal payment',
+                'QueueTimeOutURL' => $data['callback_url'],
+                'ResultURL' => $data['callback_url'],
+                'Occasion' => 'Withdrawal'
+            ];
+
+            // Make B2C request
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $accessToken,
+                'Content-Type' => 'application/json',
+            ])->post($this->getB2CPaymentUrl(), $requestData);
+
+            $responseData = $response->json();
+
+            if ($response->successful() && isset($responseData['ResponseCode']) && $responseData['ResponseCode'] === '0') {
+                return [
+                    'success' => true,
+                    'transaction_id' => $responseData['ConversationID'],
+                    'response' => $responseData,
+                ];
+            } else {
+                return [
+                    'success' => false,
+                    'error' => $responseData['errorMessage'] ?? 'M-Pesa payment failed',
+                    'response' => $responseData,
+                ];
+            }
+        } catch (\Exception $e) {
+            Log::error('M-Pesa B2C payment error', [
+                'error' => $e->getMessage(),
+                'data' => $data,
             ]);
 
             return [

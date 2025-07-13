@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Services\WalletService;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class WithdrawalRequest extends FormRequest
@@ -18,55 +20,82 @@ class WithdrawalRequest extends FormRequest
             'amount' => [
                 'required',
                 'numeric',
-                //'min:100', // Minimum withdrawal amount
-                //'max:50000', // Maximum withdrawal amount
+                'min:1', // Minimum withdrawal amount
+                'max:1000000', // Maximum withdrawal amount
+                'regex:/^\d+(\.\d{1,2})?$/', // Only up to 2 decimal places
             ],
-            'withdrawal_method' => [
-                'required',
-                Rule::in(['mpesa', 'bank_transfer']),
-            ],
-            // M-Pesa fields
-            'mpesa_number' => [
-                'required_if:withdrawal_method,mpesa',
-                'regex:/^254[0-9]{9}$/', // Kenyan phone number format
-            ],
-            // Bank transfer fields
-            'bank_name' => 'required_if:withdrawal_method,bank_transfer|string|max:100',
-            'account_number' => 'required_if:withdrawal_method,bank_transfer|string|max:50',
-            'account_name' => 'required_if:withdrawal_method,bank_transfer|string|max:100',
         ];
     }
 
     public function messages(): array
     {
         return [
-            //'amount.min' => 'Minimum withdrawal amount is KES 100',
-            //'amount.max' => 'Maximum withdrawal amount is KES 50,000',
-            'mpesa_number.regex' => 'Please enter a valid Kenyan phone number (254XXXXXXXXX)',
-            'mpesa_number.required_if' => 'M-Pesa number is required for M-Pesa withdrawals',
-            'bank_name.required_if' => 'Bank name is required for bank transfers',
-            'account_number.required_if' => 'Account number is required for bank transfers',
-            'account_name.required_if' => 'Account name is required for bank transfers',
+            'amount.required' => 'Withdrawal amount is required',
+            'amount.numeric' => 'Withdrawal amount must be a valid number',
+            'amount.min' => 'Minimum withdrawal amount is KES 1',
+            'amount.max' => 'Maximum withdrawal amount is KES 1,000,000',
+            'amount.regex' => 'Amount can only have up to 2 decimal places',
         ];
     }
 
     /**
-     * Get withdrawal details based on method
+     * Prepare the data for validation
      */
-    public function getWithdrawalDetails(): array
+    protected function prepareForValidation()
     {
-        if ($this->withdrawal_method === 'mpesa') {
-            return [
-                'method' => 'mpesa',
-                'phone_number' => $this->mpesa_number,
-            ];
-        }
+        // Clean and format the amount
+        if ($this->has('amount')) {
+            $amount = $this->input('amount');
 
+            // Remove any commas or spaces
+            $amount = str_replace([',', ' '], '', $amount);
+
+            // Convert to float and back to string to normalize
+            $amount = (float) $amount;
+
+            $this->merge([
+                'amount' => $amount
+            ]);
+        }
+    }
+
+    /**
+     * Configure the validator instance
+     */
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            if ($this->amount) {
+                // Check if user has sufficient balance
+                $user = Auth::user();
+                $availableBalance = app(WalletService::class)->getAvailableBalance($user);
+
+                if ($this->amount > $availableBalance) {
+                    $validator->errors()->add(
+                        'amount',
+                        'Insufficient available balance. Available: KES ' . number_format($availableBalance, 2)
+                    );
+                }
+
+                // Check if user has a payout method
+                $walletService = app(WalletService::class);
+                if (!$walletService->userHasPayoutMethod($user)) {
+                    $validator->errors()->add(
+                        'payout_method',
+                        'Please set up a payout method before making a withdrawal'
+                    );
+                }
+            }
+        });
+    }
+
+    /**
+     * Get custom attributes for validator errors
+     */
+    public function attributes(): array
+    {
         return [
-            'method' => 'bank_transfer',
-            'bank_name' => $this->bank_name,
-            'account_number' => $this->account_number,
-            'account_name' => $this->account_name,
+            'amount' => 'withdrawal amount',
         ];
     }
 }

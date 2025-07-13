@@ -124,7 +124,7 @@ class Application extends Model
         return [
             'type' => 'percentage', // or 'fixed' or 'range'
             'value' => '5%', // or specific amount/range
-            'description' => '5% of total contribution'
+            'description' => '5% of each contribution'
         ];
     }
 
@@ -143,7 +143,7 @@ class Application extends Model
         return $this->payoutMandate ? $this->payoutMandate->checker : null;
     }
 
-     /**
+    /**
      * Check if application has any rejected support documents
      */
     public function hasRejectedDocuments(): bool
@@ -214,8 +214,10 @@ class Application extends Model
         }
 
         // Rule 3: Company application under review
-        if ($this->applicant_type === 'App\\Models\\Company' && 
-            $this->status->value === 'under_review') {
+        if (
+            $this->applicant_type === 'App\\Models\\Company' &&
+            $this->status->value === 'under_review'
+        ) {
             return true;
         }
 

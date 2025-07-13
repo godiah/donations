@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Contribution;
+use App\Models\PayoutMethod;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
@@ -60,6 +61,20 @@ class WalletService
                 throw new Exception('Contribution already credited but wallet transaction not found');
             }
 
+            // Calculate platform fee if not already calculated
+            if (!$contribution->hasPlatformFeeCalculated()) {
+                $contribution->refresh();
+                $contribution->calculatePlatformFee();
+                $contribution->save();
+
+                Log::info('Platform fee calculated for contribution', [
+                    'contribution_id' => $contribution->id,
+                    'amount' => $contribution->amount,
+                    'platform_fee' => $contribution->platform_fee,
+                    'net_amount' => $contribution->net_amount,
+                ]);
+            }
+
             // Get the applicant (Individual or Company)
             $applicant = $contribution->donationLink->application->applicant ?? null;
 
@@ -80,14 +95,17 @@ class WalletService
             // Create transaction reference
             $transactionRef = $this->generateTransactionReference('CR');
 
+            // Use net amount for wallet credit (amount - platform fee)
+            $creditAmount = $contribution->getNetAmount();
+
             // Calculate running balance
-            $runningBalance = $wallet->balance + $contribution->amount;
+            $runningBalance = $wallet->balance + $creditAmount;
 
             // Create wallet transaction
             $walletTransaction = $wallet->transactions()->create([
                 'transaction_reference' => $transactionRef,
                 'type' => WalletTransaction::TYPE_CREDIT,
-                'amount' => $contribution->amount,
+                'amount' => $creditAmount,
                 'running_balance' => $runningBalance,
                 'status' => WalletTransaction::STATUS_COMPLETED,
                 'source_type' => WalletTransaction::SOURCE_TYPE_DONATION,
@@ -102,15 +120,19 @@ class WalletService
                     'donation_link_code' => $contribution->donationLink->code,
                     'donor_email' => $contribution->email,
                     'donor_phone' => $contribution->phone,
+                    'gross_amount' => $contribution->amount,
+                    'platform_fee' => $contribution->platform_fee,
+                    'net_amount' => $contribution->net_amount,
+                    'platform_fee_percentage' => $contribution->platform_fee_percentage,
                 ],
-                'fee_amount' => 0,
+                'fee_amount' => $contribution->platform_fee,
                 'processed_at' => now(),
             ]);
 
             // Update wallet balance and totals
             $wallet->update([
                 'balance' => $runningBalance,
-                'total_received' => $wallet->total_received + $contribution->amount,
+                'total_received' => $wallet->total_received + $creditAmount,
                 'last_activity_at' => now(),
             ]);
 
@@ -121,10 +143,12 @@ class WalletService
                 'wallet_credited_at' => now(),
             ]);
 
-            Log::info('Wallet credited from donation', [
+            Log::info('Wallet credited from donation with platform fee', [
                 'wallet_id' => $wallet->id,
                 'contribution_id' => $contribution->id,
-                'amount' => $contribution->amount,
+                'gross_amount' => $contribution->amount,
+                'platform_fee' => $contribution->platform_fee,
+                'net_amount' => $creditAmount,
                 'new_balance' => $runningBalance,
                 'transaction_ref' => $transactionRef,
             ]);
@@ -139,10 +163,9 @@ class WalletService
     public function processWithdrawalRequest(
         User $user,
         float $amount,
-        string $withdrawalMethod,
-        array $withdrawalDetails
+        PayoutMethod $payoutMethod
     ): WithdrawalRequest {
-        return DB::transaction(function () use ($user, $amount, $withdrawalMethod, $withdrawalDetails) {
+        return DB::transaction(function () use ($user, $amount, $payoutMethod) {
             // Get user wallet
             $wallet = $user->wallet()->active()->first();
 
@@ -155,7 +178,15 @@ class WalletService
                 throw new Exception('Withdrawal amount must be greater than zero');
             }
 
-            // Calculate fees
+            // Validate payout method belongs to user
+            if ($payoutMethod->user_id !== $user->id) {
+                throw new Exception('Invalid payout method');
+            }
+
+            // Get withdrawal method from payout method
+            $withdrawalMethod = WithdrawalRequest::getWithdrawalMethodFromPayoutType($payoutMethod->type);
+
+            // Calculate fees based on withdrawal method
             $feeAmount = $this->calculateWithdrawalFee($amount, $withdrawalMethod);
             $netAmount = $amount - $feeAmount;
 
@@ -172,9 +203,13 @@ class WalletService
             // Generate request reference
             $requestRef = $this->generateWithdrawalReference();
 
+            // Create withdrawal details from payout method
+            $withdrawalDetails = WithdrawalRequest::createWithdrawalDetailsFromPayoutMethod($payoutMethod);
+
             // Create withdrawal request
             $withdrawalRequest = $wallet->withdrawalRequests()->create([
                 'user_id' => $user->id,
+                'payout_method_id' => $payoutMethod->id,
                 'request_reference' => $requestRef,
                 'amount' => $amount,
                 'fee_amount' => $feeAmount,
@@ -195,6 +230,7 @@ class WalletService
                 'user_id' => $user->id,
                 'amount' => $amount,
                 'method' => $withdrawalMethod,
+                'payout_method_id' => $payoutMethod->id,
                 'reference' => $requestRef,
             ]);
 
@@ -341,7 +377,7 @@ class WalletService
     }
 
     /**
-     * Calculate withdrawal fee
+     * Calculate withdrawal fee based on method
      */
     protected function calculateWithdrawalFee(float $amount, string $method): float
     {
@@ -356,6 +392,11 @@ class WalletService
                 'percentage' => 0.015, // 1.5%
                 'minimum' => 50,       // KES 50
                 'maximum' => 500,      // KES 500
+            ],
+            'paybill' => [
+                'percentage' => 0.025, // 2.5%
+                'minimum' => 15,       // KES 15
+                'maximum' => 150,      // KES 150
             ],
         ];
 
@@ -406,6 +447,16 @@ class WalletService
         })->toArray();
     }
 
+    public function getTransactionCount(User $user, string $currency = 'KES'): int
+    {
+        $wallet = $user->wallet()->forCurrency($currency)->first();
+
+        if (!$wallet) {
+            return 0;
+        }
+
+        return $wallet->transactions()->count();
+    }
     /**
      * Validate wallet transaction integrity
      */
@@ -484,5 +535,72 @@ class WalletService
                 'debits_total' => $debits,
             ]);
         });
+    }
+
+    /**
+     * Check if user has any payout method
+     */
+    public function userHasPayoutMethod(User $user): bool
+    {
+        return $user->payoutMethods()->exists();
+    }
+
+    /**
+     * Get user's primary or latest payout method
+     */
+    public function getUserPayoutMethod(User $user): ?PayoutMethod
+    {
+        // First, try to get primary payout method
+        $primaryMethod = $user->primaryPayoutMethod;
+
+        if ($primaryMethod) {
+            return $primaryMethod;
+        }
+
+        // If no primary method, get the latest verified payout method
+        $latestMethod = $user->verifiedPayoutMethods()
+            ->latest()
+            ->first();
+
+        if ($latestMethod) {
+            return $latestMethod;
+        }
+
+        // If no verified methods, get the latest payout method
+        return $user->payoutMethods()
+            ->latest()
+            ->first();
+    }
+
+    /**
+     * Get withdrawal fee preview
+     */
+    public function getWithdrawalFeePreview(float $amount, PayoutMethod $payoutMethod): array
+    {
+        $withdrawalMethod = WithdrawalRequest::getWithdrawalMethodFromPayoutType($payoutMethod->type);
+        $feeAmount = $this->calculateWithdrawalFee($amount, $withdrawalMethod);
+        $netAmount = $amount - $feeAmount;
+
+        return [
+            'gross_amount' => $amount,
+            'fee_amount' => $feeAmount,
+            'net_amount' => $netAmount,
+            'withdrawal_method' => $withdrawalMethod,
+            'fee_percentage' => $this->getFeePercentage($withdrawalMethod),
+        ];
+    }
+
+    /**
+     * Get fee percentage for display
+     */
+    private function getFeePercentage(string $method): float
+    {
+        $feeStructure = [
+            'mpesa' => 2.0,
+            'bank_transfer' => 1.5,
+            'paybill' => 2.5,
+        ];
+
+        return $feeStructure[$method] ?? 0;
     }
 }

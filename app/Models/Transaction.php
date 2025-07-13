@@ -13,6 +13,12 @@ class Transaction extends Model
         'contribution_id',
         'transaction_id',
         'gateway_transaction_id',
+        'cybersource_transaction_uuid',
+        'cybersource_reference_number',
+        'cybersource_auth_code',
+        'cybersource_decision',
+        'cybersource_reason_code',
+        'cybersource_payment_token',
         'gateway',
         'type',
         'status',
@@ -84,6 +90,31 @@ class Transaction extends Model
             'transaction_date' => $this->mpesa_transaction_date,
             'payment_type' => $this->mpesa_payment_type,
         ];
+    }
+
+    /**
+     * Check if transaction is from CyberSource
+     */
+    public function isCyberSourceTransaction(): bool
+    {
+        return $this->gateway === self::GATEWAY_CYBERSOURCE;
+    }
+
+    /**
+     * Get transaction display status
+     */
+    public function getDisplayStatusAttribute(): string
+    {
+        return match ($this->status) {
+            self::STATUS_PENDING => 'Pending',
+            self::STATUS_PROCESSING => 'Processing',
+            self::STATUS_COMPLETED => 'Completed',
+            self::STATUS_FAILED => 'Failed',
+            self::STATUS_CANCELLED => 'Cancelled',
+            self::STATUS_DECLINED => 'Declined',
+            self::STATUS_REVIEW => 'Under Review',
+            default => 'Unknown',
+        };
     }
 
     /**

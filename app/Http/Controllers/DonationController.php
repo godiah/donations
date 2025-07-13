@@ -8,6 +8,7 @@ use App\Models\Contribution;
 use App\Models\DonationLink;
 use App\Models\Transaction;
 use App\Services\CyberSourceService;
+use App\Services\DonationNotificationService;
 use App\Services\DonationStatisticsService;
 use App\Services\MpesaService;
 use App\Services\MpesaStatusChecker;
@@ -24,17 +25,20 @@ class DonationController extends Controller
     protected $mpesaService;
     protected $walletService;
     protected $donationStatisticsService;
+    protected $notificationService;
 
     public function __construct(
         CyberSourceService $cyberSourceService,
         MpesaService $mpesaService,
         WalletService $walletService,
         DonationStatisticsService $donationStatisticsService,
+        DonationNotificationService $notificationService
     ) {
         $this->cyberSourceService = $cyberSourceService;
         $this->mpesaService = $mpesaService;
         $this->walletService = $walletService;
         $this->donationStatisticsService = $donationStatisticsService;
+        $this->notificationService = $notificationService;
     }
 
     /**
@@ -160,86 +164,233 @@ class DonationController extends Controller
         }
     }
 
-    /**
-     * Handle CyberSource webhook
-     */
-    public function webhook(Request $request)
+    public function cyberSourceCallback(Request $request)
     {
-        Log::info('CyberSource webhook received', $request->all());
-
         try {
-            $result = $this->cyberSourceService->processWebhookResponse($request->all());
+            $responseData = $request->all();
 
-            if ($result['success']) {
-                // If payment was successful, credit the wallet- handled in the service
-                // $contribution = $result['contribution'];
-
-                // if ($contribution && $contribution->payment_status === Contribution::STATUS_COMPLETED) {
-                //     $this->creditWalletFromDonation($contribution);
-                // }
-
-                return response('OK', 200);
-            }
-
-            return response('Error processing webhook', 400);
-        } catch (\Exception $e) {
-            Log::error('Webhook processing failed', [
-                'error' => $e->getMessage(),
-                'request_data' => $request->all(),
+            Log::info('CyberSource callback received', [
+                'decision' => $responseData['decision'] ?? 'unknown',
+                'reason_code' => $responseData['reason_code'] ?? 'unknown',
+                'reference_number' => $responseData['req_reference_number'] ?? 'unknown',
+                'request_id' => $responseData['request_id'] ?? 'unknown'
             ]);
 
-            return response('Error processing webhook', 500);
-        }
-    }
+            // Process the callback using our service
+            $result = $this->cyberSourceService->processCallback($responseData);
+            $contribution = $result['contribution'];
+            $decision = $result['decision'];
 
-    /**
-     * Handle successful payment return : Cybersource
-     */
-    public function success(Request $request)
-    {
-        $contribution = null;
-
-        if ($request->has('req_transaction_uuid')) {
-            $contribution = Contribution::where('cybersource_request_id', $request->req_transaction_uuid)->first();
-        }
-
-        return view('donations.success', compact('contribution'));
-    }
-
-    /**
-     * Handle cancelled payment return : Cybersource
-     */
-    public function cancel(Request $request)
-    {
-        $contribution = null;
-
-        if ($request->has('req_transaction_uuid')) {
-            $contribution = Contribution::where('cybersource_request_id', $request->req_transaction_uuid)->first();
-
-            if ($contribution) {
-                $contribution->update(['payment_status' => Contribution::STATUS_CANCELLED]);
+            // Send notifications for successful donations using the shared service
+            if ($decision === 'ACCEPT' && $contribution->payment_status === Contribution::STATUS_COMPLETED) {
+                $this->notificationService->sendDonationNotifications($contribution);
             }
-        }
 
-        return view('donations.cancel', compact('contribution'));
+            // Route based on the decision/outcome
+            return $this->routeBasedOnDecision($contribution, $decision, $result);
+        } catch (\Exception $e) {
+            Log::error('CyberSource callback processing failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
+
+            // Try to extract contribution info for error routing
+            $referenceNumber = $request->input('req_reference_number');
+            if ($referenceNumber) {
+                $contribution = Contribution::find($referenceNumber);
+                if ($contribution) {
+                    return redirect()->route('donation.failure', $contribution->donationLink->code)
+                        ->with('error', 'Payment processing error. Please contact support if you were charged.');
+                }
+            }
+
+            // Fallback error page
+            return redirect()->route('donation.failure', 'error')
+                ->with('error', 'Payment processing error. Please contact support.');
+        }
     }
 
     /**
-     * Handle error payment return : Cybersource
+     * Route user to appropriate page based on transaction decision
      */
-    public function error(Request $request)
+    private function routeBasedOnDecision(Contribution $contribution, string $decision, array $result): \Illuminate\Http\RedirectResponse
     {
-        $contribution = null;
+        $donationCode = $contribution->donationLink->code;
 
-        if ($request->has('req_transaction_uuid')) {
-            $contribution = Contribution::where('cybersource_request_id', $request->req_transaction_uuid)->first();
+        switch ($decision) {
+            case 'ACCEPT':
+                Log::info('Payment successful', [
+                    'contribution_id' => $contribution->id,
+                    'transaction_id' => $contribution->cybersource_transaction_id,
+                    'amount' => $contribution->amount,
+                    'currency' => $contribution->currency
+                ]);
 
-            if ($contribution) {
-                $contribution->update(['payment_status' => Contribution::STATUS_FAILED]);
-            }
+                return redirect()->route('donation.success', $donationCode)
+                    ->with('success', 'Your donation was processed successfully!')
+                    ->with('contribution', $contribution);
+
+            case 'CANCEL':
+                Log::info('Payment cancelled by user', [
+                    'contribution_id' => $contribution->id,
+                    'reason_code' => $result['reason_code'] ?? 'unknown'
+                ]);
+
+                return redirect()->route('donation.cancel', $donationCode)
+                    ->with('info', 'Payment was cancelled. No charges were made.')
+                    ->with('contribution', $contribution);
+
+            case 'DECLINE':
+            case 'ERROR':
+                Log::warning('Payment failed', [
+                    'contribution_id' => $contribution->id,
+                    'decision' => $decision,
+                    'reason_code' => $result['reason_code'] ?? 'unknown',
+                    'declined_reason' => $this->getDeclineReason($result['reason_code'] ?? null)
+                ]);
+
+                $errorMessage = $this->getUserFriendlyErrorMessage($result['reason_code'] ?? null);
+
+                return redirect()->route('donation.failure', $donationCode)
+                    ->with('error', $errorMessage)
+                    ->with('contribution', $contribution);
+
+            case 'REVIEW':
+                Log::info('Payment under review', [
+                    'contribution_id' => $contribution->id,
+                    'reason_code' => $result['reason_code'] ?? 'unknown'
+                ]);
+
+                return redirect()->route('donation.success', $donationCode)
+                    ->with('warning', 'Your payment is being reviewed for security. You will receive confirmation shortly.')
+                    ->with('contribution', $contribution);
+
+            default:
+                Log::error('Unknown payment decision', [
+                    'contribution_id' => $contribution->id,
+                    'decision' => $decision,
+                    'result' => $result
+                ]);
+
+                return redirect()->route('donation.failure', $donationCode)
+                    ->with('error', 'Payment status unclear. Please contact support to verify your donation.')
+                    ->with('contribution', $contribution);
+        }
+    }
+
+    /**
+     * Get user-friendly error message based on reason code
+     */
+    private function getUserFriendlyErrorMessage(?string $reasonCode): string
+    {
+        return match ($reasonCode) {
+            '102' => 'One or more fields in the request contains invalid data. Please check your information and try again.',
+            '200' => 'The authorization request was approved by the issuing bank but declined by CyberSource due to risk factors.',
+            '201' => 'The issuing bank has questions about the request. Please contact your bank.',
+            '202' => 'Your card has expired. Please use a different card.',
+            '203' => 'Your card was declined by the bank. Please try a different payment method.',
+            '204' => 'Insufficient funds available. Please check your account balance.',
+            '205' => 'Your card was stolen or lost. Please contact your bank.',
+            '207' => 'The issuing bank is unavailable. Please try again later.',
+            '208' => 'Your card is inactive or not authorized for card-not-present transactions.',
+            '210' => 'The credit limit for your card has been exceeded.',
+            '211' => 'Your card verification number (CVN) is invalid.',
+            '221' => 'The customer matched an entry on the processor\'s negative file.',
+            '230' => 'The authorization request was approved by the issuing bank but declined due to risk factors.',
+            '231' => 'The card verification number (CVN) is invalid.',
+            '232' => 'The card type sent is invalid or does not correlate with the credit card number.',
+            '233' => 'General decline by the processor.',
+            '234' => 'There is a problem with your merchant configuration.',
+            '236' => 'Processor failure.',
+            '240' => 'The card type sent is invalid or does not correlate with the credit card number.',
+            '475' => 'The cardholder is enrolled for payer authentication.',
+            '476' => 'Payer authentication could not be authenticated.',
+            default => 'Your payment could not be processed. Please try again or contact your bank.'
+        };
+    }
+
+    /**
+     * Get internal decline reason for logging
+     */
+    private function getDeclineReason(?string $reasonCode): string
+    {
+        return match ($reasonCode) {
+            '102' => 'Invalid field data',
+            '200' => 'Risk decline',
+            '201' => 'Issuer inquiry',
+            '202' => 'Expired card',
+            '203' => 'General decline',
+            '204' => 'Insufficient funds',
+            '205' => 'Stolen/lost card',
+            '207' => 'Issuer unavailable',
+            '208' => 'Inactive card',
+            '210' => 'Credit limit exceeded',
+            '211', '231' => 'Invalid CVN',
+            '221' => 'Negative file match',
+            '230' => 'Risk decline',
+            '232', '240' => 'Invalid card type',
+            '233' => 'General processor decline',
+            '234' => 'Configuration problem',
+            '236' => 'Processor failure',
+            '475' => 'Payer auth enrolled',
+            '476' => 'Payer auth failed',
+            default => "Unknown reason code: {$reasonCode}"
+        };
+    }
+
+    /**
+     * Show success page
+     */
+    public function showSuccess($code)
+    {
+        $donationLink = DonationLink::where('code', $code)->first();
+
+        if (!$donationLink) {
+            abort(404);
         }
 
-        return view('donations.error', compact('contribution'));
+        // Get the latest successful contribution for this donation link
+        $contribution = $donationLink->contributions()
+            ->where('payment_status', Contribution::STATUS_COMPLETED)
+            ->latest()
+            ->first();
+
+        return view('donations.success', compact('donationLink', 'contribution'));
+    }
+
+    /**
+     * Show cancel page
+     */
+    public function showCancel($code)
+    {
+        $donationLink = DonationLink::where('code', $code)->first();
+
+        if (!$donationLink) {
+            abort(404);
+        }
+
+        return view('donations.cancel', compact('donationLink'));
+    }
+
+    /**
+     * Show failure page
+     */
+    public function showFailure($code)
+    {
+        $donationLink = DonationLink::where('code', $code)->first();
+
+        if (!$donationLink) {
+            abort(404);
+        }
+
+        // Get the latest failed contribution for this donation link
+        $contribution = $donationLink->contributions()
+            ->whereIn('payment_status', [Contribution::STATUS_FAILED, Contribution::STATUS_CANCELLED])
+            ->latest()
+            ->first();
+
+        return view('donations.failure', compact('donationLink', 'contribution'));
     }
 
     /**
@@ -247,34 +398,104 @@ class DonationController extends Controller
      */
     private function createContribution(DonationLink $donationLink, array $data): Contribution
     {
-        return $donationLink->contributions()->create([
+        $paymentMethod = $data['payment_method'];
+
+        // Base contribution data
+        $contributionData = [
             'amount' => $data['amount'],
             'currency' => $data['currency'],
             'email' => $data['email'],
             'phone' => $data['phone'] ?? null,
             'donation_type' => $data['donation_type'],
-            'payment_method' => $data['payment_method'],
+            'payment_method' => $paymentMethod,
             'payment_status' => Contribution::STATUS_PENDING,
+        ];
+
+        // Handle billing information based on payment method
+        if ($paymentMethod === 'card') {
+            // Card payments require full billing information for CyberSource
+            $firstName = '';
+            $lastName = '';
+
+            if (!empty($data['full_name'])) {
+                $nameParts = explode(' ', trim($data['full_name']), 2);
+                $firstName = $nameParts[0] ?? '';
+                $lastName = $nameParts[1] ?? $firstName; // Use first name as fallback
+            }
+
+            $contributionData = array_merge($contributionData, [
+                'bill_to_forename' => $firstName,
+                'bill_to_surname' => $lastName,
+                'bill_to_address_line1' => $data['address_line1'],
+                'bill_to_address_city' => $data['city'],
+                'bill_to_address_state' => $data['state'],
+                'bill_to_address_postal_code' => $data['postal_code'],
+                'bill_to_address_country' => strtoupper($data['country']),
+            ]);
+        } elseif ($paymentMethod === 'mpesa') {
+            // M-Pesa payments: Generate minimal billing info or use provided name
+            $firstName = '';
+            $lastName = '';
+
+            if (!empty($data['full_name'])) {
+                $nameParts = explode(' ', trim($data['full_name']), 2);
+                $firstName = $nameParts[0] ?? '';
+                $lastName = $nameParts[1] ?? '';
+            } else {
+                // Generate name from email if not provided
+                $emailParts = explode('@', $data['email']);
+                $firstName = ucfirst($emailParts[0]);
+                $lastName = 'Donor'; // Default last name
+            }
+
+            $contributionData = array_merge($contributionData, [
+                'bill_to_forename' => $firstName,
+                'bill_to_surname' => $lastName,
+                'bill_to_address_line1' => 'N/A', // M-Pesa doesn't require address
+                'bill_to_address_city' => 'Nairobi', // Default city for M-Pesa
+                'bill_to_address_state' => 'Nairobi', // Default state
+                'bill_to_address_postal_code' => '00100', // Default postal code
+                'bill_to_address_country' => 'KE', // Kenya for M-Pesa
+            ]);
+        }
+
+        // Log contribution creation for debugging
+        Log::info('Creating contribution', [
+            'payment_method' => $paymentMethod,
+            'amount' => $data['amount'],
+            'currency' => $data['currency'],
+            'email' => $data['email'],
+            'donation_type' => $data['donation_type'],
+            'billing_name' => ($contributionData['bill_to_forename'] ?? '') . ' ' . ($contributionData['bill_to_surname'] ?? ''),
         ]);
+
+        return $donationLink->contributions()->create($contributionData);
     }
 
     /**
-     * Handle card payment via CyberSource
+     * Handle card payment through CyberSource
      */
     private function handleCardPayment(Contribution $contribution): array
     {
-        return $this->cyberSourceService->generatePaymentFormData($contribution);
+        try {
+            return $this->cyberSourceService->generatePaymentData($contribution);
+        } catch (\Exception $e) {
+            Log::error('CyberSource payment data generation failed', [
+                'contribution_id' => $contribution->id,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
     }
 
     /**
-     * Redirect to CyberSource hosted payment page
+     * Redirect to CyberSource hosted checkout
      */
     private function redirectToCyberSource(array $paymentData)
     {
-        Log::info('CyberSource Redirect Form Data', ['params' => $paymentData['params']]);
         return view('donations.cybersource-redirect', [
-            'actionUrl' => $paymentData['action_url'],
-            'params' => $paymentData['params'],
+            'gateway_url' => $paymentData['gateway_url'],
+            'fields' => $paymentData['fields']
         ]);
     }
 
@@ -381,14 +602,6 @@ class DonationController extends Controller
                     'environment' => $this->mpesaService->getCurrentEnvironment(),
                 ]);
 
-                // Auto-acknowledge if enabled
-                // if (config('mpesa.webhooks.auto_acknowledge', true)) {
-                //     return response()->json([
-                //         'ResultCode' => 0,
-                //         'ResultDesc' => 'Accepted'
-                //     ], 200);
-                // }
-
                 return response('OK', 200);
             } else {
                 Log::error('M-Pesa callback processing failed', [
@@ -466,9 +679,19 @@ class DonationController extends Controller
                                 'processed_at' => now(),
                             ]);
 
+                            // Calculate platform fee before marking contribution as completed
+                            if (!$contribution->hasPlatformFeeCalculated()) {
+                                $contribution->refresh();
+                                $contribution->calculatePlatformFee(null, $transaction);
+                                $contribution->save();
+                            }
+
                             // Update contribution
                             $contribution->update([
                                 'payment_status' => Contribution::STATUS_COMPLETED,
+                                'platform_fee' => $contribution->platform_fee,
+                                'net_amount' => $contribution->net_amount,
+                                'platform_fee_percentage' => $contribution->platform_fee_percentage,
                                 'processed_at' => now(),
                             ]);
 
@@ -486,10 +709,17 @@ class DonationController extends Controller
 
                             DB::commit();
 
-                            Log::info('M-Pesa payment completed via status check', [
+                            if ($contribution->payment_status === Contribution::STATUS_COMPLETED) {
+                                $this->notificationService->sendDonationNotifications($contribution);
+                            }
+
+                            Log::info('M-Pesa payment completed via status check with platform fee', [
                                 'contribution_id' => $contribution->id,
                                 'transaction_id' => $transaction->id,
                                 'receipt_number' => $paymentData['receipt_number'] ?? 'N/A',
+                                'gross_amount' => $contribution->amount,
+                                'platform_fee' => $contribution->platform_fee,
+                                'net_amount' => $contribution->net_amount,
                             ]);
                         } catch (\Exception $e) {
                             DB::rollback();
