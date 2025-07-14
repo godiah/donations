@@ -98,68 +98,6 @@ class Contribution extends Model
     }
 
     /**
-     * Calculate and set platform fee for this contribution
-     */
-    public function calculatePlatformFee(?float $feePercentage = null, ?Transaction $transaction = null): void
-    {
-        $feePercentage = $feePercentage ?? self::DEFAULT_PLATFORM_FEE_PERCENTAGE;
-
-        // If a transaction is provided, use its mpesa_amount
-        if ($transaction && $transaction->mpesa_amount) {
-            $amount = (float) $transaction->mpesa_amount;
-        } else {
-            // Get the actual M-Pesa transaction amount from the completed transaction
-            $mpesaTransaction = $this->transactions()
-                ->where('gateway', Transaction::GATEWAY_MPESA)
-                ->where('status', Transaction::STATUS_COMPLETED)
-                ->first();
-
-            // Use M-Pesa amount if available, otherwise fall back to contribution amount
-            $amount = $mpesaTransaction && $mpesaTransaction->mpesa_amount
-                ? (float) $mpesaTransaction->mpesa_amount
-                : (float) $this->amount;
-        }
-
-        // Validate that amount is greater than 0
-        if ($amount <= 0) {
-            $this->platform_fee_percentage = $feePercentage;
-            $this->platform_fee = 0.00;
-            $this->net_amount = $amount;
-            return;
-        }
-
-        // Calculate platform fee
-        $calculatedFee = ($amount * $feePercentage) / 100;
-        $roundedFee = round($calculatedFee, 2);
-
-        $this->platform_fee_percentage = $feePercentage;
-        $this->platform_fee = $roundedFee;
-        $this->net_amount = $amount - $roundedFee;
-    }
-
-    /**
-     * Get the net amount after platform fee
-     */
-    public function getNetAmount(): float
-    {
-        if (!is_null($this->net_amount)) {
-            return $this->net_amount;
-        }
-
-        // Calculate net amount using M-Pesa transaction amount if available
-        $mpesaTransaction = $this->transactions()
-            ->where('gateway', Transaction::GATEWAY_MPESA)
-            ->where('status', Transaction::STATUS_COMPLETED)
-            ->first();
-
-        $amount = $mpesaTransaction && $mpesaTransaction->mpesa_amount
-            ? (float) $mpesaTransaction->mpesa_amount
-            : (float) $this->amount;
-
-        return $amount - ($this->platform_fee ?? 0);
-    }
-
-    /**
      * Check if platform fee has been calculated
      */
     public function hasPlatformFeeCalculated(): bool
@@ -237,5 +175,180 @@ class Contribution extends Model
         ]);
 
         return implode(', ', $address);
+    }
+
+    /**
+     * Calculate platform fee for any payment method and currency
+     */
+    public function calculatePlatformFee(?float $feePercentage = null, ?Transaction $transaction = null): void
+    {
+        $feePercentage = $feePercentage ?? self::DEFAULT_PLATFORM_FEE_PERCENTAGE;
+
+        // Get the transaction amount based on payment method
+        $amount = $this->getTransactionAmount($transaction);
+
+        // Validate that amount is greater than 0
+        if ($amount <= 0) {
+            $this->platform_fee_percentage = $feePercentage;
+            $this->platform_fee = 0.00;
+            $this->net_amount = $amount;
+            return;
+        }
+
+        // Calculate platform fee in the original currency
+        $calculatedFee = ($amount * $feePercentage) / 100;
+        $roundedFee = round($calculatedFee, 2);
+
+        $this->platform_fee_percentage = $feePercentage;
+        $this->platform_fee = $roundedFee;
+        $this->net_amount = $amount - $roundedFee;
+
+        Log::info('Platform fee calculated', [
+            'contribution_id' => $this->id,
+            'payment_method' => $this->payment_method,
+            'currency' => $this->currency,
+            'original_amount' => $amount,
+            'platform_fee' => $this->platform_fee,
+            'net_amount' => $this->net_amount,
+            'fee_percentage' => $feePercentage
+        ]);
+    }
+
+    /**
+     * Get transaction amount based on payment method
+     */
+    public function getTransactionAmount(?Transaction $transaction = null): float
+    {
+        // If a specific transaction is provided, use its amount
+        if ($transaction) {
+            if ($transaction->gateway === Transaction::GATEWAY_MPESA && $transaction->mpesa_amount) {
+                return (float) $transaction->mpesa_amount;
+            }
+            return (float) $transaction->amount;
+        }
+
+        // For M-Pesa payments, get the actual transaction amount
+        if ($this->payment_method === 'mpesa') {
+            $mpesaTransaction = $this->transactions()
+                ->where('gateway', Transaction::GATEWAY_MPESA)
+                ->where('status', Transaction::STATUS_COMPLETED)
+                ->first();
+
+            if ($mpesaTransaction && $mpesaTransaction->mpesa_amount) {
+                return (float) $mpesaTransaction->mpesa_amount;
+            }
+        }
+
+        // For CyberSource payments or fallback, use contribution amount
+        return (float) $this->amount;
+    }
+
+    /**
+     * Get net amount
+     */
+    public function getNetAmount(): float
+    {
+        if (!is_null($this->net_amount)) {
+            return $this->net_amount;
+        }
+
+        // Get transaction amount based on payment method
+        $amount = $this->getTransactionAmount();
+
+        return $amount - ($this->platform_fee ?? 0);
+    }
+
+    /**
+     * Get net amount converted to KES for wallet crediting
+     */
+    public function getNetAmountInKes(): float
+    {
+        $netAmount = $this->getNetAmount();
+
+        // If already in KES, return as is
+        if ($this->currency === 'KES') {
+            return $netAmount;
+        }
+
+        // Convert to KES using currency service
+        $currencyService = app(\App\Services\CurrencyService::class);
+        $convertedAmount = $currencyService->convertCurrency($netAmount, $this->currency, 'KES');
+
+        Log::info('Net amount converted to KES for wallet credit', [
+            'contribution_id' => $this->id,
+            'original_currency' => $this->currency,
+            'original_net_amount' => $netAmount,
+            'converted_amount_kes' => $convertedAmount
+        ]);
+
+        return $convertedAmount;
+    }
+
+    /**
+     * Get platform fee converted to KES
+     */
+    public function getPlatformFeeInKes(): float
+    {
+        $platformFee = $this->platform_fee ?? 0;
+
+        // If already in KES, return as is
+        if ($this->currency === 'KES') {
+            return $platformFee;
+        }
+
+        // Convert to KES using currency service
+        $currencyService = app(\App\Services\CurrencyService::class);
+        return $currencyService->convertCurrency($platformFee, $this->currency, 'KES');
+    }
+
+    /**
+     * Get gross amount converted to KES
+     */
+    public function getGrossAmountInKes(): float
+    {
+        $grossAmount = $this->getTransactionAmount();
+
+        // If already in KES, return as is
+        if ($this->currency === 'KES') {
+            return $grossAmount;
+        }
+
+        // Convert to KES using currency service
+        $currencyService = app(\App\Services\CurrencyService::class);
+        return $currencyService->convertCurrency($grossAmount, $this->currency, 'KES');
+    }
+
+    /**
+     * Check if this is a CyberSource transaction
+     */
+    public function isCyberSourceTransaction(): bool
+    {
+        return $this->payment_method === 'card' && !empty($this->cybersource_transaction_id);
+    }
+
+    /**
+     * Check if this is an M-Pesa transaction
+     */
+    public function isMpesaTransaction(): bool
+    {
+        return $this->payment_method === 'mpesa';
+    }
+
+    /**
+     * Get currency display with symbol
+     */
+    public function getFormattedAmount(): string
+    {
+        $currencyService = app(\App\Services\CurrencyService::class);
+        return $currencyService->formatAmount($this->getTransactionAmount(), $this->currency);
+    }
+
+    /**
+     * Get net amount formatted with currency
+     */
+    public function getFormattedNetAmount(): string
+    {
+        $currencyService = app(\App\Services\CurrencyService::class);
+        return $currencyService->formatAmount($this->getNetAmount(), $this->currency);
     }
 }

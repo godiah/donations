@@ -23,13 +23,6 @@ return [
             'from_kes' => 0.0074, // 1 KES = 0.0074 USD
             'last_updated' => '2025-07-08',
         ],
-
-        // Add more currencies as needed
-        // 'EUR' => [
-        //     'to_kes' => 150.0,
-        //     'from_kes' => 0.0067,
-        //     'last_updated' => '2025-07-08',
-        // ],
     ],
 
     // Cache exchange rates for this duration

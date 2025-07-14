@@ -219,6 +219,10 @@ class CyberSourceService
         $requestId = $responseData['request_id'] ?? null;
         $transactionId = $responseData['transaction_id'] ?? null;
 
+        // Extract currency and amount from callback
+        $callbackCurrency = strtoupper($responseData['req_currency'] ?? '');
+        $callbackAmount = $responseData['req_amount'] ?? $responseData['auth_amount'] ?? null;
+
         // Validate required fields
         if (!$referenceNumber || !$transactionUuid || !$decision) {
             throw new \Exception('Missing required fields in CyberSource response');
@@ -231,6 +235,35 @@ class CyberSourceService
 
         if (!$contribution) {
             throw new \Exception("Contribution not found for reference: {$referenceNumber}, UUID: {$transactionUuid}");
+        }
+
+        // Verify currency matches (security check)
+        if ($callbackCurrency && $contribution->currency !== $callbackCurrency) {
+            Log::warning('Currency mismatch between contribution and callback', [
+                'contribution_id' => $contribution->id,
+                'contribution_currency' => $contribution->currency,
+                'callback_currency' => $callbackCurrency,
+            ]);
+
+            // Update contribution currency if callback has valid currency
+            if (in_array($callbackCurrency, ['KES', 'USD'])) {
+                Log::info('Updating contribution currency from callback', [
+                    'contribution_id' => $contribution->id,
+                    'old_currency' => $contribution->currency,
+                    'new_currency' => $callbackCurrency,
+                ]);
+                $contribution->currency = $callbackCurrency;
+            }
+        }
+
+        // Verify amount matches (allow small discrepancies due to formatting)
+        if ($callbackAmount && abs($contribution->amount - floatval($callbackAmount)) > 0.01) {
+            Log::warning('Amount mismatch between contribution and callback', [
+                'contribution_id' => $contribution->id,
+                'contribution_amount' => $contribution->amount,
+                'callback_amount' => $callbackAmount,
+                'difference' => abs($contribution->amount - floatval($callbackAmount)),
+            ]);
         }
 
         // Check if already processed (idempotency)
@@ -254,6 +287,14 @@ class CyberSourceService
             $contribution->refresh();
             $contribution->calculatePlatformFee();
             $contribution->save();
+
+            Log::info('Platform fee calculated for CyberSource contribution', [
+                'contribution_id' => $contribution->id,
+                'currency' => $contribution->currency,
+                'amount' => $contribution->amount,
+                'platform_fee' => $contribution->platform_fee,
+                'net_amount' => $contribution->net_amount,
+            ]);
         }
 
         // Update contribution with response data
@@ -293,25 +334,42 @@ class CyberSourceService
         // Refresh contribution to get latest wallet_credited status
         $contribution->refresh();
 
-        // Credit wallet only if not already credited
-        if (!$contribution->wallet_credited) {
-            $this->walletService->creditFromDonation($contribution);
-        } else {
-            Log::info('Wallet already credited for contribution via callback', [
+        // Credit wallet only if not already credited and payment is successful
+        if (!$contribution->wallet_credited && $decision === 'ACCEPT') {
+            try {
+                $this->walletService->creditFromDonation($contribution);
+
+                Log::info('Wallet credited for CyberSource contribution', [
+                    'contribution_id' => $contribution->id,
+                    'currency' => $contribution->currency,
+                    'net_amount_original' => $contribution->getNetAmount(),
+                    'net_amount_kes' => $contribution->getNetAmountInKes(),
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to credit wallet for CyberSource contribution', [
+                    'contribution_id' => $contribution->id,
+                    'error' => $e->getMessage(),
+                ]);
+                // Don't throw exception as payment was successful
+            }
+        } elseif ($contribution->wallet_credited) {
+            Log::info('Wallet already credited for CyberSource contribution via callback', [
                 'contribution_id' => $contribution->id,
             ]);
         }
 
-        // Log the transaction result
-        Log::info('CyberSource callback processed', [
+        // Log the transaction result with currency information
+        Log::info('CyberSource callback processed with currency handling', [
             'contribution_id' => $contribution->id,
-            'request_id' => $requestId,
             'decision' => $decision,
             'reason_code' => $reasonCode,
             'transaction_id' => $transactionId,
             'auth_code' => $authCode,
+            'currency' => $contribution->currency,
             'amount' => $contribution->amount,
-            'currency' => $contribution->currency
+            'platform_fee' => $contribution->platform_fee,
+            'net_amount' => $contribution->net_amount,
+            'net_amount_kes' => $decision === 'ACCEPT' ? $contribution->getNetAmountInKes() : null,
         ]);
 
         return [

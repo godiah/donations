@@ -1,19 +1,39 @@
 <x-app-layout>
-    <div class="pt-16 bg-gradient-to-br from-neutral-50 to-neutral-100">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-6">
+    <x-slot name="header">
+        <div class="flex items-center justify-between">
+            <div class="py-2 space-y-1">
+                <h2 class="text-2xl font-bold font-heading text-neutral-800">
+                    Applications in Workflow
+                </h2>
+                <p class="text-sm font-medium text-neutral-500">
+                    Rejected, resubmitted, or requiring additional
+                    information
+                </p>
+            </div>
+            <a href="{{ route('active') }}"
+                class="inline-flex items-center px-4 py-2 font-medium text-white transition-all duration-200 shadow-lg bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl hover:from-primary-600 hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 hover:shadow-xl">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z" />
+                </svg>
+                Active Applications
+            </a>
+        </div>
+    </x-slot>
 
-            <div class="bg-gradient-to-r from-secondary-600 to-secondary-700 rounded-2xl p-6 text-white shadow-xl">
+    <div class="pt-6">
+        <div class="px-4 mx-auto space-y-6 max-w-7xl sm:px-6 lg:px-8">
+
+            {{-- <div class="p-6 text-white shadow-xl bg-gradient-to-r from-secondary-600 to-secondary-700 rounded-2xl">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                        <div class="flex items-center justify-center w-12 h-12 bg-white/20 rounded-xl backdrop-blur-sm">
                             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z" />
                             </svg>
                         </div>
                         <div>
-                            <h2 class="text-2xl font-heading font-bold">Applications in Workflow</h2>
-                            <p class="text-secondary-100 mt-1">Rejected, resubmitted, or requiring additional
-                                information</p>
+                            <h2 class="text-2xl font-bold font-heading"></h2>
+                            <p class="mt-1 text-secondary-100"></p>
                         </div>
                     </div>
                     <a href="{{ route('active') }}"
@@ -21,21 +41,22 @@
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z" />
                         </svg>
-                        Active Applications
+                        
                     </a>
                 </div>
-            </div>
+            </div> --}}
+
             <!-- Status Filter -->
-            <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
-                <div class="bg-gradient-to-r from-neutral-800 to-neutral-700 px-6 py-4">
-                    <h3 class="text-lg font-heading font-semibold text-white flex items-center gap-2">
+            <div class="overflow-hidden bg-white border shadow-sm rounded-2xl border-neutral-200">
+                <div class="px-6 py-4 bg-gradient-to-r from-neutral-800 to-neutral-700">
+                    <h3 class="flex items-center gap-2 text-lg font-semibold text-white font-heading">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                             <path
                                 d="M14 12L10 8V11H2V13H10V16L14 12ZM20 3H4C2.9 3 2 3.9 2 5V8H4V5H20V19H4V16H2V19C2 20.1 2.9 21 4 21H20C21.1 21 22 20.1 22 19V5C22 3.9 21.1 3 20 3Z" />
                         </svg>
                         Filter by Status
                     </h3>
-                    <p class="text-neutral-300 text-sm mt-1">Filter applications that need attention</p>
+                    <p class="mt-1 text-sm text-neutral-300">Filter applications that need attention</p>
                 </div>
 
                 <div class="p-6">
@@ -81,21 +102,21 @@
             </div>
 
             <!-- Applications List -->
-            <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
+            <div class="overflow-hidden bg-white border shadow-sm rounded-2xl border-neutral-200">
                 @if ($pendingApplications->count() > 0)
-                    <div class="bg-gradient-to-r from-secondary-600 to-secondary-700 px-6 py-4">
+                    <div class="px-6 py-4 bg-gradient-to-r from-secondary-600 to-secondary-700">
                         <div class="flex items-center justify-between">
                             <div>
-                                <h3 class="text-lg font-heading font-semibold text-white">
+                                <h3 class="text-lg font-semibold text-white font-heading">
                                     Applications Requiring Attention
                                 </h3>
-                                <p class="text-secondary-100 text-sm mt-1">
+                                <p class="mt-1 text-sm text-secondary-100">
                                     Showing {{ $pendingApplications->count() }} of {{ $pendingApplications->total() }}
                                     applications
                                 </p>
                             </div>
-                            <div class="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
-                                <span class="text-white font-semibold">{{ $pendingApplications->total() }} Total</span>
+                            <div class="px-4 py-2 rounded-lg bg-white/20 backdrop-blur-sm">
+                                <span class="font-semibold text-white">{{ $pendingApplications->total() }} Total</span>
                             </div>
                         </div>
                     </div>
@@ -122,7 +143,7 @@
                                         <div class="flex items-center gap-4 mb-4">
                                             <div class="flex items-center gap-3">
                                                 <div
-                                                    class="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center group-hover:bg-primary-200 transition-colors">
+                                                    class="flex items-center justify-center w-12 h-12 transition-colors bg-primary-100 rounded-xl group-hover:bg-primary-200">
                                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                                         viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
                                                         class="w-6 h-6 text-primary-600">
@@ -132,7 +153,7 @@
                                                 </div>
                                                 <div>
                                                     <div class="text-sm text-neutral-500">Application ID</div>
-                                                    <span class="text-lg font-heading font-bold text-neutral-800">
+                                                    <span class="text-lg font-bold font-heading text-neutral-800">
                                                         #{{ $application->application_number }}
                                                     </span>
                                                 </div>
@@ -148,7 +169,7 @@
 
                                                 @if ($application->status === \App\Enums\ApplicationStatus::AdditionalInfoRequired)
                                                     <span
-                                                        class="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold bg-secondary-500 text-white animate-pulse">
+                                                        class="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold text-white rounded-lg bg-secondary-500 animate-pulse">
                                                         <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
                                                             <path
                                                                 d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z" />
@@ -161,16 +182,16 @@
 
                                         <!-- Campaign Title -->
                                         <h3
-                                            class="text-lg font-heading font-bold text-neutral-800 mb-1 group-hover:text-primary-700 transition-colors">
+                                            class="mb-1 text-lg font-bold transition-colors font-heading text-neutral-800 group-hover:text-primary-700">
                                             {{ $application->applicant->contribution_name }}
                                         </h3>
 
                                         <!-- Application Details Grid -->
-                                        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-2">
+                                        <div class="grid gap-4 mb-2 sm:grid-cols-2 lg:grid-cols-3">
                                             <div
-                                                class="flex items-center gap-3 p-3 bg-white/60 rounded-lg border border-white/40">
+                                                class="flex items-center gap-3 p-3 border rounded-lg bg-white/60 border-white/40">
                                                 <div
-                                                    class="w-8 h-8 bg-primary-200 rounded-lg flex items-center justify-center">
+                                                    class="flex items-center justify-center w-8 h-8 rounded-lg bg-primary-200">
                                                     <svg class="w-4 h-4 text-primary-600" fill="currentColor"
                                                         viewBox="0 0 24 24">
                                                         <path
@@ -178,7 +199,7 @@
                                                     </svg>
                                                 </div>
                                                 <div>
-                                                    <div class="text-xs text-neutral-500 font-medium">Submitted</div>
+                                                    <div class="text-xs font-medium text-neutral-500">Submitted</div>
                                                     <div class="text-sm font-semibold text-neutral-800">
                                                         {{ $application->submitted_at->format('M j, Y') }}
                                                     </div>
@@ -187,9 +208,9 @@
 
                                             @if ($application->reviewed_at)
                                                 <div
-                                                    class="flex items-center gap-3 p-3 bg-white/60 rounded-lg border border-white/40">
+                                                    class="flex items-center gap-3 p-3 border rounded-lg bg-white/60 border-white/40">
                                                     <div
-                                                        class="w-8 h-8 bg-secondary-200 rounded-lg flex items-center justify-center">
+                                                        class="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary-200">
                                                         <svg class="w-4 h-4 text-secondary-600" fill="currentColor"
                                                             viewBox="0 0 24 24">
                                                             <path
@@ -197,7 +218,7 @@
                                                         </svg>
                                                     </div>
                                                     <div>
-                                                        <div class="text-xs text-secondary-600 font-medium">Status
+                                                        <div class="text-xs font-medium text-secondary-600">Status
                                                             Updated</div>
                                                         <div class="text-sm font-semibold text-secondary-800">
                                                             {{ $application->reviewed_at->format('M j, Y') }}
@@ -207,9 +228,9 @@
                                             @endif
 
                                             <div
-                                                class="flex items-center gap-3 p-3 bg-white/60 rounded-lg border border-white/40">
+                                                class="flex items-center gap-3 p-3 border rounded-lg bg-white/60 border-white/40">
                                                 <div
-                                                    class="w-8 h-8 bg-success-200 rounded-lg flex items-center justify-center">
+                                                    class="flex items-center justify-center w-8 h-8 rounded-lg bg-success-200">
                                                     <svg class="w-4 h-4 text-success-600" fill="currentColor"
                                                         viewBox="0 0 24 24">
                                                         <path
@@ -217,7 +238,7 @@
                                                     </svg>
                                                 </div>
                                                 <div>
-                                                    <div class="text-xs text-success-600 font-medium">Type</div>
+                                                    <div class="text-xs font-medium text-success-600">Type</div>
                                                     <div class="text-sm font-semibold text-success-800">
                                                         {{ $application->applicant_type === \App\Models\Individual::class ? 'Individual' : 'Company' }}
                                                     </div>
@@ -242,11 +263,11 @@
                                             <div class="p-4 {{ $commentBgClass }} rounded-xl border-2 mb-4">
                                                 <div class="flex items-start gap-3">
                                                     <div
-                                                        class="w-8 h-8 rounded-lg flex items-center justify-center bg-white/50">
+                                                        class="flex items-center justify-center w-8 h-8 rounded-lg bg-white/50">
                                                         {!! $application->status->getIcon() !!}
                                                     </div>
                                                     <div class="flex-1">
-                                                        <h4 class="font-semibold text-sm mb-1">
+                                                        <h4 class="mb-1 text-sm font-semibold">
                                                             @if ($application->status === \App\Enums\ApplicationStatus::Rejected)
                                                                 Rejection Reason:
                                                             @elseif($application->status === \App\Enums\ApplicationStatus::AdditionalInfoRequired)
@@ -265,16 +286,16 @@
 
                                         <!-- Description -->
                                         @if ($application->applicant->contribution_description)
-                                            <div class="border-t border-white/40 pt-4">
+                                            <div class="pt-4 border-t border-white/40">
                                                 <h4
-                                                    class="text-sm font-semibold text-neutral-700 mb-2 flex items-center gap-2">
+                                                    class="flex items-center gap-2 mb-2 text-sm font-semibold text-neutral-700">
                                                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                                                         <path
                                                             d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20Z" />
                                                     </svg>
                                                     Description
                                                 </h4>
-                                                <p class="text-sm text-neutral-600 leading-relaxed line-clamp-3">
+                                                <p class="text-sm leading-relaxed text-neutral-600 line-clamp-3">
                                                     {{ $application->applicant->contribution_description }}
                                                 </p>
                                             </div>
@@ -282,7 +303,7 @@
                                     </div>
 
                                     <!-- Action Button -->
-                                    <div class="ml-6 flex-shrink-0">
+                                    <div class="flex-shrink-0 ml-6">
                                         @if ($application->status === \App\Enums\ApplicationStatus::AdditionalInfoRequired)
                                             @if ($application->applicant_type === \App\Models\Individual::class)
                                                 <a href="{{ route('individual.applications.update', $application->application_number) }}"
@@ -330,7 +351,7 @@
 
                     <!-- Pagination -->
                     @if ($pendingApplications->hasPages())
-                        <div class="border-t border-neutral-200 px-6 py-4">
+                        <div class="px-6 py-4 border-t border-neutral-200">
                             <div class="flex items-center justify-between">
                                 <div class="text-sm text-neutral-600">
                                     Showing {{ $pendingApplications->firstItem() }} to
@@ -345,16 +366,16 @@
                     @endif
                 @else
                     <!-- Empty State -->
-                    <div class="text-center py-16">
+                    <div class="py-16 text-center">
                         <div
-                            class="w-24 h-24 bg-gradient-to-br from-success-100 to-success-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                            class="flex items-center justify-center w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-success-100 to-success-200 rounded-2xl">
                             <svg class="w-12 h-12 text-success-600" fill="currentColor" viewBox="0 0 24 24">
                                 <path
                                     d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.59,8.09L11,13.67L7.91,10.59L6.5,12L11,16.5Z" />
                             </svg>
                         </div>
-                        <h3 class="text-xl font-heading font-bold text-neutral-800 mb-2">All Caught Up!</h3>
-                        <p class="text-neutral-600 mb-6 max-w-md mx-auto">
+                        <h3 class="mb-2 text-xl font-bold font-heading text-neutral-800">All Caught Up!</h3>
+                        <p class="max-w-md mx-auto mb-6 text-neutral-600">
                             @if (request('status'))
                                 No applications with "{{ ucfirst(str_replace('_', ' ', request('status'))) }}" status
                                 found.
@@ -371,7 +392,7 @@
                                 Back to Dashboard
                             </a>
                             <a href="{{ route('pending') }}"
-                                class="bg-neutral-100 hover:bg-neutral-200 text-neutral-700 px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center gap-2">
+                                class="flex items-center gap-2 px-6 py-3 font-semibold transition-all duration-200 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-xl">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                     <path
                                         d="M17.65 6.35C16.2 4.9 14.21 4 12 4C7.58 4 4 7.58 4 12C4 16.42 7.58 20 12 20C16.42 20 20 16.42 20 12H18C18 15.31 15.31 18 12 18C8.69 18 6 15.31 6 12C6 8.69 8.69 6 12 6C13.66 6 15.14 6.69 16.22 7.78L13 11H20V4L17.65 6.35Z" />
@@ -387,15 +408,15 @@
             @if ($pendingApplications->count() > 0)
                 <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     <!-- Additional Info Required -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
-                        <div class="bg-gradient-to-r from-secondary-500 to-secondary-600 p-4">
+                    <div class="overflow-hidden bg-white border shadow-sm rounded-2xl border-neutral-200">
+                        <div class="p-4 bg-gradient-to-r from-secondary-500 to-secondary-600">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                                <div class="flex items-center justify-center w-10 h-10 bg-white/20 rounded-xl">
                                     {!! \App\Enums\ApplicationStatus::AdditionalInfoRequired->getIcon() !!}
                                 </div>
                                 <div>
                                     <h4 class="font-semibold text-white">Additional Info Required</h4>
-                                    <p class="text-secondary-100 text-sm">Needs immediate attention</p>
+                                    <p class="text-sm text-secondary-100">Needs immediate attention</p>
                                 </div>
                             </div>
                         </div>
@@ -408,15 +429,15 @@
                     </div>
 
                     <!-- Rejected -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
-                        <div class="bg-gradient-to-r from-danger-500 to-danger-600 p-4">
+                    <div class="overflow-hidden bg-white border shadow-sm rounded-2xl border-neutral-200">
+                        <div class="p-4 bg-gradient-to-r from-danger-500 to-danger-600">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                                <div class="flex items-center justify-center w-10 h-10 bg-white/20 rounded-xl">
                                     {!! \App\Enums\ApplicationStatus::Rejected->getIcon() !!}
                                 </div>
                                 <div>
                                     <h4 class="font-semibold text-white">Rejected</h4>
-                                    <p class="text-danger-100 text-sm">Review and resubmit</p>
+                                    <p class="text-sm text-danger-100">Review and resubmit</p>
                                 </div>
                             </div>
                         </div>
@@ -429,15 +450,15 @@
                     </div>
 
                     <!-- Resubmitted -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
-                        <div class="bg-gradient-to-r from-primary-500 to-primary-600 p-4">
+                    <div class="overflow-hidden bg-white border shadow-sm rounded-2xl border-neutral-200">
+                        <div class="p-4 bg-gradient-to-r from-primary-500 to-primary-600">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                                <div class="flex items-center justify-center w-10 h-10 bg-white/20 rounded-xl">
                                     {!! \App\Enums\ApplicationStatus::Resubmitted->getIcon() !!}
                                 </div>
                                 <div>
                                     <h4 class="font-semibold text-white">Resubmitted</h4>
-                                    <p class="text-primary-100 text-sm">Awaiting review</p>
+                                    <p class="text-sm text-primary-100">Awaiting review</p>
                                 </div>
                             </div>
                         </div>

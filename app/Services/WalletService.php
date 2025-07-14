@@ -69,6 +69,8 @@ class WalletService
 
                 Log::info('Platform fee calculated for contribution', [
                     'contribution_id' => $contribution->id,
+                    'payment_method' => $contribution->payment_method,
+                    'currency' => $contribution->currency,
                     'amount' => $contribution->amount,
                     'platform_fee' => $contribution->platform_fee,
                     'net_amount' => $contribution->net_amount,
@@ -89,23 +91,53 @@ class WalletService
                 throw new Exception('User not found for applicant');
             }
 
-            // Get or create wallet for the user
-            $wallet = $this->getOrCreateWallet($user, $contribution->currency);
+            // Get or create wallet for the user (wallet is always in KES)
+            $wallet = $this->getOrCreateWallet($user, 'KES');
 
             // Create transaction reference
             $transactionRef = $this->generateTransactionReference('CR');
 
-            // Use net amount for wallet credit (amount - platform fee)
-            $creditAmount = $contribution->getNetAmount();
+            // Get net amount in original currency
+            $netAmountOriginal = $contribution->getNetAmount();
 
-            // Calculate running balance
-            $runningBalance = $wallet->balance + $creditAmount;
+            // Convert net amount to KES for wallet crediting (wallet is always in KES)
+            $creditAmountKes = $contribution->getNetAmountInKes();
 
-            // Create wallet transaction
+            // Calculate running balance in KES
+            $runningBalance = $wallet->balance + $creditAmountKes;
+
+            // Prepare metadata with both original and converted amounts
+            $metadata = [
+                'contribution_id' => $contribution->id,
+                'donation_link_code' => $contribution->donationLink->code,
+                'donor_email' => $contribution->email,
+                'donor_phone' => $contribution->phone,
+                'original_currency' => $contribution->currency,
+                'gross_amount_original' => $contribution->getTransactionAmount(),
+                'platform_fee_original' => $contribution->platform_fee,
+                'net_amount_original' => $netAmountOriginal,
+                'platform_fee_percentage' => $contribution->platform_fee_percentage,
+                'payment_method' => $contribution->payment_method,
+            ];
+
+            // Add currency conversion details if currency is not KES
+            if ($contribution->currency !== 'KES') {
+                $metadata['currency_conversion'] = [
+                    'from_currency' => $contribution->currency,
+                    'to_currency' => 'KES',
+                    'gross_amount_kes' => $contribution->getGrossAmountInKes(),
+                    'platform_fee_kes' => $contribution->getPlatformFeeInKes(),
+                    'net_amount_kes' => $creditAmountKes,
+                    'exchange_rate_info' => 'Converted using configured exchange rates',
+                    'conversion_date' => now()->toDateString(),
+                ];
+            }
+
+            // Create wallet transaction (always in KES)
             $walletTransaction = $wallet->transactions()->create([
                 'transaction_reference' => $transactionRef,
                 'type' => WalletTransaction::TYPE_CREDIT,
-                'amount' => $creditAmount,
+                'amount' => $creditAmountKes, // Amount in KES
                 'running_balance' => $runningBalance,
                 'status' => WalletTransaction::STATUS_COMPLETED,
                 'source_type' => WalletTransaction::SOURCE_TYPE_DONATION,
@@ -113,26 +145,19 @@ class WalletService
                 'gateway' => $contribution->payment_method === 'card' ?
                     WalletTransaction::GATEWAY_CYBERSOURCE :
                     WalletTransaction::GATEWAY_MPESA,
-                'gateway_reference' => $contribution->cybersource_transaction_id ?? null,
-                'description' => "Donation credit - Contribution #{$contribution->id}",
-                'metadata' => [
-                    'contribution_id' => $contribution->id,
-                    'donation_link_code' => $contribution->donationLink->code,
-                    'donor_email' => $contribution->email,
-                    'donor_phone' => $contribution->phone,
-                    'gross_amount' => $contribution->amount,
-                    'platform_fee' => $contribution->platform_fee,
-                    'net_amount' => $contribution->net_amount,
-                    'platform_fee_percentage' => $contribution->platform_fee_percentage,
-                ],
-                'fee_amount' => $contribution->platform_fee,
+                'gateway_reference' => $contribution->cybersource_transaction_id ??
+                    $contribution->transactions()->where('gateway', 'mpesa')->first()?->mpesa_receipt_number ??
+                    null,
+                'description' => $this->generateWalletDescription($contribution, $creditAmountKes),
+                'metadata' => $metadata,
+                'fee_amount' => $contribution->getPlatformFeeInKes(), // Platform fee in KES
                 'processed_at' => now(),
             ]);
 
-            // Update wallet balance and totals
+            // Update wallet balance and totals (in KES)
             $wallet->update([
                 'balance' => $runningBalance,
-                'total_received' => $wallet->total_received + $creditAmount,
+                'total_received' => $wallet->total_received + $creditAmountKes,
                 'last_activity_at' => now(),
             ]);
 
@@ -143,14 +168,19 @@ class WalletService
                 'wallet_credited_at' => now(),
             ]);
 
-            Log::info('Wallet credited from donation with platform fee', [
+            Log::info('Wallet credited from donation with currency conversion', [
                 'wallet_id' => $wallet->id,
                 'contribution_id' => $contribution->id,
-                'gross_amount' => $contribution->amount,
-                'platform_fee' => $contribution->platform_fee,
-                'net_amount' => $creditAmount,
-                'new_balance' => $runningBalance,
+                'payment_method' => $contribution->payment_method,
+                'original_currency' => $contribution->currency,
+                'gross_amount_original' => $contribution->getTransactionAmount(),
+                'platform_fee_original' => $contribution->platform_fee,
+                'net_amount_original' => $netAmountOriginal,
+                'credit_amount_kes' => $creditAmountKes,
+                'platform_fee_kes' => $contribution->getPlatformFeeInKes(),
+                'new_balance_kes' => $runningBalance,
                 'transaction_ref' => $transactionRef,
+                'currency_converted' => $contribution->currency !== 'KES',
             ]);
 
             return $walletTransaction;
@@ -326,6 +356,22 @@ class WalletService
                 'amount' => $withdrawalRequest->amount,
             ]);
         });
+    }
+
+
+    /**
+     * Generate wallet transaction description
+     */
+    private function generateWalletDescription(Contribution $contribution, float $creditAmount): string
+    {
+        $originalAmount = $contribution->getFormattedNetAmount();
+        $kesAmount = 'KSh ' . number_format($creditAmount, 2);
+
+        if ($contribution->currency === 'KES') {
+            return "Donation credit - Contribution #{$contribution->id} ({$kesAmount})";
+        }
+
+        return "Donation credit - Contribution #{$contribution->id} ({$originalAmount} → {$kesAmount})";
     }
 
     /**

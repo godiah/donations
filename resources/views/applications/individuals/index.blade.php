@@ -1,34 +1,31 @@
 <x-app-layout>
-    <div class="pt-16">
-        <div class="relative py-8 sm:py-12">
-            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <!-- Header Section -->
-                {{-- <div class="mb-8">
-                    <div class="flex items-center justify-between">
-                        <div class="bg-white rounded-2xl p-6  shadow-xl">
-                            <div class="space-y-1">
-                            <h2 class="text-2xl font-heading font-bold text-neutral-800">
-                                Individual Donation Application
-                            </h2>
-                            <p class="text-sm font-medium text-neutral-500">
-                                Create your fundraising campaign in just a few simple steps
-                            </p>
-                            </div>
-                            <div class="hidden sm:flex items-center space-x-2 text-sm text-neutral-500">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
-                            <span>Secure & Encrypted</span>
-                            </div>
-                        </div>
-                    </div>
-                </div> --}}
+    <x-slot name="header">
+        <div class="flex items-center justify-between">
+            <div class="py-2 space-y-1">
+                <h2 class="text-2xl font-bold font-heading text-neutral-800">
+                    Donation Application
+                </h2>
+                <p class="text-sm font-medium text-neutral-500">
+                    Create your fundraising campaign in just a few simple steps
+                </p>
+            </div>
+            <div class="items-center hidden space-x-2 text-sm sm:flex text-neutral-500">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <span>Secure & Encrypted</span>
+            </div>
+        </div>
+    </x-slot>
 
+    <div class="pt-6 pb-8">
+        <div class="relative">
+            <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <!-- Progress Indicator -->
                 <div class="mb-8">
                     <div class="flex items-center justify-between max-w-3xl mx-auto">
-                        <div class="flex items-center space-x-4 w-full">
+                        <div class="flex items-center w-full space-x-4">
                             <!-- Step 1 -->
                             <div class="flex items-center">
                                 <div class="step-circle active" data-step="1">
@@ -99,23 +96,23 @@
                 </div>
 
                 <!-- Form Container -->
-                <div class="bg-white rounded-2xl shadow-xl border border-neutral-100 overflow-hidden">
+                <div class="overflow-hidden bg-white border shadow-xl rounded-2xl border-neutral-100">
                     <form id="individualDonationForm" enctype="multipart/form-data">
                         @csrf
 
                         <!-- Step 1: Contribution Details -->
                         <div class="form-step active" id="step-1">
                             <div class="p-8">
-                                <div class="text-center mb-8">
+                                <div class="mb-8 text-center">
                                     <div
-                                        class="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                        class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl">
                                         <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor"
                                             viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                         </svg>
                                     </div>
-                                    <h3 class="text-2xl font-heading font-bold text-neutral-800 mb-2">Tell us about
+                                    <h3 class="mb-2 text-2xl font-bold font-heading text-neutral-800">Tell us about
                                         your
                                         cause</h3>
                                     <p class="text-neutral-600">Help people understand what you're raising money for
@@ -130,7 +127,7 @@
                                         </label>
                                         <input type="text" id="contribution_name" name="contribution_name"
                                             class="form-input" placeholder="e.g., Help Sarah's Cancer Treatment Fund">
-                                        <div class="form-error hidden"></div>
+                                        <div class="hidden form-error"></div>
                                         {{-- <p class="form-hint">Make it clear and compelling - this is what donors will
                                             see
                                             first</p> --}}
@@ -142,9 +139,8 @@
                                             Contribution Description
                                         </label>
                                         <textarea id="contribution_description" name="contribution_description" rows="4"
-                                            class="form-input resize-none"
-                                            placeholder="Tell your story..."></textarea>
-                                        <div class="form-error hidden"></div>
+                                            class="resize-none form-input" placeholder="Tell your story..."></textarea>
+                                        <div class="hidden form-error"></div>
                                         {{-- <p class="form-hint">Share your story to connect with potential donors
                                             emotionally
                                         </p> --}}
@@ -165,15 +161,15 @@
                                                 </option>
                                             @endforeach
                                         </select>
-                                        <div class="form-error hidden"></div>
+                                        <div class="hidden form-error"></div>
                                     </div>
 
                                     <!--  Document Upload Section -->
-                                    <div id="document-upload-section" class="form-group hidden">
+                                    <div id="document-upload-section" class="hidden form-group">
                                         <label class="form-label required">Supporting Documents</label>
 
                                         <div id="document-types-info"
-                                            class="bg-primary-50 border border-primary-200 rounded-xl p-4 mb-4">
+                                            class="p-4 mb-4 border bg-primary-50 border-primary-200 rounded-xl">
                                             <!-- Document types will be populated here -->
                                         </div>
 
@@ -181,7 +177,7 @@
                                             onclick="document.getElementById('support_documents').click()">
                                             <div class="upload-content">
                                                 <div
-                                                    class="w-12 h-12 bg-gradient-to-br from-secondary-500 to-secondary-600 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                                    class="flex items-center justify-center w-12 h-12 mx-auto mb-3 bg-gradient-to-br from-secondary-500 to-secondary-600 rounded-xl">
                                                     <svg class="w-6 h-6 text-white" fill="none"
                                                         stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -189,8 +185,8 @@
                                                             d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                                     </svg>
                                                 </div>
-                                                <h4 class="font-medium text-neutral-800 mb-1">Upload Documents</h4>
-                                                <p class="text-sm text-neutral-600 mb-2">Click to browse or drag and
+                                                <h4 class="mb-1 font-medium text-neutral-800">Upload Documents</h4>
+                                                <p class="mb-2 text-sm text-neutral-600">Click to browse or drag and
                                                     drop
                                                     files</p>
                                                 <p class="text-xs text-neutral-500">PDF, JPG, JPEG, PNG up to 5MB each
@@ -201,12 +197,12 @@
                                         </div>
 
                                         <div id="uploaded-files" class="mt-4"></div>
-                                        <div class="form-error hidden"></div>
+                                        <div class="hidden form-error"></div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="border-t border-neutral-100 px-8 py-6 bg-neutral-50">
+                            <div class="px-8 py-6 border-t border-neutral-100 bg-neutral-50">
                                 <div class="flex justify-end">
                                     <button type="button" class="btn-primary next-step">
                                         Continue
@@ -223,16 +219,16 @@
                         <!-- Step 2: Personal Information -->
                         <div class="form-step" id="step-2">
                             <div class="p-8">
-                                <div class="text-center mb-8">
+                                <div class="mb-8 text-center">
                                     <div
-                                        class="w-16 h-16 bg-gradient-to-br from-success-500 to-success-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                        class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-success-500 to-success-600 rounded-2xl">
                                         <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor"
                                             viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                         </svg>
                                     </div>
-                                    <h3 class="text-2xl font-heading font-bold text-neutral-800 mb-2">Your Information
+                                    <h3 class="mb-2 text-2xl font-bold font-heading text-neutral-800">Your Information
                                     </h3>
                                     <p class="text-neutral-600">We need your details for verification and communication
                                     </p>
@@ -252,7 +248,7 @@
                                                 </svg>
                                             </div>
                                             <div>
-                                                <h4 class="font-medium text-neutral-800 mb-1">Important</h4>
+                                                <h4 class="mb-1 font-medium text-neutral-800">Important</h4>
                                                 <p class="text-sm text-neutral-600">Please provide your names exactly
                                                     as
                                                     they appear on your National ID, Passport, or Alien Registration
@@ -263,53 +259,54 @@
                                     </div> --}}
 
                                     <!-- Name Fields -->
-                                    <div>                                        
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div class="form-group">
-                                            <label for="first_name" class="form-label required">First Name</label>
-                                            <input type="text" id="first_name" name="first_name"
-                                                class="form-input" placeholder="John">
-                                            <div class="form-error hidden"></div>
+                                    <div>
+                                        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                            <div class="form-group">
+                                                <label for="first_name" class="form-label required">First Name</label>
+                                                <input type="text" id="first_name" name="first_name"
+                                                    class="form-input" placeholder="John">
+                                                <div class="hidden form-error"></div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="middle_name" class="form-label">Middle Name</label>
+                                                <input type="text" id="middle_name" name="middle_name"
+                                                    class="form-input" placeholder="Optional">
+                                                <div class="hidden form-error"></div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="last_name" class="form-label required">Last Name</label>
+                                                <input type="text" id="last_name" name="last_name"
+                                                    class="form-input" placeholder="Doe">
+                                                <div class="hidden form-error"></div>
+                                            </div>
                                         </div>
-                                        <div class="form-group">
-                                            <label for="middle_name" class="form-label">Middle Name</label>
-                                            <input type="text" id="middle_name" name="middle_name"
-                                                class="form-input" placeholder="Optional">
-                                            <div class="form-error hidden"></div>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="last_name" class="form-label required">Last Name</label>
-                                            <input type="text" id="last_name" name="last_name" class="form-input"
-                                                placeholder="Doe">
-                                            <div class="form-error hidden"></div>
-                                        </div>                                        
+                                        <p class="mt-1 text-xs text-neutral-500">Please provide your names exactly as
+                                            they appear on your National ID, Passport, or Alien Registration
+                                            Card.</p>
                                     </div>
-                                    <p class="text-xs text-neutral-500 mt-1">Please provide your names exactly as they appear on your National ID, Passport, or Alien Registration
-                                        Card.</p>
-                                </div>
-                                    
+
 
                                     <!-- Contact Information -->
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                                         <div class="form-group">
                                             <label for="email" class="form-label required">Email Address</label>
                                             <input type="email" id="email" name="email" class="form-input"
                                                 placeholder="john@example.com">
-                                            <div class="form-error hidden"></div>
+                                            <div class="hidden form-error"></div>
                                             <p class="form-hint">We'll use this to send updates about your campaign</p>
                                         </div>
                                         <div class="form-group">
                                             <label for="phone" class="form-label required">Phone Number</label>
                                             <input type="tel" id="phone" name="phone" class="form-input"
                                                 placeholder="+254 700 000 000">
-                                            <div class="form-error hidden"></div>
+                                            <div class="hidden form-error"></div>
                                             <p class="form-hint">For important notifications and verification</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="border-t border-neutral-100 px-8 py-6 bg-neutral-50">
+                            <div class="px-8 py-6 border-t border-neutral-100 bg-neutral-50">
                                 <div class="flex justify-between">
                                     <button type="button" class="btn-secondary prev-step">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor"
@@ -334,16 +331,16 @@
                         <!-- Step 3: Financial & Verification -->
                         <div class="form-step" id="step-3">
                             <div class="p-8">
-                                <div class="text-center mb-8">
+                                <div class="mb-8 text-center">
                                     <div
-                                        class="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                        class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl">
                                         <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor"
                                             viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                                         </svg>
                                     </div>
-                                    <h3 class="text-2xl font-heading font-bold text-neutral-800 mb-2">Verification &
+                                    <h3 class="mb-2 text-2xl font-bold font-heading text-neutral-800">Verification &
                                         Goals
                                     </h3>
                                     <p class="text-neutral-600">Final details to verify your identity and set your
@@ -354,7 +351,7 @@
                                     <!-- Identification Section -->
                                     <div class="section-card">
                                         <h4 class="section-title">
-                                            <svg class="w-5 h-5 text-secondary-500 mr-2" fill="none"
+                                            <svg class="w-5 h-5 mr-2 text-secondary-500" fill="none"
                                                 stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V4a2 2 0 114 0v2m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
@@ -362,7 +359,7 @@
                                             Identity Verification
                                         </h4>
 
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                                             <div class="form-group">
                                                 <label for="id_type_id" class="form-label required">ID Type</label>
                                                 <select id="id_type_id" name="id_type_id" class="form-input">
@@ -374,21 +371,21 @@
                                                         </option>
                                                     @endforeach
                                                 </select>
-                                                <div class="form-error hidden"></div>
+                                                <div class="hidden form-error"></div>
                                             </div>
 
                                             <div class="form-group">
                                                 <label for="id_number" class="form-label required">ID Number</label>
                                                 <input type="text" id="id_number" name="id_number"
                                                     class="form-input" placeholder="Enter your ID number">
-                                                <div class="form-error hidden"></div>
+                                                <div class="hidden form-error"></div>
                                             </div>
 
                                             <div class="form-group md:col-span-2">
                                                 <label for="kra_pin" class="form-label">KRA PIN (Optional)</label>
                                                 <input type="text" id="kra_pin" name="kra_pin"
                                                     class="form-input" placeholder="A000000000A">
-                                                <div class="form-error hidden"></div>
+                                                <div class="hidden form-error"></div>
                                                 <p class="form-hint">Providing your KRA PIN helps with verification but
                                                     is
                                                     optional</p>
@@ -398,14 +395,17 @@
 
                                     <!-- Financial Goals Section -->
                                     <div class="section-card">
-                                        <h4 class="section-title">                                            
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-success-500 mr-2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
-                                              </svg>                                              
+                                        <h4 class="section-title">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                class="w-5 h-5 mr-2 text-success-500">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
+                                            </svg>
                                             Fundraising Goals (Optional)
                                         </h4>
 
-                                        <div class="info-card mb-4">
+                                        <div class="mb-4 info-card">
                                             <div class="flex items-start space-x-3">
                                                 <div
                                                     class="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center mt-0.5">
@@ -417,7 +417,7 @@
                                                     </svg>
                                                 </div>
                                                 <div>
-                                                    <h5 class="font-medium text-neutral-800 mb-1">Note</h5>
+                                                    <h5 class="mb-1 font-medium text-neutral-800">Note</h5>
                                                     <p class="text-sm text-neutral-600">Setting a target amount and
                                                         date
                                                         helps donors understand your goals, but you can still receive
@@ -426,14 +426,14 @@
                                             </div>
                                         </div>
 
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                                             <div class="form-group">
                                                 <label for="target_amount" class="form-label">Target Amount
                                                     (KES)</label>
                                                 <input type="number" id="target_amount" name="target_amount"
                                                     step="0.01" min="1" class="form-input"
                                                     placeholder="10,000.00">
-                                                <div class="form-error hidden"></div>
+                                                <div class="hidden form-error"></div>
                                                 <p class="form-hint">Optional: Set a fundraising goal</p>
                                             </div>
 
@@ -441,7 +441,7 @@
                                                 <label for="target_date" class="form-label">Target Date</label>
                                                 <input type="date" id="target_date" name="target_date"
                                                     class="form-input" min="{{ date('Y-m-d', strtotime('+1 day')) }}">
-                                                <div class="form-error hidden"></div>
+                                                <div class="hidden form-error"></div>
                                                 <p class="form-hint">Optional: When you hope to reach your goal</p>
                                             </div>
                                         </div>
@@ -450,8 +450,8 @@
                                     <!-- Payout Authorization Section -->
                                     <div class="section-card">
                                         <h4 class="section-title">
-                                            <svg class="w-5 h-5 text-purple-500 mr-2" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24">
+                                            <svg class="w-5 h-5 mr-2 text-purple-500" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                                             </svg>
@@ -465,7 +465,7 @@
                                                 <label for="mandate_single" class="mandate-label">
                                                     <div class="mandate-header">
                                                         <div
-                                                            class="w-10 h-10 bg-success-100 rounded-xl flex items-center justify-center">
+                                                            class="flex items-center justify-center w-10 h-10 bg-success-100 rounded-xl">
                                                             <svg class="w-5 h-5 text-success-600" fill="none"
                                                                 stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -491,7 +491,7 @@
                                                 <label for="mandate_dual" class="mandate-label">
                                                     <div class="mandate-header">
                                                         <div
-                                                            class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
+                                                            class="flex items-center justify-center w-10 h-10 bg-primary-100 rounded-xl">
                                                             <svg class="w-5 h-5 text-primary-600" fill="none"
                                                                 stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -512,11 +512,11 @@
                                             </div>
                                         </div>
 
-                                        <div class="form-error hidden" id="mandate_type_error"></div>
+                                        <div class="hidden form-error" id="mandate_type_error"></div>
 
                                         <!-- Checker Details (shown only for dual mandate) -->
-                                        <div id="checker_details" class="checker-section hidden">
-                                            <div class="info-card mb-4">
+                                        <div id="checker_details" class="hidden checker-section">
+                                            <div class="mb-4 info-card">
                                                 <div class="flex items-start space-x-3">
                                                     <div
                                                         class="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center mt-0.5">
@@ -528,7 +528,7 @@
                                                         </svg>
                                                     </div>
                                                     <div>
-                                                        <h5 class="font-medium text-neutral-800 mb-1">Checker
+                                                        <h5 class="mb-1 font-medium text-neutral-800">Checker
                                                             Authorization
                                                         </h5>
                                                         <p class="text-sm text-neutral-600">The person you designate
@@ -539,20 +539,20 @@
                                                 </div>
                                             </div>
 
-                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                                                 <div class="form-group">
                                                     <label for="checker_name" class="form-label required">Checker Full
                                                         Name</label>
                                                     <input type="text" id="checker_name" name="checker_name"
                                                         class="form-input" placeholder="Full name of checker">
-                                                    <div class="form-error hidden" id="checker_name_error"></div>
+                                                    <div class="hidden form-error" id="checker_name_error"></div>
                                                 </div>
                                                 <div class="form-group">
                                                     <label for="checker_email" class="form-label required">Checker
                                                         Email</label>
                                                     <input type="email" id="checker_email" name="checker_email"
                                                         class="form-input" placeholder="checker@example.com">
-                                                    <div class="form-error hidden" id="checker_email_error"></div>
+                                                    <div class="hidden form-error" id="checker_email_error"></div>
                                                 </div>
                                             </div>
                                         </div>
@@ -561,16 +561,16 @@
                                     <!-- Additional Information -->
                                     <div class="form-group">
                                         <label for="additional_info" class="form-label">Additional Information</label>
-                                        <textarea id="additional_info" name="additional_info" rows="3" class="form-input resize-none"
+                                        <textarea id="additional_info" name="additional_info" rows="3" class="resize-none form-input"
                                             placeholder="Any additional details you'd like to share..."></textarea>
-                                        <div class="form-error hidden"></div>
+                                        <div class="hidden form-error"></div>
                                         <p class="form-hint">Optional: Share any other relevant information about your
                                             campaign</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="border-t border-neutral-100 px-8 py-6 bg-neutral-50">
+                            <div class="px-8 py-6 border-t border-neutral-100 bg-neutral-50">
                                 <div class="flex justify-between">
                                     <button type="button" class="btn-secondary prev-step">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor"
@@ -595,16 +595,16 @@
                         <!-- Step 4: Review & Submit -->
                         <div class="form-step" id="step-4">
                             <div class="p-8">
-                                <div class="text-center mb-8">
+                                <div class="mb-8 text-center">
                                     <div
-                                        class="w-16 h-16 bg-gradient-to-br from-success-500 to-success-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                        class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-success-500 to-success-600 rounded-2xl">
                                         <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor"
                                             viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                     </div>
-                                    <h3 class="text-2xl font-heading font-bold text-neutral-800 mb-2">Review Your
+                                    <h3 class="mb-2 text-2xl font-bold font-heading text-neutral-800">Review Your
                                         Application</h3>
                                     <p class="text-neutral-600">Double-check everything before submitting your
                                         fundraising
@@ -613,7 +613,7 @@
 
                                 <!-- Review Summary -->
                                 <div class="max-w-5xl mx-auto">
-                                    <div class="review-status mb-8">
+                                    <div class="mb-8 review-status">
                                         <div class="flex items-center justify-center space-x-2 text-success-600">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor"
                                                 viewBox="0 0 24 24">
@@ -631,7 +631,7 @@
                                 </div>
                             </div>
 
-                            <div class="border-t border-neutral-100 px-8 py-6 bg-neutral-50">
+                            <div class="px-8 py-6 border-t border-neutral-100 bg-neutral-50">
                                 <div class="flex justify-between">
                                     <button type="button" class="btn-secondary prev-step">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor"
@@ -643,7 +643,7 @@
                                     </button>
                                     <button type="submit" id="submit-application" class="btn-success">
                                         <span class="submit-text">Submit Application</span>
-                                        <span class="loading-text hidden">
+                                        <span class="hidden loading-text">
                                             <svg class="inline w-4 h-4 mr-2 animate-spin" fill="none"
                                                 viewBox="0 0 24 24">
                                                 <circle class="opacity-25" cx="12" cy="12" r="10"
@@ -812,13 +812,13 @@
                                 </svg>
                             </div>
                             <div>
-                                <h5 class="font-medium text-neutral-800 mb-2">Required Documents:</h5>
-                                <ul class="text-sm text-neutral-600 space-y-1">
+                                <h5 class="mb-2 font-medium text-neutral-800">Required Documents:</h5>
+                                <ul class="space-y-1 text-sm text-neutral-600">
                     `;
 
                     documentTypes.forEach(type => {
                         html += `<li class="flex items-start space-x-2">
-                            <span class="text-primary-500 mt-1">•</span>
+                            <span class="mt-1 text-primary-500">•</span>
                             <div>
                                 <span class="font-medium">${type.display_name}</span>
                                 <p class="text-xs text-neutral-500">${type.description}</p>
@@ -831,7 +831,7 @@
                 } catch (error) {
                     console.error('Error fetching document types:', error);
                     documentTypesInfo.innerHTML = `
-                        <div class="text-danger-600 text-sm">
+                        <div class="text-sm text-danger-600">
                             <svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
@@ -1264,15 +1264,15 @@
                                 <span class="review-value">${mandateDisplay}</span>
                             </div>
                             ${mandateType === 'dual' ? `
-                                                                <div class="review-item">
-                                                                    <span class="review-label">Checker Name:</span>
-                                                                    <span class="review-value">${formData.get('checker_name') || 'Not specified'}</span>
-                                                                </div>
-                                                                <div class="review-item">
-                                                                    <span class="review-label">Checker Email:</span>
-                                                                    <span class="review-value">${formData.get('checker_email') || 'Not specified'}</span>
-                                                                </div>
-                                                            ` : ''}
+                                                                        <div class="review-item">
+                                                                            <span class="review-label">Checker Name:</span>
+                                                                            <span class="review-value">${formData.get('checker_name') || 'Not specified'}</span>
+                                                                        </div>
+                                                                        <div class="review-item">
+                                                                            <span class="review-label">Checker Email:</span>
+                                                                            <span class="review-value">${formData.get('checker_email') || 'Not specified'}</span>
+                                                                        </div>
+                                                                    ` : ''}
                             <div class="review-item">
                                 <span class="review-label">Additional Info:</span>
                                 <span class="review-value">${formData.get('additional_info') || 'None provided'}</span>

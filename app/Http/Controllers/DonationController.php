@@ -176,12 +176,12 @@ class DonationController extends Controller
                 'request_id' => $responseData['request_id'] ?? 'unknown'
             ]);
 
-            // Process the callback using our service
+            // Process the callback
             $result = $this->cyberSourceService->processCallback($responseData);
             $contribution = $result['contribution'];
             $decision = $result['decision'];
 
-            // Send notifications for successful donations using the shared service
+            // Send notifications for successful donations
             if ($decision === 'ACCEPT' && $contribution->payment_status === Contribution::STATUS_COMPLETED) {
                 $this->notificationService->sendDonationNotifications($contribution);
             }
@@ -1277,60 +1277,5 @@ class DonationController extends Controller
             'target_reached' => false,
             'error' => true,
         ];
-    }
-
-
-    public function verifyCyberSource()
-    {
-        $verificationResult = $this->cyberSourceService->verifyKeysAndTimestamp();
-        $timestampResult = $this->cyberSourceService->verifyTimestampAdvanced();
-        $keyCleaningResult = $this->cyberSourceService->cleanKeys();
-
-        return response()->json([
-            'overall_status' => $verificationResult['status'],
-            'issues' => $verificationResult['issues'],
-            'warnings' => $verificationResult['warnings'],
-            'verification_details' => $verificationResult['verification_details'],
-            'timestamp_verification' => $timestampResult,
-            'key_cleaning' => $keyCleaningResult,
-            'recommendations' => $this->getRecommendations($verificationResult, $keyCleaningResult)
-        ], 200);
-    }
-
-    private function getRecommendations(array $verificationResult, array $keyCleaningResult): array
-    {
-        $recommendations = [];
-
-        if (!empty($verificationResult['issues'])) {
-            $recommendations[] = "❌ CRITICAL ISSUES FOUND - Must be fixed before CyberSource will work";
-
-            foreach ($verificationResult['issues'] as $issue) {
-                if (strpos($issue, 'length') !== false) {
-                    $recommendations[] = "🔑 Re-copy your keys from CyberSource Business Center";
-                    $recommendations[] = "📋 Use a plain text editor (Notepad) to avoid formatting issues";
-                }
-
-                if (strpos($issue, 'word-wrapped') !== false) {
-                    $recommendations[] = "🧹 Your keys contain spaces/newlines - they were word-wrapped during copy/paste";
-                    $recommendations[] = "💡 Use the cleaned keys from the key_cleaning section above";
-                }
-
-                if (strpos($issue, 'time') !== false) {
-                    $recommendations[] = "⏰ Your server time is not synchronized with UTC";
-                    $recommendations[] = "🔧 Run: sudo ntpdate -s time.nist.gov (Linux) or sync your server time";
-                }
-            }
-        }
-
-        if ($keyCleaningResult['keys_were_dirty']) {
-            $recommendations[] = "🚨 Your keys were word-wrapped! Update your .env with the cleaned versions";
-        }
-
-        if (empty($verificationResult['issues']) && empty($recommendations)) {
-            $recommendations[] = "✅ Keys and timestamp look good - the issue is likely profile configuration";
-            $recommendations[] = "🔍 Check that your CyberSource profile is ACTIVATED in Business Center";
-        }
-
-        return $recommendations;
     }
 }

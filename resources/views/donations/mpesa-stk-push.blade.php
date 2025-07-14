@@ -3,142 +3,223 @@
 @section('title', 'M-Pesa Payment - Complete Your Transaction')
 
 @section('content')
-    <div class="min-h-screen py-8 bg-gray-50">
-        <div class="max-w-md mx-auto">
-            <div class="p-6 bg-white rounded-lg shadow-lg">
-                <!-- Header -->
-                <div class="mb-6 text-center">
-                    <div class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full">
-                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 18l9-9-9-9-3 3 6 6-6 6 3 3z" />
-                        </svg>
-                    </div>
-                    <h1 class="text-2xl font-bold text-gray-900">M-Pesa Payment</h1>
-                    <p class="mt-2 text-gray-600">Complete your donation payment</p>
-                </div>
+    <div class="min-h-screen py-8">
+        <div class="max-w-5xl px-4 mx-auto">
+            <div class="overflow-hidden bg-white border shadow-2xl rounded-2xl border-neutral-100">
+                <!-- Enhanced Header -->
+                <div class="relative px-8 py-6 overflow-hidden text-center bg-gradient-to-r from-success-500 to-success-600">
+                    <!-- Decorative Background Pattern -->
+                    <div class="absolute inset-0 origin-top-left transform -skew-y-6 bg-white/10"></div>
 
-                <!-- Payment Details -->
-                <div class="p-4 mb-6 rounded-lg bg-green-50">
-                    <h3 class="mb-3 font-semibold text-green-800">Payment Details</h3>
-                    <div class="space-y-2 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-green-700">Amount:</span>
-                            <span class="font-semibold text-green-900">KES
-                                {{ number_format($contribution->amount, 2) }}</span>
+                    <div class="relative z-10">
+                        <div class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-white shadow-lg rounded-2xl">
+                            <svg class="w-8 h-8 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-green-700">Reference:</span>
-                            <span class="font-semibold text-green-900">DON_{{ $contribution->id }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-green-700">Environment:</span>
-                            <span class="font-semibold text-green-900 capitalize">{{ $environment }}</span>
-                        </div>
+                        <h1 class="mb-2 text-2xl font-bold text-white font-heading">M-Pesa Payment</h1>
+                        <p class="text-success-100">Complete your donation payment</p>
                     </div>
                 </div>
 
-                <!-- Status Display -->
-                <div class="mb-6">
-                    <div id="payment-status" class="text-center">
-                        <div
-                            class="w-8 h-8 mx-auto mb-4 border-4 border-blue-500 rounded-full animate-spin border-t-transparent">
+                <div class="p-8">
+                    <!-- Enhanced Payment Details -->
+                    <div
+                        class="p-6 mb-8 border bg-gradient-to-r from-success-50 to-green-50 rounded-2xl border-success-200">
+                        <div class="flex items-center mb-4 space-x-3">
+                            <div class="flex items-center justify-center w-8 h-8 bg-success-500 rounded-xl">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            <h3 class="font-bold font-heading text-success-800">Payment Details</h3>
                         </div>
-                        <p class="text-lg font-semibold text-gray-800">Processing Payment...</p>
-                        <p class="mt-2 text-sm text-gray-600">Please check your phone for the M-Pesa prompt</p>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-white rounded-xl">
+                                <span class="font-medium text-neutral-600">Amount:</span>
+                                <span class="text-lg font-bold font-heading text-success-700">KES
+                                    {{ number_format($contribution->amount, 2) }}</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-white rounded-xl">
+                                <span class="font-medium text-neutral-600">Reference:</span>
+                                <code
+                                    class="px-2 py-1 font-mono text-sm rounded bg-neutral-100 text-neutral-700">DON_{{ $contribution->id }}</code>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-white rounded-xl">
+                                <span class="font-medium text-neutral-600">Environment:</span>
+                                <span class="font-medium capitalize text-neutral-800">{{ $environment }}</span>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Instructions -->
-                <div class="p-4 mb-6 rounded-lg bg-blue-50">
-                    <h3 class="mb-3 font-semibold text-blue-800">Instructions</h3>
-                    <ol class="space-y-2 text-sm text-blue-700">
-                        <li class="flex items-start">
-                            <span
-                                class="bg-blue-200 text-blue-800 rounded-full w-5 h-5 flex items-center justify-center text-xs font-semibold mr-3 mt-0.5">1</span>
-                            Check your phone for the M-Pesa payment prompt
-                        </li>
-                        <li class="flex items-start">
-                            <span
-                                class="bg-blue-200 text-blue-800 rounded-full w-5 h-5 flex items-center justify-center text-xs font-semibold mr-3 mt-0.5">2</span>
-                            Enter your M-Pesa PIN to complete the payment
-                        </li>
-                        <li class="flex items-start">
-                            <span
-                                class="bg-blue-200 text-blue-800 rounded-full w-5 h-5 flex items-center justify-center text-xs font-semibold mr-3 mt-0.5">3</span>
-                            Wait for confirmation - this page will update automatically
-                        </li>
-                    </ol>
-                </div>
+                    <!-- Enhanced Status Display -->
+                    <div class="mb-8">
+                        <div id="payment-status" class="text-center">
+                            <div class="relative w-16 h-16 mx-auto mb-4">
+                                <div class="w-16 h-16 border-4 rounded-full border-primary-200 animate-spin">
+                                    <div
+                                        class="w-16 h-16 border-4 rounded-full border-primary-500 border-t-transparent animate-spin">
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="mb-2 text-xl font-bold font-heading text-neutral-800">Processing Payment...</p>
+                            <p class="text-neutral-600">Please check your phone for the M-Pesa prompt</p>
+                        </div>
+                    </div>
 
-                <!-- Action Buttons -->
-                <div class="space-y-3">
-                    <button id="check-status-btn" onclick="checkPaymentStatus()"
-                        class="w-full px-4 py-3 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                        Check Payment Status
-                    </button>
+                    <!-- Enhanced Instructions -->
+                    <div class="p-6 mb-8 border bg-gradient-to-r from-primary-50 to-blue-50 rounded-2xl border-primary-200">
+                        <div class="flex items-center mb-4 space-x-3">
+                            <div class="flex items-center justify-center w-8 h-8 bg-primary-500 rounded-xl">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <h3 class="font-bold font-heading text-primary-800">Instructions</h3>
+                        </div>
+                        <ol class="space-y-4">
+                            <li class="flex items-start space-x-3">
+                                <div
+                                    class="w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center text-sm font-bold mt-0.5">
+                                    1</div>
+                                <div class="flex-1">
+                                    <p class="font-medium text-neutral-800">Check your phone for the M-Pesa payment prompt
+                                    </p>
+                                    <p class="mt-1 text-sm text-neutral-600">You should receive an SMS notification shortly
+                                    </p>
+                                </div>
+                            </li>
+                            <li class="flex items-start space-x-3">
+                                <div
+                                    class="w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center text-sm font-bold mt-0.5">
+                                    2</div>
+                                <div class="flex-1">
+                                    <p class="font-medium text-neutral-800">Enter your M-Pesa PIN to complete the payment
+                                    </p>
+                                    <p class="mt-1 text-sm text-neutral-600">Follow the prompts on your phone screen</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start space-x-3">
+                                <div
+                                    class="w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center text-sm font-bold mt-0.5">
+                                    3</div>
+                                <div class="flex-1">
+                                    <p class="font-medium text-neutral-800">Wait for confirmation - this page will update
+                                        automatically</p>
+                                    <p class="mt-1 text-sm text-neutral-600">No need to refresh the page manually</p>
+                                </div>
+                            </li>
+                        </ol>
+                    </div>
 
-                    <button onclick="window.location.reload()"
-                        class="w-full px-4 py-3 text-white transition-colors bg-gray-600 rounded-lg hover:bg-gray-700">
-                        Refresh Page
-                    </button>
-                </div>
+                    <!-- Enhanced Action Buttons -->
+                    <div class="mb-8 space-y-4">
+                        <button id="check-status-btn" onclick="checkPaymentStatus()"
+                            class="w-full px-6 py-4 font-medium text-white transition-all duration-200 shadow-lg bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl hover:from-primary-600 hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed">
+                            <svg class="inline w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Check Payment Status
+                        </button>
 
-                <!-- Help Section -->
-                <div class="p-4 mt-6 rounded-lg bg-gray-50">
-                    <h4 class="mb-2 font-semibold text-gray-800">Need Help?</h4>
-                    <p class="text-sm text-gray-600">
-                        If you don't receive the M-Pesa prompt or encounter any issues, please contact our support team.
-                    </p>
+                        <button onclick="window.location.reload()"
+                            class="w-full px-6 py-4 font-medium transition-all duration-200 border bg-neutral-100 text-neutral-700 rounded-xl hover:bg-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2 border-neutral-200">
+                            <svg class="inline w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Refresh Page
+                        </button>
+                    </div>
+
+                    <!-- Enhanced Help Section -->
+                    <div
+                        class="p-6 border bg-gradient-to-r from-secondary-50 to-orange-50 rounded-2xl border-secondary-200">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-8 h-8 bg-secondary-500 rounded-xl flex items-center justify-center mt-0.5">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="mb-2 font-bold font-heading text-neutral-800">Need Help?</h4>
+                                <p class="text-sm leading-relaxed text-neutral-700">
+                                    If you don't receive the M-Pesa prompt or encounter any issues, please contact our
+                                    support team for assistance.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Success Modal -->
-    <div id="success-modal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50">
+    <!-- Enhanced Success Modal -->
+    <div id="success-modal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm">
         <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="w-full max-w-md p-6 bg-white rounded-lg">
-                <div class="text-center">
-                    <div class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full">
-                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-full max-w-md overflow-hidden bg-white border shadow-2xl rounded-2xl border-neutral-100">
+                <div class="px-8 py-6 text-center bg-gradient-to-r from-success-500 to-success-600">
+                    <div class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-white shadow-lg rounded-2xl">
+                        <svg class="w-8 h-8 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         </svg>
                     </div>
-                    <h3 class="mb-2 text-xl font-bold text-gray-900">Payment Successful!</h3>
-                    <p class="mb-4 text-gray-600">Thank you for your generous donation!</p>
-                    <div id="success-details" class="p-4 mb-4 text-sm rounded-lg bg-green-50">
+                    <h3 class="mb-2 text-2xl font-bold text-white font-heading">Payment Successful!</h3>
+                    <p class="text-success-100">Thank you for your generous donation!</p>
+                </div>
+                <div class="p-8">
+                    <div id="success-details"
+                        class="p-6 mb-6 border bg-gradient-to-r from-success-50 to-green-50 rounded-2xl border-success-200">
                         <!-- Success details will be populated here -->
                     </div>
                     <button onclick="redirectToSuccess()"
-                        class="w-full px-4 py-3 text-white transition-colors bg-green-600 rounded-lg hover:bg-green-700">
-                        Close
+                        class="w-full px-6 py-4 font-medium text-white transition-all duration-200 shadow-lg bg-gradient-to-r from-success-500 to-success-600 rounded-xl hover:from-success-600 hover:to-success-700 focus:outline-none focus:ring-2 focus:ring-success-500 focus:ring-offset-2 hover:shadow-xl">
+                        <svg class="inline w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Continue
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Error Modal -->
-    <div id="error-modal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50">
+    <!-- Enhanced Error Modal -->
+    <div id="error-modal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm">
         <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="w-full max-w-md p-6 bg-white rounded-lg">
-                <div class="text-center">
-                    <div class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full">
-                        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-full max-w-md overflow-hidden bg-white border shadow-2xl rounded-2xl border-neutral-100">
+                <div class="px-8 py-6 text-center bg-gradient-to-r from-danger-500 to-danger-600">
+                    <div class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-white shadow-lg rounded-2xl">
+                        <svg class="w-8 h-8 text-danger-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </div>
-                    <h3 class="mb-2 text-xl font-bold text-gray-900">Payment Failed</h3>
-                    <p id="error-message" class="mb-4 text-gray-600">Something went wrong with your payment.</p>
-                    <div class="space-y-3">
+                    <h3 class="mb-2 text-2xl font-bold text-white font-heading">Payment Failed</h3>
+                    <p id="error-message" class="text-danger-100">Something went wrong with your payment.</p>
+                </div>
+                <div class="p-8">
+                    <div class="space-y-4">
                         <button onclick="tryAgain()"
-                            class="w-full px-4 py-3 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700">
+                            class="w-full px-6 py-4 font-medium text-white transition-all duration-200 shadow-lg bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl hover:from-primary-600 hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 hover:shadow-xl">
+                            <svg class="inline w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
                             Try Again
                         </button>
                         <button onclick="closeModal('error-modal')"
-                            class="w-full px-4 py-3 text-white transition-colors bg-gray-600 rounded-lg hover:bg-gray-700">
+                            class="w-full px-6 py-4 font-medium transition-all duration-200 border bg-neutral-100 text-neutral-700 rounded-xl hover:bg-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2 border-neutral-200">
+                            <svg class="inline w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
                             Close
                         </button>
                     </div>
@@ -242,7 +323,12 @@
         function updateStatusButton() {
             const button = document.getElementById('check-status-btn');
             const remaining = maxStatusChecks - statusCheckCount;
-            button.textContent = `Checking Status... (${remaining} checks remaining)`;
+            button.innerHTML = `
+                <svg class="inline w-5 h-5 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Checking Status... (${remaining} checks remaining)
+            `;
         }
 
         // Show success modal
@@ -251,18 +337,18 @@
             const detailsDiv = document.getElementById('success-details');
 
             detailsDiv.innerHTML = `
-                <div class="space-y-2">
-                    <div class="flex justify-between">
-                        <span class="text-green-700">Status:</span>
-                        <span class="font-semibold text-green-900">Completed</span>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between p-3 bg-white rounded-xl">
+                        <span class="font-medium text-neutral-600">Status:</span>
+                        <span class="font-bold font-heading text-success-700">Completed</span>
                     </div>
-                    <div class="flex justify-between">
-                        <span class="text-green-700">Amount:</span>
-                        <span class="font-semibold text-green-900">KES {{ number_format($contribution->amount, 2) }}</span>
+                    <div class="flex items-center justify-between p-3 bg-white rounded-xl">
+                        <span class="font-medium text-neutral-600">Amount:</span>
+                        <span class="font-bold font-heading text-success-700">KES {{ number_format($contribution->amount, 2) }}</span>
                     </div>
-                    <div class="flex justify-between">
-                        <span class="text-green-700">Reference:</span>
-                        <span class="font-semibold text-green-900">DON_{{ $contribution->id }}</span>
+                    <div class="flex items-center justify-between p-3 bg-white rounded-xl">
+                        <span class="font-medium text-neutral-600">Reference:</span>
+                        <code class="px-2 py-1 font-mono text-sm rounded bg-neutral-100 text-neutral-700">DON_{{ $contribution->id }}</code>
                     </div>
                 </div>
             `;
@@ -294,33 +380,33 @@
 
             if (status === 'success') {
                 statusDiv.innerHTML = `
-                    <div class="flex items-center justify-center w-8 h-8 mx-auto mb-4 bg-green-100 rounded-full">
-                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-success-100 rounded-2xl">
+                        <svg class="w-8 h-8 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>
                     </div>
-                    <p class="text-lg font-semibold text-green-800">Payment Successful!</p>
-                    <p class="mt-2 text-sm text-green-600">Your donation has been processed</p>
+                    <p class="mb-2 text-xl font-bold font-heading text-success-700">Payment Successful!</p>
+                    <p class="text-success-600">Your donation has been processed</p>
                 `;
             } else if (status === 'failed') {
                 statusDiv.innerHTML = `
-                    <div class="flex items-center justify-center w-8 h-8 mx-auto mb-4 bg-red-100 rounded-full">
-                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-danger-100 rounded-2xl">
+                        <svg class="w-8 h-8 text-danger-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
                     </div>
-                    <p class="text-lg font-semibold text-red-800">Payment Failed</p>
-                    <p class="mt-2 text-sm text-red-600">Please try again or contact support</p>
+                    <p class="mb-2 text-xl font-bold font-heading text-danger-700">Payment Failed</p>
+                    <p class="text-danger-600">Please try again or contact support</p>
                 `;
             } else if (status === 'timeout') {
                 statusDiv.innerHTML = `
-                    <div class="flex items-center justify-center w-8 h-8 mx-auto mb-4 bg-yellow-100 rounded-full">
-                        <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-secondary-100 rounded-2xl">
+                        <svg class="w-8 h-8 text-secondary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"/>
                         </svg>
                     </div>
-                    <p class="text-lg font-semibold text-yellow-800">Payment Timeout</p>
-                    <p class="mt-2 text-sm text-yellow-600">Please check your M-Pesa messages or try again</p>
+                    <p class="mb-2 text-xl font-bold font-heading text-secondary-700">Payment Timeout</p>
+                    <p class="text-secondary-600">Please check your M-Pesa messages or try again</p>
                 `;
             }
         }
@@ -337,7 +423,7 @@
             window.location.href = '{{ route('donation.show', $contribution->donationLink->code) }}';
         }
 
-        // Redirect to success page - REMOVED: Now just closes modal and stays on page
+        // Redirect to success page
         function redirectToSuccess() {
             // Close modal and redirect back to donation form
             closeModal('success-modal');

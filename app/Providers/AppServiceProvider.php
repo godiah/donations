@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Channels\SmsChannel;
 use App\Channels\WhatsAppChannel;
+use App\Services\CurrencyService;
 use App\Services\CyberSourceService;
 use App\Services\DonationNotificationService;
 use App\Services\MpesaService;
@@ -38,6 +39,10 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(\App\Services\MpesaService::class),
                 $app->make(\App\Services\WalletService::class)
             );
+        });
+
+        $this->app->singleton(CurrencyService::class, function ($app) {
+            return new CurrencyService();
         });
     }
 
